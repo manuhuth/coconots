@@ -1,0 +1,9 @@
+useDynLib(coconots, .registration=TRUE)
+importFrom(Rcpp, evalCpp)
+import(MASS)
+import(forecast)
+import(numDeriv)
+import(HMMpa)
+import(stats)
+exportPattern("^[[:alpha:]]+")
+

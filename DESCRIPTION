@@ -1,0 +1,17 @@
+Package: coconots
+Type: Package
+Title: Analysis of Convolution-closed Nonlinear Count Time Series
+Version: 1.0
+Date: 2022-4-28
+Author: Manuel Huth [aut,cre],
+	Robert C. Jung [aut],
+	A. R. Tremanye [aut]
+Maintainer: Manuel Huth <manuel.huth@yahoo.com>
+Description: Likelihood-based methods for model fitting, assessment and prediction analysis of some convolution-closed count time series model are provided.  The marginal distribution can be Poisson or Generalized Poisson. Regression effects can be modelled via time varying innovation rates.
+License: GPL (>= 2)
+Imports: Rcpp (>= 1.0.4), MASS, forecast, numDeriv, HMMpa, stats, ggplot2
+LazyData: true
+LinkingTo: Rcpp, StanHeaders (>= 2.21.0), RcppParallel (>= 5.0.1)
+RoxygenNote: 7.1.1
+Depends: 
+    R (>= 2.10)
