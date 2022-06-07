@@ -1,5 +1,5 @@
 # coconots
-Likelihood-based methods for model fitting, assessment and prediction analysis of some convo- lution-closed count time series model are provided. The marginal distribution can be Poisson or Generalized Poisson. Regression effects can be modelled via time varying innovation rates.
+Likelihood-based methods for model fitting, assessment and prediction analysis of some convolution-closed count time series model are provided. The marginal distribution can be Poisson or Generalized Poisson. Regression effects can be modelled via time varying innovation rates.
 
 # Details
 The package allows simulation of convolution-closed count time series models with the cocoSim
