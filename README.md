@@ -11,3 +11,7 @@ The package allows simulation of convolution-closed count time series models wit
 function. Model fitting is performed with the cocoReg routine. By passing a cocoReg-type object,
 cocoForecast computes the probability mass of the one-step ahead forecast. cocoBoot, cocoPIT,
 cocoScore, and cocoResid provide routines for model assessment.
+
+## Model
+
+![alt text](https://github.com/manuhuth/coconots/blob/main/images/dgp.png?raw=true)
