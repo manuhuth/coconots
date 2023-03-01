@@ -211,7 +211,7 @@ if (methods::is(coco, "coco.fit")){
 
 ##covariates
   if (methods::is(coco, "coco.fit.c")){
-    xreg <- cbind(rep(1,nrow(coco$cov)),coco$cov)
+    xreg <- coco$cov
 
 
     #Poisson 1
