@@ -73,7 +73,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
   
   df_covariates <- as.data.frame(cbind(data,xreg))
   covariates_glm_fit <- stats::glm(data ~ -1 + ., family="poisson", data=df_covariates)
-  starting_values_covariates <- stats::na.omit(covariates_glm_fit$coefficients)
+  starting_values_covariates <<- stats::na.omit(covariates_glm_fit$coefficients)
 
   # PAR1
   if ((type == "Poisson") & (order == 1)) {
@@ -143,7 +143,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             #outer.iterations = outer.it, outer.eps = outer.eps,
             hessian = FALSE)          
         }else{
-        fit <- stats::constrOptim(
+        fit <<- stats::constrOptim(
           theta = sta, f = mlf, ui = ui, ci = ci, data = data, mu = mu,
           method = "Nelder-Mead", control = optim_control,
           outer.iterations = outer.it, outer.eps = outer.eps,
@@ -171,7 +171,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       pars <- as.vector(unlist(fit$par, use.names = FALSE))
       lambs <- c()
       for (j in 1:ncov) {
-        lambs[j + 1] <- paste("beta", j, sep = "")
+        lambs[j] <- paste("beta", j, sep = "")
       }
       names(pars) <- c("alpha", lambs)
       T <- length(data)
@@ -187,7 +187,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         vec_lambda <- c()
         for (j in 1:ncol(xreg)) {
           nam <- paste("lambda", j, sep = "")
-          vec_lambda[j] <- assign(nam, par[j + 2])
+          vec_lambda[j] <- assign(nam, par[j + 1])
         }
 
         T <- length(data)
