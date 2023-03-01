@@ -213,8 +213,8 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probabili
     type = "h", lend = 1, lwd = 18, ylab = ylab, xlab = xlab, main = plot_main,
     ylim = c(0, max(d) * 2), xaxt = "n", col = "navyblue", yaxs = "i"
   )
-  axis(1, at = seq(0.1, 0.9, 0.1), labels = as.character(seq(0.1, 0.9, 0.1)))
-  p <- recordPlot()
+  graphics::axis(1, at = seq(0.1, 0.9, 0.1), labels = as.character(seq(0.1, 0.9, 0.1)))
+  p <- grDevices::recordPlot()
 
   end.time <- Sys.time()
 

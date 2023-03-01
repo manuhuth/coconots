@@ -15,7 +15,7 @@ rgenpois <- function(n, lambda, eta){
     nain <- dgenpois(0, lambda1 = lambda, lambda2 = eta)
     while(nain < unif) {
       index <- index + 1
-      nain <- nain + dgenpois(index, lambda1 = lambda, lambda2 = eta)
+      nain <- nain + HMMpa::dgenpois(index, lambda1 = lambda, lambda2 = eta)
     }
     vec[j] <- index
   }

@@ -33,7 +33,7 @@ cocoForecast <- function(coco, max=10, xcast=NULL, plot = TRUE, title = "Probabi
   if (class(coco) == "coco.fit.c") { 
     number_covariates <- ncol(coco$cov) 
     betas <- parameter[(length(parameter)-number_covariates+1):length(parameter)]
-    parameter <- head(parameter, -number_covariates)
+    parameter <- utils::head(parameter, -number_covariates)
     dot_product <- betas %*% c(xcast)
     lambda <- exp(dot_product)
     parameter <- c(lambda, parameter)

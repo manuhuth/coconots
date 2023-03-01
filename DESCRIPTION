@@ -8,10 +8,24 @@ Author: Manuel Huth [aut,cre],
 	A. R. Tremanye [aut]
 Maintainer: Manuel Huth <manuel.huth@yahoo.com>
 Description: Likelihood-based methods for model fitting, assessment and prediction analysis of some convolution-closed count time series model are provided.  The marginal distribution can be Poisson or Generalized Poisson. Regression effects can be modelled via time varying innovation rates.
-License: GPL (>= 2)
-Imports: Rcpp (>= 1.0.4), MASS, forecast, numDeriv, HMMpa, stats, ggplot2
+License: MIT + file LICENSE
+Imports: 
+    Rcpp (>= 1.0.4),
+    MASS,
+    forecast,
+    numDeriv,
+    HMMpa,
+    stats,
+    ggplot2,
+    utils,
+    graphics,
+    grDevices
 LazyData: true
 LinkingTo: Rcpp, StanHeaders (>= 2.21.0), RcppParallel (>= 5.0.1)
 RoxygenNote: 7.2.3
 Depends: 
     R (>= 2.10)
+Suggests: 
+    covr,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

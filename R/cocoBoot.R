@@ -154,7 +154,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     for (b in 1:nB) {
       help <- cocoSim(order = coco$order, type = coco$type, par = par, length = (T + 10), seasonality = seasonality)$data[11:(T + 10)]
       B[, b] <- help
-      ac[, b] <- Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
+      ac[, b] <- forecast::Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
     }
   }
 
@@ -164,7 +164,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     for (b in 1:nB) {
       help <- cocoSim(type = coco$type, order = coco$order, par = par, length = T, xreg = xreg, seasonality = seasonality)$data
       B[, b] <- help
-      ac[, b] <- Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
+      ac[, b] <- forecast::Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
     }
   }
 
@@ -178,7 +178,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     lower <- qnorm(conf / 2, means[j], var[j]^0.5)
     confidence[j, ] <- c(lower, upper)
   }
-  acfdata <- Acf(data, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
+  acfdata <- forecast::Acf(data, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
   max <- max(c(acfdata, confidence[, "upper"])) + 0.5 * abs(max(c(acfdata, confidence[, "upper"])))
   if (max >= 1.1) {
     max <- 1.1

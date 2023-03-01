@@ -77,7 +77,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
 
       ## starting values
       if (length(start) == 0) {
-        acf <- Acf(data, plot = FALSE, lag.max = lag.max)
+        acf <- forecast::Acf(data, plot = FALSE, lag.max = lag.max)
         alpha_s <- acf$acf[seasonality[1] + 1]
 
         if (start.val.adjust == TRUE) {
@@ -115,13 +115,13 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         # constrained.optimained optimization process
         if (method_optim == "BFGS") {
           gradient <- function(par, data){return(grad(func=mlf, x=par, data=data))}
-          fit <- constrOptim(
+          fit <- stats::constrOptim(
             theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, #mu = mu,
             method = method_optim, control = optim_control,
             #outer.iterations = outer.it, outer.eps = outer.eps,
             hessian = FALSE, ...)          
         }else{
-          fit <- constrOptim(
+          fit <- stats::constrOptim(
             theta = sta, f = mlf, ui = ui, ci = ci, data = data,
             method = method_optim, control = optim_control,
             hessian = FALSE, ...
@@ -138,7 +138,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           stop("Number of upper bounds must equal 2 for the Poisson 1 model")
         }
         
-        fit <- optim(
+        fit <- stats::optim(
           par = sta, fn = mlf, gr = NULL, method = c(method_optim), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           hessian = FALSE, ...
@@ -195,7 +195,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
 
       ## starting values
       if (length(start) == 0) {
-        acf <- Acf(data, plot = FALSE, lag.max = lag.max)
+        acf <- forecast::Acf(data, plot = FALSE, lag.max = lag.max)
         alpha_s <- acf$acf[seasonality[1] + 1]
 
         if (start.val.adjust == TRUE) {
@@ -204,7 +204,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
             warning(paste("The initial value of alpha is not in the feasible region and was set to", replace.start.val, ""))
           }
         }
-        eta_s <- 1 - (mean(data) / var(data))^0.5
+        eta_s <- 1 - (mean(data) / stats::var(data))^0.5
         if (start.val.adjust == TRUE) {
           if (eta_s < 0) {
             eta_s <- replace.start.val
@@ -243,12 +243,12 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         # constrained.optimained optimization process
         if (method_optim == "BFGS") {
           gradient <- function(par, data){return(grad(func=mlf, x=par, data=data))}
-          fit <- constrOptim(
+          fit <- stats::constrOptim(
             theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data,
             method = method_optim, control = optim_control,
             hessian = FALSE, ...)          
         }else{
-          fit <- constrOptim(
+          fit <- stats::constrOptim(
             theta = sta, f = mlf, ui = ui, ci = ci, data = data,
             method = method_optim, control = optim_control,
 
@@ -266,7 +266,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           stop("Number of upper bounds must equal 3 for the GP 1 model")
         }
 
-        fit <- optim(
+        fit <- stats::optim(
           par = sta, fn = mlf, gr = NULL, method = c(method_optim), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           hessian = FALSE, ...
@@ -331,7 +331,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       ## starting values
 
       if (length(start) == 0) {
-        acf <- Acf(data, plot = FALSE, lag.max = lag.max)
+        acf <- forecast::Acf(data, plot = FALSE, lag.max = lag.max)
         p1 <- acf$acf[seasonality[1] + 1]
         p2 <- acf$acf[seasonality[2] + 1]
 
@@ -417,12 +417,12 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         # constrained.optimained optimization process
         if (method_optim == "BFGS") {
           gradient <- function(par, data){return(grad(func=mlf, x=par, data=data))}
-          fit <- constrOptim(
+          fit <- stats::constrOptim(
             theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, 
             method = method_optim, control = optim_control,
             hessian = FALSE, ...)          
         }else{
-          fit <- constrOptim(
+          fit <- stats::constrOptim(
             theta = sta, f = mlf, ui = ui, ci = ci, data = data,
             method = method_optim, control = optim_control,
             hessian = FALSE, ...
@@ -439,7 +439,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           stop("Number of upper bounds must equal 2 for the Poisson 4 model")
         }
 
-        fit <- optim(
+        fit <- stats::optim(
           par = sta, fn = mlf, gr = NULL, method = c(method_optim), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           hessian = FALSE, ...
@@ -506,7 +506,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
 
       ## starting values
       if (length(start) == 0) {
-        acf <- Acf(data, plot = FALSE, lag.max = lag.max)
+        acf <- forecast::Acf(data, plot = FALSE, lag.max = lag.max)
         p1 <- acf$acf[[seasonality[1] + 1]]
         p2 <- acf$acf[[seasonality[2] + 1]]
 
@@ -516,7 +516,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         }
         mu111 <- sum(v) / length(data)
 
-        eta_s <- 1 - (mean(data) / var(data))^0.5
+        eta_s <- 1 - (mean(data) / stats::var(data))^0.5
 
         if (start.val.adjust == TRUE) {
           if (eta_s < 0) {
@@ -608,12 +608,12 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         # constrained.optimained optimization process
         if (method_optim == "BFGS") {
           gradient <- function(par, data){return(grad(func=mlf, x=par, data=data))}
-          fit <- constrOptim(
+          fit <- stats::constrOptim(
             theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, 
             method = method_optim, control = optim_control,
             hessian = FALSE, ...)          
         }else{
-          fit <- constrOptim(
+          fit <- stats::constrOptim(
             theta = sta, f = mlf, ui = ui, ci = ci, data = data,
             method = method_optim, control = optim_control,
             hessian = FALSE, ...
@@ -630,7 +630,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           stop("Number of upper bounds must equal 5 for the GP 2 model")
         }
 
-        fit <- optim(
+        fit <- stats::optim(
           par = sta, fn = mlf, gr = NULL, method = c(method_optim), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           hessian = FALSE, ...
