@@ -16,7 +16,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
                  confidence = 0.95, plot_main="Bootstrap", xlab = "Lag", ylab= "Autocorrelation") {
   start.time <- Sys.time()
 
-  if ( (is(coco, "coco.fit")) & (is(coco, "coco.fit.c")) ) {
+  if (!((methods::is(coco, "coco.fit")) | (methods::is(coco, "coco.fit.c")))) {
     stop("The object coco must be from class coco.fit or coco.fit.c")
   }
 
@@ -37,7 +37,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
 
   conf.alpha <- 1 - confidence
   
-  if (class(coco) == "coco.fit") {
+  if ( (methods::is(coco, "coco.fit")) ) {
     if ((coco$type == "GP") & (coco$order == 2)) {
       par <- coco$par
       lambda <- par[1]
@@ -76,7 +76,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   }
 
 
-  if (class(coco) == "coco.fit.c") {
+  if ( (methods::is(coco, "coco.fit.c")) )  {
     if ((coco$type == "Poisson") & (coco$order == 1)) {
       par <- coco$par
       alpha <- par[1]
@@ -150,7 +150,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   ac <- matrix(NaN, nrow = nlags, ncol = nB)
   conf <- conf.alpha
 
-  if (class(coco) == "coco.fit") {
+  if ( (methods::is(coco, "coco.fit")) ) {
     for (b in 1:nB) {
       help <- cocoSim(order = coco$order, type = coco$type, par = par, length = (T + 10), seasonality = seasonality)$data[11:(T + 10)]
       B[, b] <- help
@@ -159,7 +159,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   }
 
 
-  if (class(coco) == "coco.fit.c") {
+  if (  (methods::is(coco, "coco.fit.c")) ) {
     xreg <- as.matrix(xreg)
     for (b in 1:nB) {
       help <- cocoSim(type = coco$type, order = coco$order, par = par, length = T, xreg = xreg, seasonality = seasonality)$data

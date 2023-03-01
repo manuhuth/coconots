@@ -16,7 +16,7 @@
 cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probability integral transform", plot_main = "PIT") {
   start.time <- Sys.time()
 
-  if ((class(coco) != "coco.fit") & (class(coco) != "coco.fit.c")) {
+  if (!((methods::is(coco, "coco.fit")) | (methods::is(coco, "coco.fit.c")))) {
     stop("The coco object must be from class coco.fit or coco.fit.c")
   }
 
@@ -29,7 +29,7 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probabili
   data <- coco$ts
   seasonality <- coco$seasonality
 
-  if (class(coco) == "coco.fit") {
+  if(methods::is(coco, "coco.fit")) {
     if ((coco$type == "GP") & (coco$order == 2)) {
       par <- coco$par
       lambda <- rep(par[1], length(data))
@@ -69,7 +69,7 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probabili
 
 
 
-  if (class(coco) == "coco.fit.c") {
+  if (methods::is(coco, "coco.fit.c")) {
     if ((coco$type == "Poisson") & (coco$order == 1)) {
       par <- coco$par
       alpha <- par[1]

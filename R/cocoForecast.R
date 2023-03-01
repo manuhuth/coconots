@@ -17,7 +17,7 @@
 cocoForecast <- function(coco, max=10, xcast=NULL, plot = TRUE, title = "Probability mass",
              xlab="x", ylab="Probabilities", width_bars = 0.04, seasonality=c(1,2), decimals = 4) {
 
-  if ((class(coco) != "coco.fit") & (class(coco) != "coco.fit.c")) {
+  if (!((methods::is(coco, "coco.fit")) | (methods::is(coco, "coco.fit.c")))) {
     stop("The coco object must be from class coco.fit or coco.fit.c")
   }
   
@@ -30,7 +30,7 @@ cocoForecast <- function(coco, max=10, xcast=NULL, plot = TRUE, title = "Probabi
   z <- data[length(data) - seasonality[2] + 1]
   parameter <-coco$par
   
-  if (class(coco) == "coco.fit.c") { 
+  if (methods::is(coco, "coco.fit.c")) { 
     number_covariates <- ncol(coco$cov) 
     betas <- parameter[(length(parameter)-number_covariates+1):length(parameter)]
     parameter <- utils::head(parameter, -number_covariates)

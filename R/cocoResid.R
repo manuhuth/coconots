@@ -12,7 +12,7 @@
 cocoResid <- function(coco, val.num = 1e-5) {
   start.time <- Sys.time()
 
-  if ((class(coco) != "coco.fit") & (class(coco) != "coco.fit.c")) {
+  if (!((methods::is(coco, "coco.fit")) | (methods::is(coco, "coco.fit.c")))) {
     stop("The coco object must be from class coco.fit or coco.fit.c")
   }
 
@@ -22,7 +22,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
 
   seasonality <- coco$seasonality
 
-  if (class(coco) == "coco.fit") {
+  if (methods::is(coco, "coco.fit")) {
     xreg <- NULL
     ### PAR1
     if ((coco$type == "Poisson") & (coco$order == 1)) {
@@ -184,7 +184,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
     )
   } # end no covariates
 
-  if (class(coco) == "coco.fit.c") {
+  if (methods::is(coco, "coco.fit.c")) {
     ### PAR1
     if ((coco$type == "Poisson") & (coco$order == 1)) {
       par <- coco$par

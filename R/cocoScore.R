@@ -14,7 +14,7 @@
 
 cocoScore <- function(coco, val.num = 1e-10) {
 
-  if ( (class(coco) != "coco.fit") & (class(coco) != "coco.fit.c")) {
+  if (!((methods::is(coco, "coco.fit")) | (methods::is(coco, "coco.fit.c")))){
     stop("The coco object must be from class coco.fit or coco.fit.c")
   }
 
@@ -23,7 +23,7 @@ cocoScore <- function(coco, val.num = 1e-10) {
   seas <- coco$seasonality
   data <- coco$ts
 
-if (class(coco) == "coco.fit") {
+if (methods::is(coco, "coco.fit")){
 
 
   #Poisson 1
@@ -210,7 +210,7 @@ if (class(coco) == "coco.fit") {
 
 
 ##covariates
-  if (class(coco) == "coco.fit.c") {
+  if (methods::is(coco, "coco.fit.c")){
     xreg <- cbind(rep(1,nrow(coco$cov)),coco$cov)
 
 
