@@ -1,3 +1,12 @@
+#' @title Compute the cumulative distribution function (CDF) of the random operator used in the GP2 model
+#' @description Computes the CDF of the GP2 convolution distribution with parameters lambda,alpha1, alpha2, alpha3 and eta, at a given value q, for a given value of y and z . 
+#' @param q The value at which to evaluate the CDF
+#' @param y non-negative integer 
+#' @param z non-negative integer 
+#' @param par A vector of 5 parameters: lambda, alpha1, alpha2, alpha3 and eta
+#' @return The CDF of the the GP2 convolution distribution at the given quantile
+#' @export
+
 pGP2 <- function(q, y, z, par) { # q is number we want to know the quantile of
 
   if ((round(y) != y) | (y < 0)) {

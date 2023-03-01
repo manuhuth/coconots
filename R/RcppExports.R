@@ -2,62 +2,62 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 fact <- function(i) {
-    .Call(`_coconots_fact`, i)
+    .Call('_coconots_fact', PACKAGE = 'coconots', i)
 }
 
 innerProduct <- function(x, y) {
-    .Call(`_coconots_innerProduct`, x, y)
+    .Call('_coconots_innerProduct', PACKAGE = 'coconots', x, y)
 }
 
 likelihoodGP2 <- function(sumlimit, lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data) {
-    .Call(`_coconots_likelihoodGP2`, sumlimit, lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data)
+    .Call('_coconots_likelihoodGP2', PACKAGE = 'coconots', sumlimit, lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data)
 }
 
 likelihoodGP1 <- function(sumlimit, lambda, alpha, eta, T, seas, data) {
-    .Call(`_coconots_likelihoodGP1`, sumlimit, lambda, alpha, eta, T, seas, data)
+    .Call('_coconots_likelihoodGP1', PACKAGE = 'coconots', sumlimit, lambda, alpha, eta, T, seas, data)
 }
 
 simGP2 <- function(sumlimit, lambda, alpha1, alpha2, alpha3, eta, T, N, seas1, seas2, data, uniform, innovations) {
-    .Call(`_coconots_simGP2`, sumlimit, lambda, alpha1, alpha2, alpha3, eta, T, N, seas1, seas2, data, uniform, innovations)
+    .Call('_coconots_simGP2', PACKAGE = 'coconots', sumlimit, lambda, alpha1, alpha2, alpha3, eta, T, N, seas1, seas2, data, uniform, innovations)
 }
 
 simGP1 <- function(sumlimit, lambda, alpha, eta, T, N, seas, data, uniform, innovations) {
-    .Call(`_coconots_simGP1`, sumlimit, lambda, alpha, eta, T, N, seas, data, uniform, innovations)
+    .Call('_coconots_simGP1', PACKAGE = 'coconots', sumlimit, lambda, alpha, eta, T, N, seas, data, uniform, innovations)
 }
 
 dGP2h <- function(x, y, z, lambda, alpha1, alpha2, alpha3, eta) {
-    .Call(`_coconots_dGP2h`, x, y, z, lambda, alpha1, alpha2, alpha3, eta)
+    .Call('_coconots_dGP2h', PACKAGE = 'coconots', x, y, z, lambda, alpha1, alpha2, alpha3, eta)
 }
 
 dGP1h <- function(x, y, lambda, alpha, eta) {
-    .Call(`_coconots_dGP1h`, x, y, lambda, alpha, eta)
+    .Call('_coconots_dGP1h', PACKAGE = 'coconots', x, y, lambda, alpha, eta)
 }
 
 dR2 <- function(r, y, z, lambda, alpha1, alpha2, alpha3, eta) {
-    .Call(`_coconots_dR2`, r, y, z, lambda, alpha1, alpha2, alpha3, eta)
+    .Call('_coconots_dR2', PACKAGE = 'coconots', r, y, z, lambda, alpha1, alpha2, alpha3, eta)
 }
 
 Pyz <- function(y, z, lambda, alpha1, alpha2, alpha3, eta) {
-    .Call(`_coconots_Pyz`, y, z, lambda, alpha1, alpha2, alpha3, eta)
+    .Call('_coconots_Pyz', PACKAGE = 'coconots', y, z, lambda, alpha1, alpha2, alpha3, eta)
 }
 
 simGP2cov <- function(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations) {
-    .Call(`_coconots_simGP2cov`, sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations)
+    .Call('_coconots_simGP2cov', PACKAGE = 'coconots', sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations)
 }
 
 simGP1cov <- function(sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations) {
-    .Call(`_coconots_simGP1cov`, sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations)
+    .Call('_coconots_simGP1cov', PACKAGE = 'coconots', sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations)
 }
 
 likelihoodGP2cov <- function(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg) {
-    .Call(`_coconots_likelihoodGP2cov`, sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg)
+    .Call('_coconots_likelihoodGP2cov', PACKAGE = 'coconots', sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg)
 }
 
 likelihoodGP1cov <- function(sumlimit, alpha, eta, lambdas, T, seas, data, xreg) {
-    .Call(`_coconots_likelihoodGP1cov`, sumlimit, alpha, eta, lambdas, T, seas, data, xreg)
+    .Call('_coconots_likelihoodGP1cov', PACKAGE = 'coconots', sumlimit, alpha, eta, lambdas, T, seas, data, xreg)
 }
 
 likelihoodGP2cov_repara <- function(sumlimit, z1, z2, z3, eta, lambdas, T, seas1, seas2, data, xreg) {
-    .Call(`_coconots_likelihoodGP2cov_repara`, sumlimit, z1, z2, z3, eta, lambdas, T, seas1, seas2, data, xreg)
+    .Call('_coconots_likelihoodGP2cov_repara', PACKAGE = 'coconots', sumlimit, z1, z2, z3, eta, lambdas, T, seas1, seas2, data, xreg)
 }
 

@@ -1,3 +1,13 @@
+#' @title Compute the probability density function (PDF) of the GP2 convolution.
+#' @description Computes the PDF of the GP2 convolution. with parameters lambda,alpha1, alpha2, alpha3 and eta, at a given value x, for a given value of y and z . 
+#' @param x The value at which to evaluate the PDF
+#' @param y non-negative integer 
+#' @param z non-negative integer 
+#' @param par A vector of 5 parameters: lambda, alpha1, alpha2, alpha3 and eta
+#' @return The PDF of the the GP2 convolution distribution at the given value
+#' @export
+
+
 dGP2 <- function(x, y, z, par) {
   if ((round(y) != y) | (y < 0)) {
     stop("y must be a non-negative integer")

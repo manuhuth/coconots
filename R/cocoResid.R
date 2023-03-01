@@ -1,3 +1,14 @@
+#' @title cocoResid
+#' @description The function calculates the residuals of a coco model object.
+#' @param coco An object of class "coco.fit" or "coco.fit.c"
+#' @param val.num A non-negative real number which is used to stop the calculation of
+#' @author Manuel Huth
+#' @return A list with the elements:
+#' 
+#'   - fitted: a vector of the fitted values
+#'   
+#'   - varX: a vector of the conditional variances of the residuals
+#' @export
 cocoResid <- function(coco, val.num = 1e-5) {
   start.time <- Sys.time()
 

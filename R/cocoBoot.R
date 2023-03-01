@@ -1,3 +1,17 @@
+#' @title Bootstrap Confidence Intervals for Autocorrelations of a COCO Model
+#' @description Computes bootstrap confidence intervals for the autocorrelations of a COCO model. The function can handle both Poisson and GP models, with order 1 or 2. The function also has options for the number of lags, the number of bootstrap replicates, the confidence level, and the labels for the plot.
+#' @param coco An object of class coco.fit or coco.fit.c
+#' @param numb.lags Number of lags for which to compute autocorrelations
+#' @param rep.Bootstrap Number of bootstrap replicates to use
+#' @param confidence Confidence level for the intervals
+#' @param plot_main Plot title
+#' @param xlab X-axis label for the plot
+#' @param ylab Y-axis label for the plot
+#' @return A plot of the autocorrelations with bootstrap confidence intervals
+#' @references 
+#' Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
+#' @export
+
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
                  confidence = 0.95, plot_main="Bootstrap", xlab = "Lag", ylab= "Autocorrelation") {
   start.time <- Sys.time()

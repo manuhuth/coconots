@@ -1,8 +1,19 @@
-cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2), init = NULL) {
-  
+#' @title Simulation of time series data 
+#' @description 
+#' The cocoSim_base function generates a time series of a specified innovation distribution, size, order, and parameters. It also allows for the option of specifying the seasonality range and an initial set of data. 
+#' The function checks for valid input of the type, order, parameters, seasonality, and initial data before generating the time series.
+#' @param type character, either "Poisson" or "GP" indicating the type of the innovation distribution
+#' @param order integer, either 1 or 2 indicating the order of the model
+#' @param par numeric vector, the parameters of the model, the number of elements in the vector depends on the type and order specified
+#' @param size integer, the number of observations in the generated time series
+#' @param size data frame, control variables
+#' @param seasonality integer vector, the range of seasonality, default is c(1,2)
+#' @param init numeric vector, initial data to use, default is NULL
+#' @return list containing 'time' and 'data' which are the computation time and generated time series respectively
+#' @author Manuel Huth
+#' @export
 
-  
-  
+cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2), init = NULL) {
   if (is.null(xreg)) {
     if (order == 2){
       

@@ -1,3 +1,17 @@
+#' @title cocoScore
+#' @description The function calculates the log, quadratic and ranked probability scores for a coco model object.
+#' @param coco An object of class "coco.fit" or "coco.fit.c"
+#' @param val.num A non-negative real number which is used to stop the calculation of the score in case of GP models. The default value is 1e-10
+#' @return A list containing the log score, quadratic score and ranked probability score.
+#' @references 
+#' Czado, C. and Gneitling, T. and Held, L. (2009) Predictive Model Assessment for Count Data. \emph{Biometrics}, \bold{65}, 4, 1254--1261.
+#'
+#' Jung, R. C. and McCabe, B. P. and Tremayne, A. R. (2016) Model validation and diagnostics. \emph{Handbook of discrete-valued time series}, 189--218.
+#'
+#' Jung, R. C. and Tremayne, A. R. (2010) Convolution-closed models for count timeseries with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
+#' @author Manuel Huth
+#' @export
+
 cocoScore <- function(coco, val.num = 1e-10) {
 
   if ( (class(coco) != "coco.fit") & (class(coco) != "coco.fit.c")) {
@@ -354,7 +368,7 @@ if (class(coco) == "coco.fit") {
       for (t in (seas[2]+1):T) {
         #log score
         par <- c(lambdas[t], coco$par[1], coco$par[2], coco$par[3], coco$par[4])
-        log.score <- log.score -log(dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par))
+        log.score <- log.score - log(dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par))
 
         #quadratic score
         norm.p <- 0

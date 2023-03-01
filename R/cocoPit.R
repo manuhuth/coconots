@@ -1,3 +1,18 @@
+#' @title Probability integral transform plot for coco
+#' @description Plots the probability integral transform (PIT) for a given coco object. 
+#' @param coco An object of class coco.fit or coco.fit.c
+#' @param J Number of bins for the histogram (default: 10)
+#' @param ylab Label for the y-axis (default: "Relative frequency")
+#' @param xlab Label for the x-axis (default: "Probability integral transform")
+#' @param plot_main Title for the plot (default: "PIT")
+#' @return A plot of the probability integral transform for the coco object.
+#' @references 
+#' Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.
+#' 
+#' Jung, R. C. and Tremayne, A. R. (2010) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
+#' @author Manuel Huth
+#' @export
+
 cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probability integral transform", plot_main = "PIT") {
   start.time <- Sys.time()
 

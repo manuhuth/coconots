@@ -12,6 +12,6 @@ License: GPL (>= 2)
 Imports: Rcpp (>= 1.0.4), MASS, forecast, numDeriv, HMMpa, stats, ggplot2
 LazyData: true
 LinkingTo: Rcpp, StanHeaders (>= 2.21.0), RcppParallel (>= 5.0.1)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Depends: 
     R (>= 2.10)

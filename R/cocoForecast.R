@@ -1,3 +1,19 @@
+#' @title Forecast for COCO models
+#' @description Computes forecast for a COCO model. The function can handle both Poisson and GP models, with order 1 or 2. The function also has options for the maximum number of forecast steps, covariates for forecasting, the plot, plot title, axis labels, width of bars, seasonality, and decimal precision.
+#' @param coco An object of class coco.fit or coco.fit.c
+#' @param max The maximum number of forecast steps
+#' @param xcast A vector of covariate values for forecasting (only required for coco.fit.c class)
+#' @param plot A logical value indicating whether to plot the forecast
+#' @param title Plot title
+#' @param xlab X-axis label for the plot
+#' @param ylab Y-axis label for the plot
+#' @param width_bars Width of bars in the plot
+#' @param seasonality A vector of two integers indicating the seasonalities of the time series
+#' @param decimals Number of decimal places for the forecast probabilities
+#' @return A list containing the plot, density, mode, and median of the forecast
+#' @export
+
+
 cocoForecast <- function(coco, max=10, xcast=NULL, plot = TRUE, title = "Probability mass",
              xlab="x", ylab="Probabilities", width_bars = 0.04, seasonality=c(1,2), decimals = 4) {
 
