@@ -64,7 +64,7 @@ cocoForecast <- function(coco, max=10, xcast=NULL, plot = TRUE, title = "Probabi
   
   if (isTRUE(plot)) {
   plot <- ggplot2::ggplot(mapping = ggplot2::aes(x = x, y = densities)) + ggplot2::geom_bar(stat="identity", position="dodge", width=width_bars) + 
-    ggplot2::labs(title = title, x = xlab, y = ylab) + ggplot2::scale_x_continuous(breaks=x)
+    ggplot2::labs(title = title, x = xlab, y = ylab) + ggplot2::scale_x_continuous(breaks=x) + theme_bw() + theme(text = element_text(size = 20)) 
   }
   
   mode <- match(max(densities), densities) - 1
