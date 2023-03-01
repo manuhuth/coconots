@@ -9,7 +9,7 @@
   We provide R functions to conduct Likelihood-based methods for model fitting, assessment and prediction analysis of some convolution-closed count time series model. The marginal distribution can be Poisson or Generalized Poisson. Regression effects can be modelled via time varying innovation rates.
 }
 \details{
-The package allows simulation of convolution-closed count time series models with the \code{\link{cocoSim}} function. Model fitting is performed with the \code{\link{cocoReg}} routine. By passing a cocoReg-type object, \code{\link{cocoForecast}} computes the probability mass of the one-step ahead forecast. \code{\link{cocoBoot}}, \code{\link{cocoPIT}}, \code{\link{cocoScore}}, and \code{\link{cocoResid}} provide routines for model assessment. 
+The package allows simulation of convolution-closed count time series models with the \code{\link{cocoSim}} function. Model fitting is performed with the \code{\link{cocoReg}} routine. By passing a cocoReg-type object, \code{\link{cocoForecast}} computes the probability mass of the one-step ahead forecast. \code{\link{cocoBoot}}, \code{\link{cocoPit}}, \code{\link{cocoScore}}, and \code{\link{cocoResid}} provide routines for model assessment. 
 
 
 The main usage of the package is illustrated within the \code{\link{cocoReg}} function chapter. For more details and examples of the functions see the respective sections within this vignette. 

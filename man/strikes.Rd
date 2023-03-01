@@ -1,7 +1,7 @@
-\name{strikese}
+\name{strikes}
 \alias{strikes}
 \title{
-  Strike  Time Series
+  Strike Time Series
 }
 \description{
   Add description (one sentence). 

@@ -5,8 +5,8 @@
 #' @param type character, either "Poisson" or "GP" indicating the type of the innovation distribution
 #' @param order integer, either 1 or 2 indicating the order of the model
 #' @param par numeric vector, the parameters of the model, the number of elements in the vector depends on the type and order specified
-#' @param size integer, the number of observations in the generated time series
-#' @param size data frame, control variables
+#' @param length integer, the number of observations in the generated time series
+#' @param xreg data.frame, data frame of control variables
 #' @param seasonality integer vector, the range of seasonality, default is c(1,2)
 #' @param init numeric vector, initial data to use, default is NULL
 #' @return list containing 'time' and 'data' which are the computation time and generated time series respectively

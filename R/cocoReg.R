@@ -44,20 +44,20 @@
 #' Joe, H. (1996) Time series models with univariate margins in the convolution-closed infinitely divisible class. \emph{Journal of Applied Probability}, 664--677.
 #' @examples
 #' ## GP2 model without covariates
-#' size <- 1000
+#' length <- 1000
 #' par <- c(0.5,0.2,0.05,0.3,0.3)
-#' data.sim <- cocoSim(order = 2, type = "GP", par = par, size = size)
+#' data.sim <- cocoSim(order = 2, type = "GP", par = par, length = length)
 #' data <- data.sim$data
 #' fit <- cocoReg(order = 2, type = "GP", data = data)
 #' 
 #' ##Poisson1 model with covariates
-#' size <- 1000
+#' length <- 1000
 #' period <- 50
 #' sin <- sin(2*pi/period*(1:size))
 #' cos <- cos(2*pi/period*(1:size))
 #' cov <- cbind(sin, cos)
 #' par <- c(0.2, 0.1, 0.2, -0.2)
-#' data.sim <- cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, size = size)
+#' data.sim <- cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, length = length)
 #' data <- data.sim$data
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
 #' @export
@@ -66,7 +66,7 @@ cocoReg <- function(type, order, data, xreg = NULL, seasonality = c(1, 2),
                     constrained.optim = TRUE, b.beta = -10,
                     start = NULL, start.val.adjust = TRUE, method_optim = "Nelder-Mead",
                     replace.start.val = 1e-5, iteration.start.val = 0.99,
-                    method.hessian = "Richardson", cores=2, ...) {
+                    method.hessian = "Richardson", cores=2) {
   
   if (is.null(xreg)) {
     
@@ -74,15 +74,14 @@ cocoReg <- function(type, order, data, xreg = NULL, seasonality = c(1, 2),
       type = type, order = order, data = data, seasonality = seasonality, 
       constrained.optim = constrained.optim, start = start,
       start.val.adjust = start.val.adjust, replace.start.val = replace.start.val, method_optim=method_optim,
-      iteration.start.val = iteration.start.val, method.hessian = method.hessian, ...
+      iteration.start.val = iteration.start.val, method.hessian = method.hessian
     )
   } else {
     output <- cocoReg_cov(
       type = type, order = order, data = data, xreg = xreg, seasonality = seasonality,
       constrained.optim = constrained.optim, b.beta = -10, start = start, method_optim=method_optim,
       start.val.adjust = start.val.adjust, replace.start.val = replace.start.val,
-      iteration.start.val = iteration.start.val, method.hessian = method.hessian, 
-      ...
+      iteration.start.val = iteration.start.val, method.hessian = method.hessian
     )
   }
 
