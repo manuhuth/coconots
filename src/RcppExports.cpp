@@ -265,27 +265,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// likelihoodGP2cov_repara
-double likelihoodGP2cov_repara(double sumlimit, double z1, double z2, double z3, double eta, NumericVector lambdas, int T, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg);
-RcppExport SEXP _coconots_likelihoodGP2cov_repara(SEXP sumlimitSEXP, SEXP z1SEXP, SEXP z2SEXP, SEXP z3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type sumlimit(sumlimitSEXP);
-    Rcpp::traits::input_parameter< double >::type z1(z1SEXP);
-    Rcpp::traits::input_parameter< double >::type z2(z2SEXP);
-    Rcpp::traits::input_parameter< double >::type z3(z3SEXP);
-    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type lambdas(lambdasSEXP);
-    Rcpp::traits::input_parameter< int >::type T(TSEXP);
-    Rcpp::traits::input_parameter< int >::type seas1(seas1SEXP);
-    Rcpp::traits::input_parameter< int >::type seas2(seas2SEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
-    rcpp_result_gen = Rcpp::wrap(likelihoodGP2cov_repara(sumlimit, z1, z2, z3, eta, lambdas, T, seas1, seas2, data, xreg));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_coconots_fact", (DL_FUNC) &_coconots_fact, 1},
@@ -302,7 +281,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coconots_simGP1cov", (DL_FUNC) &_coconots_simGP1cov, 11},
     {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 11},
     {"_coconots_likelihoodGP1cov", (DL_FUNC) &_coconots_likelihoodGP1cov, 8},
-    {"_coconots_likelihoodGP2cov_repara", (DL_FUNC) &_coconots_likelihoodGP2cov_repara, 11},
     {NULL, NULL, 0}
 };
 

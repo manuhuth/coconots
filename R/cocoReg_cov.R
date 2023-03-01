@@ -157,7 +157,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of lower bounds must equal", 1 + ncol(xreg), "for the Poisson 1 model with", ncol(xreg), "covariates"))
         }
 
-        if (length(unconstrained.optim.upper) != 1 + ncol(xreg) & (unconstrained.optim.lower != Inf)) {
+        if (length(unconstrained.optim.upper) != 1 + ncol(xreg) & (unconstrained.optim.upper != Inf)) {
           stop(paste("Number of upper bounds must equal", 1 + ncol(xreg), "for the Poisson 1 model with", ncol(xreg), "covariates"))
         }
 
@@ -313,7 +313,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of lower bounds must equal", 2 + ncol(xreg), "for the GP 1 model with", ncol(xreg), "covariates"))
         }
 
-        if (length(unconstrained.optim.upper) != 2 + ncol(xreg) & (unconstrained.optim.lower != Inf)) {
+        if (length(unconstrained.optim.upper) != 2 + ncol(xreg) & (unconstrained.optim.upper != Inf)) {
           stop(paste("Number of upper bounds must equal", 2 + ncol(xreg), "for the GP 1 model with", ncol(xreg), "covariates"))
         }
 
@@ -512,7 +512,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of lower bounds must equal", 4 + ncol(xreg), "for the Poisson 2 model with", ncol(xreg), "covariates"))
         }
 
-        if (length(unconstrained.optim.upper) != 3 + ncol(xreg) & (unconstrained.optim.lower != Inf)) {
+        if (length(unconstrained.optim.upper) != 3 + ncol(xreg) & (unconstrained.optim.upper != Inf)) {
           stop(paste("Number of upper bounds must equal", 3 + ncol(xreg), "for the Poisson 2 model with", ncol(xreg), "covariates"))
         }
 
@@ -749,7 +749,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of lower bounds must equal", 4 + ncol(xreg), "for the GP 2 model with", ncol(xreg), "covariates"))
         }
 
-        if (length(unconstrained.optim.upper) != 4 + ncol(xreg) & (unconstrained.optim.lower != Inf)) {
+        if (length(unconstrained.optim.upper) != 4 + ncol(xreg) & (unconstrained.optim.upper != Inf)) {
           stop(paste("Number of upper bounds must equal", 4 + ncol(xreg), "for the GP 2 model with", ncol(xreg), "covariates"))
         }
 

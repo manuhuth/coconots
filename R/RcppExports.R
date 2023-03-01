@@ -57,7 +57,3 @@ likelihoodGP1cov <- function(sumlimit, alpha, eta, lambdas, T, seas, data, xreg)
     .Call(`_coconots_likelihoodGP1cov`, sumlimit, alpha, eta, lambdas, T, seas, data, xreg)
 }
 
-likelihoodGP2cov_repara <- function(sumlimit, z1, z2, z3, eta, lambdas, T, seas1, seas2, data, xreg) {
-    .Call(`_coconots_likelihoodGP2cov_repara`, sumlimit, z1, z2, z3, eta, lambdas, T, seas1, seas2, data, xreg)
-}
-
