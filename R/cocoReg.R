@@ -53,8 +53,8 @@
 #' ##Poisson1 model with covariates
 #' length <- 1000
 #' period <- 50
-#' sin <- sin(2*pi/period*(1:size))
-#' cos <- cos(2*pi/period*(1:size))
+#' sin <- sin(2*pi/period*(1:length))
+#' cos <- cos(2*pi/period*(1:length))
 #' cov <- cbind(sin, cos)
 #' par <- c(0.2, 0.1, 0.2, -0.2)
 #' data.sim <- cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, length = length)

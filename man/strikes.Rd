@@ -6,9 +6,6 @@
 \description{
   Add description (one sentence). 
 }
-\usage{
-  strike
-}
 
 \format{
   A data frame with the strike counts.
