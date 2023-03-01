@@ -131,10 +131,10 @@ test_that("GP2Works_cov", {
   cov <- cbind(sin, cos)
   par <- c(0.2, 0.05, 0.3, 0.2, 0.2, -0.2)
   set.seed(123456798)
-  data.sim <- cocoSim(order = 2, type = "Poisson", par = par,
+  data.sim <- cocoSim(order = 2, type = "GP", par = par,
                       xreg = cov, length = length)
   data <- data.sim$data
-  fit <- cocoReg(order = 2, type = "Poisson", data = data, xreg = cov)
+  fit <- cocoReg(order = 2, type = "GP", data = data, xreg = cov)
   cocoPit(fit)
   cocoResid(fit)
   cocoSummary(fit)
