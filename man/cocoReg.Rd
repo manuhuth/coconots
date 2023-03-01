@@ -18,8 +18,7 @@ cocoReg(
   replace.start.val = 1e-05,
   iteration.start.val = 0.99,
   method.hessian = "Richardson",
-  cores = 2,
-  ...
+  cores = 2
 )
 }
 \arguments{
@@ -80,20 +79,20 @@ Standard errors are computed by the square root of the diagonal elements of the 
 }
 \examples{
 ## GP2 model without covariates
-size <- 1000
+length <- 1000
 par <- c(0.5,0.2,0.05,0.3,0.3)
-data.sim <- cocoSim(order = 2, type = "GP", par = par, size = size)
+data.sim <- cocoSim(order = 2, type = "GP", par = par, length = length)
 data <- data.sim$data
 fit <- cocoReg(order = 2, type = "GP", data = data)
 
 ##Poisson1 model with covariates
-size <- 1000
+length <- 1000
 period <- 50
 sin <- sin(2*pi/period*(1:size))
 cos <- cos(2*pi/period*(1:size))
 cov <- cbind(sin, cos)
 par <- c(0.2, 0.1, 0.2, -0.2)
-data.sim <- cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, size = size)
+data.sim <- cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, length = length)
 data <- data.sim$data
 fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
 }

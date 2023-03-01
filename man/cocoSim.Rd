@@ -21,11 +21,13 @@ cocoSim(
 
 \item{par}{numeric vector, the parameters of the model, the number of elements in the vector depends on the type and order specified}
 
+\item{length}{integer, the number of observations in the generated time series}
+
+\item{xreg}{data.frame, data frame of control variables}
+
 \item{seasonality}{integer vector, the range of seasonality, default is c(1,2)}
 
 \item{init}{numeric vector, initial data to use, default is NULL}
-
-\item{size}{data frame, control variables}
 }
 \value{
 list containing 'time' and 'data' which are the computation time and generated time series respectively
