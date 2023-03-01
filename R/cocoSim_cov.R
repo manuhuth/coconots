@@ -72,7 +72,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     data <- c()
     for (t in 1:seasonality[1]) {
       lambda_start1 <- exp(as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
-      data[t] <- rpois(n = 1, lambda_start1)
+      data[t] <- stats::rpois(n = 1, lambda_start1)
     }
 
     if (length(init) > 0) {
@@ -86,9 +86,9 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     innovations <- c()
     for (index in 1:T) {
       lambda <- lambdas[index]
-      innovations[index] <- rpois(n = 1, lambda)
+      innovations[index] <- stats::rpois(n = 1, lambda)
     }
-    uniform <- runif(n = T, 0, 1)
+    uniform <- stats::runif(n = T, 0, 1)
 
     data <- simGP1cov(20, alpha, eta, vec_lambda, T, N, seasonality[1], data, xreg, uniform, innovations)
 
@@ -134,7 +134,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       lambda <- lambdas[index]
       innovations[index] <- rgenpois(n = 1, lambda, eta)
     }
-    uniform <- runif(n = T, 0, 1)
+    uniform <- stats::runif(n = T, 0, 1)
 
     data <- simGP1cov(20, alpha, eta, vec_lambda, T, N, seasonality[1], data, xreg, uniform, innovations)
 
@@ -166,7 +166,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     data <- c()
     for (t in 1:seasonality[2]) {
       lambda_start1 <- exp( as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
-      data[t] <- rpois(n = 1, lambda_start1)
+      data[t] <- stats::rpois(n = 1, lambda_start1)
     }
 
     if (length(init) > 0) {
@@ -180,9 +180,9 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     innovations <- c()
     for (index in 1:T) {
       lambda <- lambdas[index]
-      innovations[index] <- rpois(n = 1, lambda)
+      innovations[index] <- stats::rpois(n = 1, lambda)
     }
-    uniform <- runif(n = T, 0, 1)
+    uniform <- stats::runif(n = T, 0, 1)
 
     data <- simGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, N, seasonality[1], seasonality[2], data, xreg, uniform, innovations)
 
@@ -231,7 +231,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       lambda <- lambdas[index]
       innovations[index] <- rgenpois(n = 1, lambda, eta)
     }
-    uniform <- runif(n = T, 0, 1)
+    uniform <- stats::runif(n = T, 0, 1)
 
     data <- simGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, N, seasonality[1], seasonality[2], data, xreg, uniform, innovations)
 

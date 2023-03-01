@@ -33,7 +33,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
 
       # Fitted Values
       fitted <- c(rep(mean(data), seasonality[1])) 
-      varX <- c(rep(var(data), seasonality[1])) 
+      varX <- c(rep(stats::var(data), seasonality[1])) 
       for (j in (seasonality[1] + 1):(length(data) + 1)) {
         fitted[j] <- alpha * data[j - seasonality[1]] + lambda
         varX[j] <- alpha * (1 - alpha) * data[j - seasonality[1]] + lambda
@@ -51,7 +51,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
 
       # Fitted Values
       fitted <- c(rep(mean(data), seasonality[1])) 
-      varX <- c(rep(var(data), seasonality[1])) 
+      varX <- c(rep(stats::var(data), seasonality[1])) 
       for (j in (seasonality[1] + 1):(length(data) + 1)) {
         fitted[j] <- alpha * data[j - seasonality[1]] + lambda / (1 - eta)
         # compute conditional variance
@@ -83,7 +83,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
 
       # Fitted Values
       fitted <- c(rep(mean(data), seasonality[2])) 
-      varX <- c(rep(var(data), seasonality[2])) 
+      varX <- c(rep(stats::var(data), seasonality[2])) 
       
       for (j in (seasonality[2] + 1):(length(data) + 1)) {
         y <- data[j - seasonality[1]]
@@ -128,7 +128,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
 
       # Fitted Values
       fitted <- c(rep(mean(data), seasonality[2])) 
-      varX <- c(rep(var(data), seasonality[2])) 
+      varX <- c(rep(stats::var(data), seasonality[2])) 
 
       for (j in (seasonality[2] + 1):(length(data) + 1)) {
         y <- data[j - seasonality[1]]
@@ -202,7 +202,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
 
       # Fitted Values
       fitted <- c(rep(mean(data), seasonality[1])) 
-      varX <- c(rep(var(data), seasonality[1])) 
+      varX <- c(rep(stats::var(data), seasonality[1])) 
       for (j in (seasonality[1] + 1):(length(data))) {
         fitted[j] <- alpha * data[j - seasonality[1]] + lambda[j]
         varX[j] <- alpha * (1 - alpha) * data[j - seasonality[1]] + lambda[j]
@@ -227,7 +227,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
 
       # Fitted Values
       fitted <- c(mean(data)) 
-      varX <- c(var(data)) 
+      varX <- c(stats::var(data)) 
       for (j in (seasonality[1] + 1):(length(data))) {
         fitted[j] <- alpha * data[j - seasonality[1]] + lambda[j] / (1 - eta)
         # compute conditional variance
@@ -267,7 +267,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
 
       # Fitted Values
       fitted <- c(rep(mean(data), seasonality[2])) 
-      varX <- c(rep(var(data), seasonality[2]))
+      varX <- c(rep(stats::var(data), seasonality[2]))
       
       for (j in (seasonality[2] + 1):(length(data))) {
         y <- data[j - seasonality[1]]
@@ -321,7 +321,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
 
       # Fitted Values
       fitted <- c(rep(mean(data), seasonality[2])) 
-      varX <- c(rep(var(data), seasonality[2])) 
+      varX <- c(rep(stats::var(data), seasonality[2])) 
 
       for (j in (seasonality[2] + 1):(length(data))) {
         y <- data[j - seasonality[1]]

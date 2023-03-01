@@ -97,7 +97,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
 
       ## starting values
       if (length(start) == 0) {
-        acf <- Acf(data, plot = FALSE, lag.max = lag.max)
+        acf <- forecast::Acf(data, plot = FALSE, lag.max = lag.max)
         alpha_s <- acf$acf[seasonality[1] + 1]
         if (start.val.adjust == TRUE) {
           if (alpha_s < 0) {
@@ -161,7 +161,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of upper bounds must equal", 1 + ncol(xreg), "for the Poisson 1 model with", ncol(xreg), "covariates"))
         }
 
-        fit <- optim(
+        fit <- stats::optim
           par = sta, fn = mlf, gr = NULL, method = c("Nelder-Mead"), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           control = optim_control, hessian = FALSE
@@ -244,7 +244,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
 
       ## starting values
       if (length(start) == 0) {
-        acf <- Acf(data, plot = FALSE, lag.max = lag.max)
+        acf <- forecast::Acf(data, plot = FALSE, lag.max = lag.max)
         alpha_s <- acf$acf[seasonality[1] + 1]
         if (start.val.adjust == TRUE) {
           if (alpha_s < 0) {
@@ -317,7 +317,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of upper bounds must equal", 2 + ncol(xreg), "for the GP 1 model with", ncol(xreg), "covariates"))
         }
 
-        fit <- optim(
+        fit <- stats::optim
           par = sta, fn = mlf, gr = NULL, method = c("Nelder-Mead"), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           control = optim_control, hessian = FALSE
@@ -409,7 +409,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
 
       ## starting values
       if (length(start) == 0) {
-        acf <- Acf(data, plot = FALSE, lag.max = lag.max)
+        acf <- forecast::Acf(data, plot = FALSE, lag.max = lag.max)
         p1 <- acf$acf[seasonality[1] + 1]
         p2 <- acf$acf[seasonality[2] + 1]
 
@@ -516,7 +516,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of upper bounds must equal", 3 + ncol(xreg), "for the Poisson 2 model with", ncol(xreg), "covariates"))
         }
 
-        fit <- optim(
+        fit <- stats::optim
           par = sta, fn = mlf, gr = NULL, method = c("Nelder-Mead"), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           control = optim_control, hessian = FALSE
@@ -617,7 +617,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
 
       ## starting values
       if (length(start) == 0) {
-        acf <- Acf(data, plot = FALSE, lag.max = lag.max)
+        acf <- forecast::Acf(data, plot = FALSE, lag.max = lag.max)
         p1 <- acf$acf[[seasonality[1] + 1]]
         p2 <- acf$acf[[seasonality[2] + 1]]
 
@@ -753,7 +753,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of upper bounds must equal", 4 + ncol(xreg), "for the GP 2 model with", ncol(xreg), "covariates"))
         }
 
-        fit <- optim(
+        fit <- stats::optim
           par = sta, fn = mlf, gr = NULL, method = c("Nelder-Mead"), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           control = optim_control, hessian = FALSE

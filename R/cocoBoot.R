@@ -16,7 +16,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
                  confidence = 0.95, plot_main="Bootstrap", xlab = "Lag", ylab= "Autocorrelation") {
   start.time <- Sys.time()
 
-  if ((class(coco) != "coco.fit") & (class(coco) != "coco.fit.c")) {
+  if ( (is(coco, "coco.fit")) & (is(coco, "coco.fit.c")) ) {
     stop("The object coco must be from class coco.fit or coco.fit.c")
   }
 
@@ -174,8 +174,8 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   confidence <- matrix(NaN, nrow = nlags, ncol = 2)
   colnames(confidence) <- c("lower", "upper")
   for (j in 1:nlags) {
-    upper <- qnorm(1 - conf / 2, means[j], var[j]^0.5)
-    lower <- qnorm(conf / 2, means[j], var[j]^0.5)
+    upper <- stats::qnorm(1 - conf / 2, means[j], var[j]^0.5)
+    lower <- stats::qnorm(conf / 2, means[j], var[j]^0.5)
     confidence[j, ] <- c(lower, upper)
   }
   acfdata <- forecast::Acf(data, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
@@ -190,9 +190,9 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   }
 
   plot(acfdata, ylab = ylab, xlab = xlab, ylim = c(min, max), main = plot_main)
-  points(confidence[, 1], pch = 3, col = c("red"))
-  points(confidence[, 2], pch = 3, col = c("red"))
-  q <- recordPlot()
+  graphics::points(confidence[, 1], pch = 3, col = c("red"))
+  graphics::points(confidence[, 2], pch = 3, col = c("red"))
+  q <- grDevices::recordPlot()
 
   end.time <- Sys.time()
   time <- end.time - start.time

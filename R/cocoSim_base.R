@@ -68,7 +68,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     psi <- eta * (1 - alpha) / lambda
 
     
-    data <- rpois(n = seasonality[1], lambda)
+    data <- stats::rpois(n = seasonality[1], lambda)
     if (length(init) > 0) {
       data <- init
     } else{
@@ -78,8 +78,8 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
 
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
-    innovations <- rpois(n = T, lambda)
-    uniform <- runif(n = T, 0, 1)
+    innovations <- stats::rpois(n = T, lambda)
+    uniform <- stats::runif(n = T, 0, 1)
 
     data <- simGP1(20, lambda, alpha, eta, T, N, seasonality[1], data, uniform, innovations)
 
@@ -109,7 +109,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
     innovations <- rgenpois(n = T, lambda, eta)
-    uniform <- runif(n = T, 0, 1)
+    uniform <- stats::runif(n = T, 0, 1)
 
     data <- simGP1(20, lambda, alpha, eta, T, N, seasonality[1], data, uniform, innovations)
 
@@ -130,7 +130,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     alpha3 <- par[4]
     eta <- 0
 
-    data <- rpois(n = seasonality[2], lambda)
+    data <- stats::rpois(n = seasonality[2], lambda)
 
     if (length(init) > 0) {
       data <- init
@@ -138,8 +138,8 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
 
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
-    innovations <- rpois(n = T, lambda)
-    uniform <- runif(n = T, 0, 1)
+    innovations <- stats::rpois(n = T, lambda)
+    uniform <- stats::runif(n = T, 0, 1)
     data <- simGP2(
       20, lambda, alpha1, alpha2, alpha3, eta, T, N, seasonality[1],
       seasonality[2], data, uniform, innovations
@@ -172,7 +172,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
     innovations <- rgenpois(n = T, lambda, eta)
-    uniform <- runif(n = T, 0, 1)
+    uniform <- stats::runif(n = T, 0, 1)
     data <- simGP2(
       20, lambda, alpha1, alpha2, alpha3, eta, T, N, seasonality[1],
       seasonality[2], data, uniform, innovations
