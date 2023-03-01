@@ -161,7 +161,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of upper bounds must equal", 1 + ncol(xreg), "for the Poisson 1 model with", ncol(xreg), "covariates"))
         }
 
-        fit <- stats::optim
+        fit <- stats::optim(
           par = sta, fn = mlf, gr = NULL, method = c("Nelder-Mead"), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           control = optim_control, hessian = FALSE
@@ -317,7 +317,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of upper bounds must equal", 2 + ncol(xreg), "for the GP 1 model with", ncol(xreg), "covariates"))
         }
 
-        fit <- stats::optim
+        fit <- stats::optim(
           par = sta, fn = mlf, gr = NULL, method = c("Nelder-Mead"), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           control = optim_control, hessian = FALSE
@@ -516,7 +516,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of upper bounds must equal", 3 + ncol(xreg), "for the Poisson 2 model with", ncol(xreg), "covariates"))
         }
 
-        fit <- stats::optim
+        fit <- stats::optim(
           par = sta, fn = mlf, gr = NULL, method = c("Nelder-Mead"), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           control = optim_control, hessian = FALSE
@@ -753,7 +753,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           stop(paste("Number of upper bounds must equal", 4 + ncol(xreg), "for the GP 2 model with", ncol(xreg), "covariates"))
         }
 
-        fit <- stats::optim
+        fit <- stats::optim(
           par = sta, fn = mlf, gr = NULL, method = c("Nelder-Mead"), data = data,
           lower = unconstrained.optim.lower, upper = unconstrained.optim.upper,
           control = optim_control, hessian = FALSE
