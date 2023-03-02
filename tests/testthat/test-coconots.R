@@ -371,3 +371,50 @@ test_that("GP2Works_cov", {
   cocoForecast(fit, xcast = cov[1,])
   cocoBoot(fit, rep.Bootstrap = 6)
 })
+#----------------Wrong models no covariates-----------------------------------
+#-----------------No covariates, constrained--------------------------------
+test_that("wrong_modelsGP2", {
+  length <- 300
+  par <- c(0.5,0.2,0.05,0.3,0.3)
+  set.seed(123499)
+  data.sim <- cocoSim(order = 2, type = "GP", par = par, length = length)
+  data <- data.sim$data
+  fit <- cocoReg(order = 1, type = "Poisson", data = data)
+  fit <- cocoReg(order = 2, type = "Poisson", data = data)
+  fit <- cocoReg(order = 1, type = "GP", data = data)
+})
+
+test_that("wrong_modelsPoisson2", {
+  length <- 300
+  par <- c(0.5, 0.2, 0.05, 0.3)
+  set.seed(12347)
+  data.sim <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
+  data <- data.sim$data
+  fit <- cocoReg(order = 1, type = "Poisson", data = data)
+  fit <- cocoReg(order = 1, type = "GP", data = data)
+  fit <- cocoReg(order = 2, type = "GP", data = data)
+  
+})
+
+test_that("wrong_modelsGP1", {
+  length <- 300
+  par <- c(0.5, 0.2, 0.2)
+  set.seed(12341)
+  data.sim <- cocoSim(order = 1, type = "GP", par = par, length = length)
+  data <- data.sim$data
+  fit <- cocoReg(order = 1, type = "Poisson", data = data)
+  fit <- cocoReg(order = 2, type = "Poisson", data = data)
+  fit <- cocoReg(order = 2, type = "GP", data = data)
+})
+
+test_that("wrong_modelsPoisson1", {
+  length <- 300
+  par <- c(0.5, 0.2)
+  set.seed(12345)
+  data.sim <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
+  data <- data.sim$data
+  fit <- cocoReg(order = 2, type = "Poisson", data = data)
+  fit <- cocoReg(order = 1, type = "GP", data = data)
+  fit <- cocoReg(order = 2, type = "GP", data = data)
+
+})
