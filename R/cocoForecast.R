@@ -10,56 +10,60 @@
 #' @param width_bars Width of bars in the plot
 #' @param seasonality A vector of two integers indicating the seasonalities of the time series
 #' @param decimals Number of decimal places for the forecast probabilities
+#' @param julia  if TRUE, the estimate is predicted with Julia.
 #' @return A list containing the plot, density, mode, and median of the forecast
 #' @export
 
 
 cocoForecast <- function(coco, max=10, xcast=NULL, plot = TRUE, title = "Probability mass",
-             xlab="x", ylab="Probabilities", width_bars = 0.04, seasonality=c(1,2), decimals = 4) {
+             xlab="x", ylab="Probabilities", width_bars = 0.04, seasonality=c(1,2), decimals = 4, julia=FALSE) {
 
-  if (!((methods::is(coco, "coco.fit")) | (methods::is(coco, "coco.fit.c")))) {
-    stop("The coco object must be from class coco.fit or coco.fit.c")
-  }
-  
-  if (length(seasonality == 1)) {
-    seasonality = c(seasonality, seasonality + 1)
-  }
-  
-  data <- coco$ts
-  y <- data[length(data) - seasonality[1] + 1]
-  z <- data[length(data) - seasonality[2] + 1]
-  parameter <-coco$par
-  
-  if (methods::is(coco, "coco.fit.c")) { 
-    number_covariates <- ncol(coco$cov) 
-    betas <- parameter[(length(parameter)-number_covariates+1):length(parameter)]
-    parameter <- utils::head(parameter, -number_covariates)
-    dot_product <- betas %*% c(xcast)
-    lambda <- exp(dot_product)
-    parameter <- c(lambda, parameter)
-  }
-  
-  type <- coco$type
-  order <- coco$order
-  
-  densities <- c()
-  
-  x <- 0:max
-  
-  if (order == 1){
-    if (type == "Poisson"){parameter <- c(parameter,0)}
-    for (number in x) { 
-      densities[number+1] <- dGP1(x=number, y=y, par=parameter)
+  if (!is.null(coco$julia_reg) & julia){
+    coco_forecast <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPredict", coco$julia_reg, 0:max))
+    densities <- coco_forecast$values[[4]]
+    x <- 0:(length(densities)-1)
+    mode <- coco_forecast$values[[1]]
+    median <- coco_forecast$values[[2]]
+  } else {
+    if (length(seasonality == 1)) {
+      seasonality = c(seasonality, seasonality + 1)
     }
-  } 
-  
-  if (order == 2){
-    if (type == "Poisson"){parameter <- c(parameter,0)}
-    for (number in x) { 
-      densities[number+1] <- dGP2(x=number, y=y, z=z, par=parameter)
+    
+    data <- coco$ts
+    y <- data[length(data) - seasonality[1] + 1]
+    z <- data[length(data) - seasonality[2] + 1]
+    parameter <-coco$par
+    
+    if (methods::is(coco, "coco.fit.c")) { 
+      number_covariates <- ncol(coco$cov) 
+      betas <- parameter[(length(parameter)-number_covariates+1):length(parameter)]
+      parameter <- utils::head(parameter, -number_covariates)
+      dot_product <- betas %*% c(xcast)
+      lambda <- exp(dot_product)
+      parameter <- c(lambda, parameter)
+    }
+    
+    type <- coco$type
+    order <- coco$order
+    
+    densities <- c()
+    
+    x <- 0:max
+    
+    if (order == 1){
+      if (type == "Poisson"){parameter <- c(parameter,0)}
+      for (number in x) { 
+        densities[number+1] <- dGP1(x=number, y=y, par=parameter)
+      }
+    } 
+    
+    if (order == 2){
+      if (type == "Poisson"){parameter <- c(parameter,0)}
+      for (number in x) { 
+        densities[number+1] <- dGP2(x=number, y=y, z=z, par=parameter)
+      }
     }
   }
-  
   densities <- round(densities, decimals)
   
   if (isTRUE(plot)) {

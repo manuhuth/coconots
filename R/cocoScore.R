@@ -14,9 +14,6 @@
 
 cocoScore <- function(coco, val.num = 1e-10) {
 
-  if (!((methods::is(coco, "coco.fit")) | (methods::is(coco, "coco.fit.c")))){
-    stop("The coco object must be from class coco.fit or coco.fit.c")
-  }
 
   T <- length(coco$ts)
   par <- coco$par

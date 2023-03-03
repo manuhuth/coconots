@@ -37,14 +37,14 @@ addJuliaFunctions <- function(){
     
     #---------------------------------Distributions---------------------------------
     function poisson_distribution(x, lambda)
-        return exp(-lambda) * lambda^x / factorial(x)
+        return exp(-lambda) * lambda^x / factorial(Int(x))
     end
     
     function generalized_poisson_distribution(x, lambda, eta)
         if x <= 20
-            return exp(-lambda-x*eta) * lambda*(lambda+x*eta)^(x-1) / factorial(x)
+            return exp(-lambda-x*eta) * lambda*(lambda+x*eta)^(x-1) / factorial(Int(x))
         else
-            return exp(-lambda-x*eta) * lambda*(lambda+x*eta)^(x-1) / factorial(big(x))
+            return exp(-lambda-x*eta) * lambda*(lambda+x*eta)^(x-1) / factorial(big(Int(x)))
         end
     end
     
@@ -60,14 +60,14 @@ addJuliaFunctions <- function(){
                 sum = sum + (lambda*U*(1-alpha1-alpha3) + eta*(y-j))^(y-j-1) *
                             (lambda*U*(1-alpha1-alpha3) + eta*(z-j))^(z-j-1) *
                             (lambda*U*(alpha1+alpha3) + eta*(j))^(j-1) /
-                            factorial(big(j)) / factorial(big(y-j)) / factorial(big(z-j)) * exp(j*eta)
+                            factorial(big(Int(j))) / factorial(big(Int(y-j))) / factorial(big(Int(z-j))) * exp(j*eta)
             end
         else
             for j in 0:min(y,z)
                 sum = sum + (lambda*U*(1-alpha1-alpha3) + eta*(y-j))^(y-j-1) *
                             (lambda*U*(1-alpha1-alpha3) + eta*(z-j))^(z-j-1) *
                             (lambda*U*(alpha1+alpha3) + eta*(j))^(j-1) /
-                            factorial(j) / factorial(y-j) / factorial(z-j) * exp(j*eta)
+                            factorial(Int(j)) / factorial(Int(y-j)) / factorial(Int(z-j)) * exp(j*eta)
             end
         end
     
@@ -220,9 +220,10 @@ addJuliaFunctions <- function(){
     end
     
     function compute_scores(cocoReg_fit)
+        cocoReg_fit["data"] = Int.(cocoReg_fit["data"])
         lambda = get_lambda(cocoReg_fit, false)
     
-        if cocoReg_fit["order"] == 1
+        if Int(cocoReg_fit["order"]) == 1
             if cocoReg_fit["type"] == "Poisson"
                 eta = 0
             else
@@ -240,7 +241,7 @@ addJuliaFunctions <- function(){
                              cocoReg_fit["data"][t-1], lambda[t], cocoReg_fit["parameter"][1],
                              eta) for t in 2:length(cocoReg_fit["data"])]
     
-        elseif cocoReg_fit["order"] == 2
+        elseif Int(cocoReg_fit["order"]) == 2
             if cocoReg_fit["type"] == "Poisson"
                 eta = 0
             else
@@ -337,11 +338,11 @@ addJuliaFunctions <- function(){
     function compute_g_r_y(y, r, alpha, eta, lambda)
         psi = eta * (1-alpha) / lambda
         if y < 20
-            return factorial(y) / factorial(r) / factorial(y-r) * alpha *  (1-alpha) *
+            return factorial(Int(y)) / factorial(Int(r)) / factorial(Int(y-r)) * alpha *  (1-alpha) *
                     (alpha + psi*r)^(r-1) * (1-alpha+psi*(y-r))^(y-r-1) /
                     (1+ psi*y)^(y-1)
         else
-            return factorial(big(y)) / factorial(big(r)) / factorial(big(y-r)) * alpha *  (1-alpha) *
+            return factorial(big(Int(y))) / factorial(big(Int(r))) / factorial(big(Int(y-r))) * alpha *  (1-alpha) *
                     (alpha + psi*r)^(r-1) * (1-alpha+psi*(y-r))^(y-r-1) /
                     (1+ psi*y)^(y-1)
         end
@@ -407,7 +408,7 @@ addJuliaFunctions <- function(){
                 eta = cocoReg_fit["parameter"][4]
             end
     
-            output = Dict("probabilities" => [compute_convolution_x_r_y_z(i, cocoReg_fit["data"][end], cocoReg_fit["data"][end-1], lambda,
+            output = Dict("probabilities" => [compute_convolution_x_r_y_z(i, Int(cocoReg_fit["data"][end]), Int(cocoReg_fit["data"][end-1]), lambda,
                                         cocoReg_fit["parameter"][1], cocoReg_fit["parameter"][2],
                                         cocoReg_fit["parameter"][3], eta,
                                         cocoReg_fit["max_loop"]) for i in x],
@@ -419,7 +420,7 @@ addJuliaFunctions <- function(){
                 eta = cocoReg_fit["parameter"][2]
             end
     
-            output = Dict("probabilities" => [compute_convolution_x_r_y(i, cocoReg_fit["data"][end],
+            output = Dict("probabilities" => [compute_convolution_x_r_y(i, Int(cocoReg_fit["data"][end]),
                                                 lambda, cocoReg_fit["parameter"][1], eta) for i in x],
                           "prediction_mode" => -3.0)
         end
@@ -782,13 +783,13 @@ addJuliaFunctions <- function(){
                      n_bootstrap=400, alpha=0.05, n_burn_in=200,
                      store_matrix = Array{Float64}(undef, length(lags), 2))
     
-        pacfs = compute_random_pacfs(cocoReg_fit, lags, n_bootstrap, n_burn_in,
-                                    Array{Float64}(undef, n_bootstrap, length(lags)))
+        pacfs = compute_random_pacfs(cocoReg_fit, lags, Int(n_bootstrap), n_burn_in,
+                                    Array{Float64}(undef, Int(n_bootstrap), length(lags)))
         for i in 1:length(lags)
             store_matrix[ i, :] = quantile!(pacfs[:,i], [alpha, 1-alpha])
         end
     
-        pacf_data = compute_partial_autocorrelation(cocoReg_fit["data"], lags)
+        pacf_data = compute_partial_autocorrelation(Int.(cocoReg_fit["data"]), lags)
     
         return Dict("upper" => store_matrix[:, 1],
                     "lower" => store_matrix[:, 2],
@@ -801,10 +802,10 @@ addJuliaFunctions <- function(){
     function compute_random_pacfs(cocoReg_fit, lags,
                      n_bootstrap=400, n_burn_in=200,
                      pacfs=Array{Float64}(undef, n_bootstrap, length(lags)))
-        Threads.@threads for b in 1:n_bootstrap
-            pacfs[b,:] = compute_partial_autocorrelation(cocoSim(cocoReg_fit["type"], cocoReg_fit["order"], cocoReg_fit["parameter"],
+        for b in 1:Int(n_bootstrap)
+            pacfs[b,:] = compute_partial_autocorrelation(cocoSim(cocoReg_fit["type"], Int(cocoReg_fit["order"]), cocoReg_fit["parameter"],
                     length(cocoReg_fit["data"]), cocoReg_fit["covariates"], cocoReg_fit["link"],
-                    n_burn_in, zeros(length(cocoReg_fit["data"]) + n_burn_in), cocoReg_fit["max_loop"]), lags)
+                    n_burn_in, zeros(length(cocoReg_fit["data"]) + n_burn_in)), lags)
         end
         return pacfs
     end

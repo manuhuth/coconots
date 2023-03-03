@@ -16,10 +16,7 @@
 cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probability integral transform", plot_main = "PIT") {
   start.time <- Sys.time()
 
-  if (!((methods::is(coco, "coco.fit")) | (methods::is(coco, "coco.fit.c")))) {
-    stop("The coco object must be from class coco.fit or coco.fit.c")
-  }
-
+  
 
   if ((J != round(J)) | (J < 1)) {
     stop("The value of J must be a positive integer")
