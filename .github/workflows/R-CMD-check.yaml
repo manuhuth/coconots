@@ -61,8 +61,3 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
-
-   - name: Add julia packages
-        run: |
-          coconots::installJuliaPackages()
-        shell: Rscript {0}
