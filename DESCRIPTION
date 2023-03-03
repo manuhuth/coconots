@@ -19,7 +19,9 @@ Imports:
     utils,
     graphics,
     grDevices,
-    methods
+    methods,
+    JuliaConnectoR,
+    JuliaConnectoR.utils
 LazyData: true
 LinkingTo: Rcpp, StanHeaders (>= 2.21.0), RcppParallel (>= 5.0.1)
 RoxygenNote: 7.2.3

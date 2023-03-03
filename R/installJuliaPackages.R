@@ -1,0 +1,14 @@
+#' @title installJuliaPackages
+#' @description checks for needed Julia packages and installs them if not installed.
+#' @export
+installJuliaPackages <- function(){
+  strings1 <- c('"Random"', '"Distributions"', 
+    '"ForwardDiff"', '"Optim"', '"StatsBase"', '"LineSearches"', '"LinearAlgebra"')
+  strings2 <- c("Random", "Distributions", 
+                "ForwardDiff", "Optim", "StatsBase", "LineSearches", "LinearAlgebra")
+  for (i in 1:length(strings1)){
+    if (!JuliaConnectoR::juliaEval(paste0(strings1[i], ' in keys(Pkg.project().dependencies)'))){
+      JuliaConnectoR.utils::install_julia_packages(strings2[i])
+    }
+  }
+}

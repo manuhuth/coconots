@@ -164,7 +164,8 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       list_func <- list(
         "par" = pars, "gradient" = gra, "hessian" = hes,
         "inv hessian" = inv_hes, "se" = se, "ts" = data, "type" = "Poisson",
-        "seasonality" = seasonality, "order" = 1, "likelihood" = likelihood, "duration" = end_time - start_time
+        "seasonality" = seasonality, "order" = 1, "likelihood" = likelihood, "duration" = end_time - start_time,
+        julia_reg = NULL
       )
 
       class(list_func) <- "coco.fit"
@@ -299,7 +300,8 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       list_func <- list(
         "par" = pars, "gradient" = gra, "hessian" = hes,
         "inv hessian" = inv_hes, "se" = se, "ts" = data, "type" = "GP",
-        "order" = 1, "seasonality" = seasonality, "likelihood" = likelihood, "duration" = end_time - start_time
+        "order" = 1, "seasonality" = seasonality, "likelihood" = likelihood, "duration" = end_time - start_time,
+        julia_reg = NULL
       )
       class(list_func) <- "coco.fit"
       return(list_func)
@@ -475,7 +477,8 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         "par" = pars,
         "gradient" = gra, "hessian" = hes, "inv hessian" = inv_hes,
         "se" = se, "ts" = data, "type" = "Poisson", "order" = 2,
-        "seasonality" = seasonality, "likelihood" = likelihood, "duration" = end_time - start_time
+        "seasonality" = seasonality, "likelihood" = likelihood, "duration" = end_time - start_time,
+        julia_reg = NULL
       )
       class(list_func) <- "coco.fit"
       return(list_func)
@@ -670,7 +673,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         "par" = pars, "gradient" = gra,
         "hessian" = hes, "inv hessian" = inv_hes, "se" = se, "ts" = data,
         "type" = "GP", "order" = 2, "seasonality" = seasonality, "likelihood" = likelihood,
-        "duration" = end_time - start_time
+        "duration" = end_time - start_time, julia_reg = NULL
       )
       class(list_func) <- "coco.fit"
       return(list_func)

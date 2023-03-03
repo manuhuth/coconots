@@ -18,7 +18,8 @@ cocoReg(
   replace.start.val = 1e-05,
   iteration.start.val = 0.99,
   method.hessian = "Richardson",
-  cores = 2
+  cores = 2,
+  julia = FALSE
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ cocoReg(
 \item{method.hessian}{character string indicating the method to be used to approximate the Hessian matrix}
 
 \item{cores}{numeric indicating the number of cores to use}
+
+\item{julia}{if TRUE, the model is estimated with Julia. This can improve the speed significantly since julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.}
 }
 \value{
 output of the regression analysis

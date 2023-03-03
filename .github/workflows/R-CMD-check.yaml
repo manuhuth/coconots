@@ -12,16 +12,16 @@ jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }}, Julia ${{ matrix.config.julia }})
 
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
+          - {os: macos-latest,   r: 'release', julia: '1.6'}
+          - {os: ubuntu-latest,   r: 'devel', julia: '1.6', http-user-agent: 'release'}
+          - {os: ubuntu-latest,   r: 'release', julia: '1.6'}
+          - {os: ubuntu-latest,   r: 'oldrel-1', julia: '1.6'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -37,6 +37,29 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
+          
+      - name: Cache R packages and Julia packages#from JuliaConnectoR
+        uses: actions/cache@v3
+        with:
+          path: | # siehe https://github.com/r-lib/actions/blob/v2/setup-r-dependencies/action.yaml
+            ${{ env.R_LIBS_USER }}/*
+            !${{ env.R_LIBS_USER }}/pak
+            ~/.julia/artifacts/
+            ~/.julia/packages/
+          key: ${{ matrix.config.r }}-${{ matrix.config.julia }}-${{ hashFiles('DESCRIPTION') }}
+          
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.config.julia }}
+          
+      - name: Make sure the JuliaConnectoR will pick up the right Julia version
+        run: |
+          GITHUB_ACTIONS_JULIACONNECTOR_JULIAVERSION=$(Rscript -e "cat(JuliaConnectoR:::getJuliaVersionViaCmd())");
+          if [[ ! $GITHUB_ACTIONS_JULIACONNECTOR_JULIAVERSION == "${{ matrix.config.julia }}"* ]]; then
+            echo "Julia version is $GITHUB_ACTIONS_JULIACONNECTOR_JULIAVERSION";
+            echo "Julia version should be ${{ matrix.config.julia }}";
+            exit 1;
+          fi
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
@@ -46,3 +69,8 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+
+   - name: Add julia packages
+        run: |
+          coconots::installJuliaPackages()
+        shell: Rscript {0}

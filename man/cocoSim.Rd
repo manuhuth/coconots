@@ -11,7 +11,9 @@ cocoSim(
   length,
   xreg = NULL,
   seasonality = c(1, 2),
-  init = NULL
+  init = NULL,
+  julia = FALSE,
+  julia_seed = NULL
 )
 }
 \arguments{
@@ -28,6 +30,10 @@ cocoSim(
 \item{seasonality}{integer vector, the range of seasonality, default is c(1,2)}
 
 \item{init}{numeric vector, initial data to use, default is NULL}
+
+\item{julia}{If TRUE, the julia implementation is used. In this case, seasonality and init are ignored but it might be faster.}
+
+\item{julia_seed}{Seed for the julia implementation. Only used if julia equals TRUE.}
 }
 \value{
 list containing 'time' and 'data' which are the computation time and generated time series respectively

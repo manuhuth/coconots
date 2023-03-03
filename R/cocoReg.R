@@ -25,6 +25,7 @@
 #' @param iteration.start.val numeric value indicating the proportion of the interval to use as the new starting value
 #' @param method.hessian character string indicating the method to be used to approximate the Hessian matrix
 #' @param cores numeric indicating the number of cores to use
+#' @param julia if TRUE, the model is estimated with Julia. This can improve the speed significantly since julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.
 #' @author Manuel Huth
 #' @return output of the regression analysis
 #' 
@@ -66,7 +67,23 @@ cocoReg <- function(type, order, data, xreg = NULL, seasonality = c(1, 2),
                     constrained.optim = TRUE, b.beta = -10,
                     start = NULL, start.val.adjust = TRUE, method_optim = "Nelder-Mead",
                     replace.start.val = 1e-5, iteration.start.val = 0.99,
-                    method.hessian = "Richardson", cores=2) {
+                    method.hessian = "Richardson", cores=2, julia=FALSE) {
+  if (julia){
+    start_time <- Sys.time()
+    fit_julia <- cocoRegJulia(type, order, data, xreg, start)
+    end_time <- Sys.time()
+    fit_R <- JuliaConnectoR::juliaGet(fit_julia)
+    return(transformJuliaRegOutputToR(xreg=xreg, pars=fit_R[["values"]][[8]], grad=NULL, hes=NULL,
+                               inv_hes=fit_R[["values"]][[7]],
+                               se=fit_R[["values"]][[11]],
+                               data=data,
+                               type=type,
+                               order=order,
+                               likelihood=-fit_R[["values"]][[1]],
+                               end_time = end_time,
+                               start_time=start_time, 
+                               julia_reg=fit_julia))
+  }
   
   if (is.null(xreg)) {
     

@@ -9,11 +9,15 @@
 #' @param xreg data.frame, data frame of control variables
 #' @param seasonality integer vector, the range of seasonality, default is c(1,2)
 #' @param init numeric vector, initial data to use, default is NULL
+#' @param julia If TRUE, the julia implementation is used. In this case, seasonality and init are ignored but it might be faster.
+#' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
 #' @return list containing 'time' and 'data' which are the computation time and generated time series respectively
 #' @author Manuel Huth
 #' @export
 
-cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2), init = NULL) {
+cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2), init = NULL, 
+                    julia=FALSE, julia_seed = NULL) {
+  
   if (is.null(xreg)) {
     if (order == 2){
       
@@ -38,6 +42,11 @@ cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2)
       if ((type == "GP") & ((par[3] < 0) | (par[3] >= 1))){
         stop("eta must be within the unit interval")
       }
+    }
+    
+    if (julia){
+      setJuliaSeed(julia_seed)
+      return(cocoSimJulia(type, order, par, length, xreg))
     }
     
     if (is.null(init)) {
@@ -70,6 +79,13 @@ cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2)
         stop("eta must be within the unit interval")
       }
     }
+    
+    if (julia){
+      setJuliaSeed(julia_seed)
+      return(cocoSimJulia(type, order, par, length, xreg))
+    }
+    
+    
     output <- cocoSim_cov(
       type = type, order = order, par = par, size = length, xreg = xreg, seasonality = seasonality, init = init
     )

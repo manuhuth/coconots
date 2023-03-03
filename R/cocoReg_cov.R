@@ -212,7 +212,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         "hessian" = hes, "inv hessian" = inv_hes, "se" = se,
         "ts" = data, "cov" = xreg, "type" = "Poisson", "order" = 1,
         "seasonality" = seasonality, "likelihood" = likelihood,
-        "duration" = end_time - start_time
+        "duration" = end_time - start_time, julia_reg = NULL
       )
       class(list_func) <- "coco.fit.c"
       return(list_func)
@@ -374,7 +374,8 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         "par" = pars, "gradient" = gra,
         "hessian" = hes, "inv hessian" = inv_hes, "se" = se,
         "ts" = data, "cov" = xreg, "type" = "GP", "order" = 1,
-        "seasonality" = seasonality, "likelihood" = likelihood, "duration" = end_time - start_time
+        "seasonality" = seasonality, "likelihood" = likelihood, "duration" = end_time - start_time,
+        julia_reg = NULL
       )
       class(list_func) <- "coco.fit.c"
       return(list_func)
@@ -578,7 +579,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         "gradient" = gra, "hessian" = hes, "inv hessian" = inv_hes,
         "se" = se, "ts" = data, "cov" = xreg, "type" = "Poisson",
         "order" = 2, "seasonality" = seasonality, "likelihood" = likelihood,
-        "duration" = end_time - start_time
+        "duration" = end_time - start_time, julia_reg = NULL
       )
       class(list_func) <- "coco.fit.c"
       return(list_func)
@@ -821,7 +822,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         "gradient" = gra, "hessian" = hes, "inv hessian" = inv_hes,
         "se" = se, "ts" = data, "cov" = xreg, "type" = "GP", "order" = 2,
         "seasonality" = seasonality, "likelihood" = likelihood,
-        "duration" = end_time - start_time
+        "duration" = end_time - start_time, julia_reg = NULL
       )
       class(list_func) <- "coco.fit.c"
       return(list_func)

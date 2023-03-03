@@ -9,4 +9,5 @@
 library(testthat)
 library(coconots)
 
+coconots::installJuliaPackages()
 test_check("coconots")
