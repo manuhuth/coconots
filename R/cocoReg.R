@@ -73,7 +73,8 @@ cocoReg <- function(type, order, data, xreg = NULL, seasonality = c(1, 2),
     fit_julia <- cocoRegJulia(type, order, data, xreg, start)
     end_time <- Sys.time()
     fit_R <- JuliaConnectoR::juliaGet(fit_julia)
-    return(transformJuliaRegOutputToR(xreg=xreg, pars=fit_R[["values"]][[8]], grad=NULL, hes=NULL,
+    return(transformJuliaRegOutputToR(xreg=xreg, pars=fit_R[["values"]][[8]],
+                                      grad=NULL, hes=NULL,
                                inv_hes=fit_R[["values"]][[7]],
                                se=fit_R[["values"]][[11]],
                                data=data,
