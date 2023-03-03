@@ -8,7 +8,9 @@ installJuliaPackages <- function(){
                 "ForwardDiff", "Optim", "StatsBase", "LineSearches", "LinearAlgebra")
   for (i in 1:length(strings1)){
     if (!JuliaConnectoR::juliaEval(paste0(strings1[i], ' in keys(Pkg.project().dependencies)'))){
-      JuliaConnectoR.utils::install_julia_packages(strings2[i])
+      #JuliaConnectoR.utils::install_julia_packages(strings2[i])
+      JuliaConnectoR::juliaEval("using Pkg")
+      JuliaConnectoR::juliaEval(paste0('Pkg.add("', strings2[i], '")') )
     }
   }
 }
