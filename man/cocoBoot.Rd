@@ -29,6 +29,8 @@ cocoBoot(
 \item{xlab}{X-axis label for the plot}
 
 \item{ylab}{Y-axis label for the plot}
+
+\item{julia}{if TRUE, the bootstrap is run with Julia.}
 }
 \value{
 A plot of the autocorrelations with bootstrap confidence intervals

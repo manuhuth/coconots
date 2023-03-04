@@ -7,6 +7,7 @@
 #' @param plot_main Plot title
 #' @param xlab X-axis label for the plot
 #' @param ylab Y-axis label for the plot
+#' @param julia  if TRUE, the bootstrap is run with Julia.
 #' @return A plot of the autocorrelations with bootstrap confidence intervals
 #' @references 
 #' Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
