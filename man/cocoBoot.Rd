@@ -11,7 +11,8 @@ cocoBoot(
   confidence = 0.95,
   plot_main = "Bootstrap",
   xlab = "Lag",
-  ylab = "Autocorrelation"
+  ylab = "Autocorrelation",
+  julia = FALSE
 )
 }
 \arguments{

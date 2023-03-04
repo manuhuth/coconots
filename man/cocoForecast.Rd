@@ -14,7 +14,8 @@ cocoForecast(
   ylab = "Probabilities",
   width_bars = 0.04,
   seasonality = c(1, 2),
-  decimals = 4
+  decimals = 4,
+  julia = FALSE
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ cocoForecast(
 \item{seasonality}{A vector of two integers indicating the seasonalities of the time series}
 
 \item{decimals}{Number of decimal places for the forecast probabilities}
+
+\item{julia}{if TRUE, the estimate is predicted with Julia.}
 }
 \value{
 A list containing the plot, density, mode, and median of the forecast
