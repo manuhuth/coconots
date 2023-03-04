@@ -70,7 +70,7 @@ cocoReg <- function(type, order, data, xreg = NULL, seasonality = c(1, 2),
                     replace.start.val = 1e-5, iteration.start.val = 0.99,
                     method.hessian = "Richardson", cores=2, julia=FALSE, 
                     julia_installed=FALSE) {
-  addJuliaFunctions()
+  
   if (julia){
     start_time <- Sys.time()
     fit_julia <- cocoRegJulia(type, order, data, xreg, start)
