@@ -11,13 +11,15 @@ test_that("GP2Works", {
   cocoSim(order = 2, type = "GP", par = par, length = length, julia = TRUE,
           julia_seed = 123499)
   data <- data.sim$data
-  fit <- cocoReg(order = 2, type = "GP", data = data)
-  cocoPit(fit)
-  cocoResid(fit)
-  cocoSummary(fit)
-  cocoScore(fit)
-  cocoForecast(fit)
-  cocoBoot(fit, rep.Bootstrap = 6)
+  fit <- cocoReg(order = 2, type = "GP", data = data, julia_installed = TRUE)
+  for (i in c(TRUE, FALSE)){
+    cocoPit(fit, julia=i)
+    cocoResid(fit)
+    cocoSummary(fit, julia=i)
+    cocoScore(fit, julia=i)
+    cocoForecast(fit, julia=i)
+    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
+  }
   
 })
 
@@ -30,13 +32,15 @@ test_that("Poisson2Works", {
                       julia = TRUE,
                       julia_seed = 12342399)
   data <- data.sim$data
-  fit <- cocoReg(order = 2, type = "Poisson", data = data)
-  cocoPit(fit)
-  cocoResid(fit)
-  cocoSummary(fit)
-  cocoScore(fit)
-  cocoForecast(fit)
-  cocoBoot(fit, rep.Bootstrap = 6)
+  fit <- cocoReg(order = 2, type = "Poisson", data = data, julia_installed = TRUE)
+  for (i in c(TRUE, FALSE)){
+    cocoPit(fit, julia=i)
+    cocoResid(fit)
+    cocoSummary(fit, julia=i)
+    cocoScore(fit, julia=i)
+    cocoForecast(fit, julia=i)
+    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
+  }
 })
 
 test_that("GP1Works", {
@@ -48,13 +52,15 @@ test_that("GP1Works", {
           julia = TRUE,
           julia_seed = 123423299)
   data <- data.sim$data
-  fit <- cocoReg(order = 1, type = "GP", data = data)
-  cocoPit(fit)
-  cocoResid(fit)
-  cocoSummary(fit)
-  cocoScore(fit)
-  cocoForecast(fit)
-  cocoBoot(fit, rep.Bootstrap = 6)
+  fit <- cocoReg(order = 1, type = "GP", data = data, julia_installed = TRUE)
+  for (i in c(TRUE, FALSE)){
+    cocoPit(fit, julia=i)
+    cocoResid(fit)
+    cocoSummary(fit, julia=i)
+    cocoScore(fit, julia=i)
+    cocoForecast(fit, julia=i)
+    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
+  }
 })
 
 test_that("Poisson1Works", {
@@ -66,13 +72,15 @@ test_that("Poisson1Works", {
   cocoSim(order = 1, type = "Poisson", par = par, length = length, 
           julia = TRUE,
           julia_seed = 1234232199)
-  fit <- cocoReg(order = 1, type = "Poisson", data = data)
-  cocoPit(fit)
-  cocoResid(fit)
-  cocoSummary(fit)
-  cocoScore(fit)
-  cocoForecast(fit)
-  cocoBoot(fit, rep.Bootstrap = 6)
+  fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+  for (i in c(TRUE, FALSE)){
+    cocoPit(fit, julia=i)
+    cocoResid(fit)
+    cocoSummary(fit, julia=i)
+    cocoScore(fit, julia=i)
+    cocoForecast(fit, julia=i)
+    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
+  }
 })
 
 #-----------------Covariates, constrained--------------------------------
@@ -91,13 +99,17 @@ test_that("Poisson1Works_cov", {
  cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, length = length, 
          julia = TRUE,
          julia_seed = 123499)
- fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
- cocoPit(fit)
- cocoResid(fit)
- cocoSummary(fit)
- cocoScore(fit)
- cocoForecast(fit, xcast = cov[1,])
- cocoBoot(fit, rep.Bootstrap = 6)
+ fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov, 
+                julia_installed = TRUE)
+ for (i in c(TRUE, FALSE)){
+   cocoPit(fit, julia=i)
+   cocoResid(fit)
+   cocoSummary(fit, julia=i)
+   cocoScore(fit, julia=i)
+   cocoForecast(fit, xcast = cov[1,], julia=i)
+   cocoBoot(fit, rep.Bootstrap = 6, julia=i)
+ }
+
 })
 
 test_that("GP1Works_cov", {
@@ -115,13 +127,15 @@ test_that("GP1Works_cov", {
   cocoSim(order = 1, type = "GP", par = par, xreg = cov, length = length, 
           julia = TRUE,
           julia_seed = 123499)
-  fit <- cocoReg(order = 1, type = "GP", data = data, xreg = cov)
-  cocoPit(fit)
-  cocoResid(fit)
-  cocoSummary(fit)
-  cocoScore(fit)
-  cocoForecast(fit, xcast = cov[1,])
-  cocoBoot(fit, rep.Bootstrap = 6)
+  fit <- cocoReg(order = 1, type = "GP", data = data, xreg = cov, julia_installed = TRUE)
+  for (i in c(TRUE, FALSE)){
+    cocoPit(fit, julia=i)
+    cocoResid(fit)
+    cocoSummary(fit, julia=i)
+    cocoScore(fit, julia=i)
+    cocoForecast(fit, xcast = cov[1,], julia=i)
+    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
+  }
 })
 
 test_that("Poisson2Works_cov", {
@@ -139,13 +153,15 @@ test_that("Poisson2Works_cov", {
   cocoSim(order = 2, type = "Poisson", par = par, xreg = cov, length = length, 
           julia = TRUE,
           julia_seed = 123499)
-  fit <- cocoReg(order = 2, type = "Poisson", data = data, xreg = cov)
-  cocoPit(fit)
-  cocoResid(fit)
-  cocoSummary(fit)
-  cocoScore(fit)
-  cocoForecast(fit, xcast = cov[1,])
-  cocoBoot(fit, rep.Bootstrap = 6)
+  fit <- cocoReg(order = 2, type = "Poisson", data = data, xreg = cov, julia_installed = TRUE)
+  for (i in c(TRUE, FALSE)){
+    cocoPit(fit, julia=i)
+    cocoResid(fit)
+    cocoSummary(fit, julia=i)
+    cocoScore(fit, julia=i)
+    cocoForecast(fit, xcast = cov[1,], julia=i)
+    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
+  }
 })
 
 test_that("GP2Works_cov", {
@@ -163,13 +179,15 @@ test_that("GP2Works_cov", {
   cocoSim(order = 2, type = "GP", par = par, xreg = cov, length = length, 
           julia = TRUE,
           julia_seed = 123499)
-  fit <- cocoReg(order = 2, type = "GP", data = data, xreg = cov)
-  cocoPit(fit)
-  cocoResid(fit)
-  cocoSummary(fit)
-  cocoScore(fit)
-  cocoForecast(fit, xcast = cov[1,])
-  cocoBoot(fit, rep.Bootstrap = 6)
+  fit <- cocoReg(order = 2, type = "GP", data = data, xreg = cov, julia_installed = TRUE)
+  for (i in c(TRUE, FALSE)){
+    cocoPit(fit, julia=i)
+    cocoResid(fit)
+    cocoSummary(fit, julia=i)
+    cocoScore(fit, julia=i)
+    cocoForecast(fit, xcast = cov[1,], julia=i)
+    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
+  }
 })
 
 #-----------------No covariates, unconstrained--------------------------------
@@ -321,7 +339,7 @@ test_that("custom_start_values_Poisson1", {
   fit <- cocoReg(order = 1, type = "Poisson", data = data, start = par)
 })
 #----------------Custom starting values covariates------------------------------
-test_that("Poisson1Works_cov", {
+test_that("Poisson1Works_cov_2", {
   ##Poisson1 model with covariates
   length <- 300
   period <- 50
@@ -336,7 +354,7 @@ test_that("Poisson1Works_cov", {
   fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
 })
 
-test_that("GP1Works_cov", {
+test_that("GP1Works_cov_2", {
   ##Poisson1 model with covariates
   length <- 300
   period <- 50
@@ -357,7 +375,7 @@ test_that("GP1Works_cov", {
   cocoBoot(fit, rep.Bootstrap = 6)
 })
 
-test_that("Poisson2Works_cov", {
+test_that("Poisson2Works_cov_2", {
   ##Poisson1 model with covariates
   length <- 300
   period <- 50
@@ -378,7 +396,7 @@ test_that("Poisson2Works_cov", {
   cocoBoot(fit, rep.Bootstrap = 6)
 })
 
-test_that("GP2Works_cov", {
+test_that("GP2Works_cov_2", {
   ##Poisson1 model with covariates
   length <- 300
   period <- 50

@@ -2,7 +2,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
                          method_optim=method_optim,
                          optim_control = FALSE, constrained.optim = TRUE, start = NULL,
                          start.val.adjust = TRUE, replace.start.val = 1e-5,
-                         iteration.start.val = 0.99, method.hessian = "Richardson", ...) {
+                         iteration.start.val = 0.99, method.hessian = "Richardson", julia_installed=FALSE, ...) {
   start_time <- Sys.time()
 
   if (replace.start.val <= 0) {
@@ -160,12 +160,28 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       if ((pars[2] < se_boundary) |  (pars[2] > 1 - se_boundary)) {
         warning("The estimate of alpha is close to the boundary. Standard errors might not be valid.")
       }
+      
+      pars_julia <- c(pars[2:length(pars)], pars[1])
+      
+      if (julia_installed) {
+        addJuliaFunctions()
+        julia_reg <- JuliaConnectoR::juliaCall("create_julia_dict", 
+                                               list("parameter", "covariance_matrix", "log_likelihood",
+                                                    "type", "order", "data", "covariates",
+                                                    "link", "starting_values", "optimizer", 
+                                                    "lower_bounds", "upper_bounds", "optimization", 
+                                                    "max_loop"),
+                                               list(pars_julia, inv_hes, likelihood,
+                                                    type, order, data, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL,
+                                                    NULL, NULL))
+      } else {julia_reg = NULL}
 
       list_func <- list(
         "par" = pars, "gradient" = gra, "hessian" = hes,
         "inv hessian" = inv_hes, "se" = se, "ts" = data, "type" = "Poisson",
         "seasonality" = seasonality, "order" = 1, "likelihood" = likelihood, "duration" = end_time - start_time,
-        julia_reg = NULL
+        julia_reg = julia_reg
       )
 
       class(list_func) <- "coco.fit"
@@ -297,11 +313,27 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         warning("The estimate of eta is close to the boundary. Standard errors might not be valid.")
       }
       
+      pars_julia <- c(pars[2:length(pars)], pars[1])
+      
+      if (julia_installed) {
+        addJuliaFunctions()
+        julia_reg <- JuliaConnectoR::juliaCall("create_julia_dict", 
+                                               list("parameter", "covariance_matrix", "log_likelihood",
+                                                    "type", "order", "data", "covariates",
+                                                    "link", "starting_values", "optimizer", 
+                                                    "lower_bounds", "upper_bounds", "optimization", 
+                                                    "max_loop"),
+                                               list(pars_julia, inv_hes, likelihood,
+                                                    type, order, data, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL,
+                                                    NULL, NULL))
+      } else {julia_reg = NULL}
+      
       list_func <- list(
         "par" = pars, "gradient" = gra, "hessian" = hes,
         "inv hessian" = inv_hes, "se" = se, "ts" = data, "type" = "GP",
         "order" = 1, "seasonality" = seasonality, "likelihood" = likelihood, "duration" = end_time - start_time,
-        julia_reg = NULL
+        julia_reg = julia_reg
       )
       class(list_func) <- "coco.fit"
       return(list_func)
@@ -471,14 +503,28 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       if ((pars[4] < se_boundary) |  (pars[4] > 1 - se_boundary)) {
         warning("The estimate of alpha3 is close to the boundary. Standard errors might not be valid.")
       }
-    
+      pars_julia <- c(pars[2:length(pars)], pars[1])
+      
+      if (julia_installed) {
+        addJuliaFunctions()
+        julia_reg <- JuliaConnectoR::juliaCall("create_julia_dict", 
+                                               list("parameter", "covariance_matrix", "log_likelihood",
+                                                    "type", "order", "data", "covariates",
+                                                    "link", "starting_values", "optimizer", 
+                                                    "lower_bounds", "upper_bounds", "optimization", 
+                                                    "max_loop"),
+                                               list(pars_julia, inv_hes, likelihood,
+                                                    type, order, data, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL,
+                                                    NULL, NULL))
+      } else {julia_reg = NULL}
       
       list_func <- list(
         "par" = pars,
         "gradient" = gra, "hessian" = hes, "inv hessian" = inv_hes,
         "se" = se, "ts" = data, "type" = "Poisson", "order" = 2,
         "seasonality" = seasonality, "likelihood" = likelihood, "duration" = end_time - start_time,
-        julia_reg = NULL
+        julia_reg = julia_reg
       )
       class(list_func) <- "coco.fit"
       return(list_func)
@@ -668,12 +714,27 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       if ((pars[5] < se_boundary) |  (pars[5] > 1 - se_boundary)) {
         warning("The estimate of eta is close to the boundary. Standard errors might not be valid.")
       }
+      
+      pars_julia <- c(pars[2:length(pars)], pars[1])
+      if (julia_installed) {
+        addJuliaFunctions()
+        julia_reg <- JuliaConnectoR::juliaCall("create_julia_dict", 
+                                               list("parameter", "covariance_matrix", "log_likelihood",
+                                                    "type", "order", "data", "covariates",
+                                                    "link", "starting_values", "optimizer", 
+                                                    "lower_bounds", "upper_bounds", "optimization", 
+                                                    "max_loop"),
+                                               list(pars_julia, inv_hes, likelihood,
+                                                    type, order, data, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL,
+                                                    NULL, NULL))
+      } else {julia_reg = NULL}
     
       list_func <- list(
         "par" = pars, "gradient" = gra,
         "hessian" = hes, "inv hessian" = inv_hes, "se" = se, "ts" = data,
         "type" = "GP", "order" = 2, "seasonality" = seasonality, "likelihood" = likelihood,
-        "duration" = end_time - start_time, julia_reg = NULL
+        "duration" = end_time - start_time, julia_reg = julia_reg
       )
       class(list_func) <- "coco.fit"
       return(list_func)

@@ -9,7 +9,8 @@ cocoPit(
   J = 10,
   ylab = "Relative frequency",
   xlab = "Probability integral transform",
-  plot_main = "PIT"
+  plot_main = "PIT",
+  julia = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ cocoPit(
 \item{xlab}{Label for the x-axis (default: "Probability integral transform")}
 
 \item{plot_main}{Title for the plot (default: "PIT")}
+
+\item{julia}{if TRUE, the PIT is computed with Julia.}
 }
 \value{
 A plot of the probability integral transform for the coco object.

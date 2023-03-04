@@ -4,12 +4,14 @@
 \alias{cocoScore}
 \title{cocoScore}
 \usage{
-cocoScore(coco, val.num = 1e-10)
+cocoScore(coco, val.num = 1e-10, julia = FALSE)
 }
 \arguments{
 \item{coco}{An object of class "coco.fit" or "coco.fit.c"}
 
 \item{val.num}{A non-negative real number which is used to stop the calculation of the score in case of GP models. The default value is 1e-10}
+
+\item{julia}{if TRUE, the scores are computed with Julia.}
 }
 \value{
 A list containing the log score, quadratic score and ranked probability score.

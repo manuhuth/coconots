@@ -54,7 +54,8 @@ cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2)
     } else {length_burn_in <- 0}
     
     size <- length + length_burn_in
-    output <- cocoSim_base(type = type, order = order, par = par, size = size, seasonality = seasonality, init = init)
+    output <- cocoSim_base(type = type, order = order, par = par, size = size,
+                           seasonality = seasonality, init = init)
     output$data <- output$data[(length_burn_in+1):(length+length_burn_in)]
   } else {
     if (order == 2){
@@ -87,7 +88,8 @@ cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2)
     
     
     output <- cocoSim_cov(
-      type = type, order = order, par = par, size = length, xreg = xreg, seasonality = seasonality, init = init
+      type = type, order = order, par = par, size = length, xreg = xreg,
+      seasonality = seasonality, init = init
     )
   }
 

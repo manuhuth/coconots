@@ -4,12 +4,14 @@
 \alias{cocoSummary}
 \title{cocoSummary}
 \usage{
-cocoSummary(coco, score = FALSE)
+cocoSummary(coco, score = FALSE, julia = FALSE)
 }
 \arguments{
 \item{coco}{an object of class cocoReg}
 
 \item{score}{logical indicating whether to include score statistics in the summary}
+
+\item{julia}{if TRUE, scores are computed via the julia implementation}
 }
 \value{
 summary of the cocoReg analysis

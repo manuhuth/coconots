@@ -158,7 +158,7 @@ addJuliaFunctions <- function(){
         if x < 0
             return 0
         end
-        return sum([compute_convolution_x_r_y(x, y, lambda, alpha, eta) for i in 0:x])
+        return sum([compute_convolution_x_r_y(i, y, lambda, alpha, eta) for i in 0:x])
     end
     
     function compute_distribution_convolution_x_r_y_z(x, y, z, alpha1, alpha2, alpha3,
@@ -172,8 +172,13 @@ addJuliaFunctions <- function(){
     end
     
     function cocoPit(cocoReg_fit, n_bins=21)
-        u = collect( range(0, stop = 1, length = n_bins+1) )
+        cocoReg_fit["data"] = Int.(cocoReg_fit["data"])
+        u = collect( range(0, stop = 1, length = Int(n_bins+1)) )
+        
         lambda = get_lambda(cocoReg_fit, false)
+        if isnothing(cocoReg_fit["covariates"])
+          lambda = repeat([lambda], length(cocoReg_fit["data"]) )
+        end
     
         if cocoReg_fit["order"] == 1
             if cocoReg_fit["type"] == "Poisson"
@@ -205,9 +210,9 @@ addJuliaFunctions <- function(){
                         eta, cocoReg_fit["max_loop"]) for t in 3:length(cocoReg_fit["data"])]
         end
     
-        uniform_distribution = [get_pit_value(Px, Pxm1, u[s]) for s in 1:(n_bins+1)]
+        uniform_distribution = [get_pit_value(Px, Pxm1, u[s]) for s in 1:(Int(n_bins+1))]
     
-        return Dict("Pit_values" => [uniform_distribution[s] - uniform_distribution[s-1] for s in 2:(n_bins+1)],
+        return Dict("Pit_values" => [uniform_distribution[s] - uniform_distribution[s-1] for s in 2:(Int(n_bins+1))],
                     "bins" => u[2:end])
     end
     
@@ -220,9 +225,13 @@ addJuliaFunctions <- function(){
     end
     
     function compute_scores(cocoReg_fit)
-        cocoReg_fit["data"] = Int.(cocoReg_fit["data"])
+        
         lambda = get_lambda(cocoReg_fit, false)
-    
+        
+        if isnothing(cocoReg_fit["covariates"])
+          lambda = repeat([lambda], length(cocoReg_fit["data"]) )
+        end
+        
         if Int(cocoReg_fit["order"]) == 1
             if cocoReg_fit["type"] == "Poisson"
                 eta = 0
@@ -268,9 +277,9 @@ addJuliaFunctions <- function(){
                             eta, cocoReg_fit["max_loop"]) for t in 3:length(cocoReg_fit["data"])]
         end
     
-        return Dict("logarithmic_score" => - sum(log.(probabilities)) / length(probabilities),
-                    "quadratic_score" => sum(- 2 .* probabilities .+ h_index) / length(probabilities),
-                    "ranked_probability_score" => sum(rbs) / length(probabilities)
+        return Dict("logarithmic_score" => Float64(- sum(log.(probabilities)) / length(probabilities)),
+                    "quadratic_score" => Float64(sum(- 2 .* probabilities .+ h_index) / length(probabilities)),
+                    "ranked_probability_score" => Float64(sum(rbs) / length(probabilities))
                     )
     end
     
@@ -351,7 +360,9 @@ addJuliaFunctions <- function(){
     function compute_convolution_x_r_y(x, y, lambda, alpha, eta)
         sum = 0.0
         for r in 0:min(x, y)
+          if (y >= r) 
             sum = sum + compute_g_r_y(y, r, alpha, eta, lambda) * generalized_poisson_distribution(x-r, lambda, eta)
+          end
         end
         return sum
     end
@@ -385,21 +396,28 @@ addJuliaFunctions <- function(){
     end
     
     function get_lambda(cocoReg_fit, last_val=false)
-    
+        cocoReg_fit["link"] = exponential_function
+        
         if isnothing(cocoReg_fit["covariates"])
             return last(cocoReg_fit["parameter"])
         else
             if last_val
-                return tr(cocoReg_fit["link"](cocoReg_fit["covariates"][end, :]) * cocoReg_fit["parameter"][(end-size(cocoReg_fit["covariates"])[2]+1):end])
+                
+                return cocoReg_fit["link"]( sum(cocoReg_fit["covariates"][end, :] .* cocoReg_fit["parameter"][(end-size(cocoReg_fit["covariates"])[2]+1):end]))
             else
                 return cocoReg_fit["link"](cocoReg_fit["covariates"] * cocoReg_fit["parameter"][(end-size(cocoReg_fit["covariates"])[2]+1):end])
             end
         end
     end
     
-    function cocoPredict(cocoReg_fit, x=0:10, safe_array = Array{Float64}(undef, length(x)))
-    
+    function cocoPredict(cocoReg_fit, x=0:10, covariates=nothing,
+                          safe_array = Array{Float64}(undef, length(x)))
+
         lambda = get_lambda(cocoReg_fit, true)
+        
+        if (!isnothing(covariates))
+          lambda = exp(sum(covariates[end,:] .* cocoReg_fit["parameter"][(end-size(cocoReg_fit["covariates"])[2]+1):end]))
+        end
     
         if cocoReg_fit["order"] == 2
             if cocoReg_fit["type"] == "Poisson"
@@ -408,7 +426,8 @@ addJuliaFunctions <- function(){
                 eta = cocoReg_fit["parameter"][4]
             end
     
-            output = Dict("probabilities" => [compute_convolution_x_r_y_z(i, Int(cocoReg_fit["data"][end]), Int(cocoReg_fit["data"][end-1]), lambda,
+            output = Dict("probabilities" => [compute_convolution_x_r_y_z(i, Int(cocoReg_fit["data"][end]),
+                                              Int(cocoReg_fit["data"][end-1]), lambda,
                                         cocoReg_fit["parameter"][1], cocoReg_fit["parameter"][2],
                                         cocoReg_fit["parameter"][3], eta,
                                         cocoReg_fit["max_loop"]) for i in x],
@@ -808,6 +827,14 @@ addJuliaFunctions <- function(){
                     n_burn_in, zeros(length(cocoReg_fit["data"]) + n_burn_in)), lags)
         end
         return pacfs
+    end
+    
+    function create_julia_dict(keys, values)
+      D = Dict()
+      for i in 1:length(keys)
+        D[keys[i]] = values[i]
+      end
+      return D
     end
     ')
     #-------------------------------------

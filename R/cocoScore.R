@@ -2,6 +2,7 @@
 #' @description The function calculates the log, quadratic and ranked probability scores for a coco model object.
 #' @param coco An object of class "coco.fit" or "coco.fit.c"
 #' @param val.num A non-negative real number which is used to stop the calculation of the score in case of GP models. The default value is 1e-10
+#' @param julia if TRUE, the scores are computed with Julia.
 #' @return A list containing the log score, quadratic score and ranked probability score.
 #' @references 
 #' Czado, C. and Gneitling, T. and Held, L. (2009) Predictive Model Assessment for Count Data. \emph{Biometrics}, \bold{65}, 4, 1254--1261.
@@ -12,15 +13,21 @@
 #' @author Manuel Huth
 #' @export
 
-cocoScore <- function(coco, val.num = 1e-10) {
-
-
+cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
+  
+  
+  if (!is.null(coco$julia_reg) & julia){
+    addJuliaFunctions()
+    coco_score <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("compute_scores", coco$julia_reg))
+    return(list("log.score" = coco_score$values[[1]], "quad.score" = coco_score$values[[2]],
+                 "rps.score" = coco_score$values[[3]]))
+  } else {
   T <- length(coco$ts)
   par <- coco$par
   seas <- coco$seasonality
   data <- coco$ts
 
-if (methods::is(coco, "coco.fit")){
+  if (methods::is(coco, "coco.fit")){
 
 
   #Poisson 1
@@ -402,6 +409,7 @@ if (methods::is(coco, "coco.fit")){
 
     list <- list("log.score" = log.score, "quad.score" = quad.score, "rps.score" = rps.score)
   }
+  }#end julia if
 
 
   return(list)

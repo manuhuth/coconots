@@ -26,6 +26,7 @@
 #' @param method.hessian character string indicating the method to be used to approximate the Hessian matrix
 #' @param cores numeric indicating the number of cores to use
 #' @param julia if TRUE, the model is estimated with Julia. This can improve the speed significantly since julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.
+#' @param julia_installed if TRUE, the model R output will contain a julia compatible output element.
 #' @author Manuel Huth
 #' @return output of the regression analysis
 #' 
@@ -67,7 +68,9 @@ cocoReg <- function(type, order, data, xreg = NULL, seasonality = c(1, 2),
                     constrained.optim = TRUE, b.beta = -10,
                     start = NULL, start.val.adjust = TRUE, method_optim = "Nelder-Mead",
                     replace.start.val = 1e-5, iteration.start.val = 0.99,
-                    method.hessian = "Richardson", cores=2, julia=FALSE) {
+                    method.hessian = "Richardson", cores=2, julia=FALSE, 
+                    julia_installed=FALSE) {
+  addJuliaFunctions()
   if (julia){
     start_time <- Sys.time()
     fit_julia <- cocoRegJulia(type, order, data, xreg, start)
@@ -92,14 +95,14 @@ cocoReg <- function(type, order, data, xreg = NULL, seasonality = c(1, 2),
       type = type, order = order, data = data, seasonality = seasonality, 
       constrained.optim = constrained.optim, start = start,
       start.val.adjust = start.val.adjust, replace.start.val = replace.start.val, method_optim=method_optim,
-      iteration.start.val = iteration.start.val, method.hessian = method.hessian
+      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed
     )
   } else {
     output <- cocoReg_cov(
       type = type, order = order, data = data, xreg = xreg, seasonality = seasonality,
       constrained.optim = constrained.optim, b.beta = -10, start = start, method_optim=method_optim,
       start.val.adjust = start.val.adjust, replace.start.val = replace.start.val,
-      iteration.start.val = iteration.start.val, method.hessian = method.hessian
+      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed
     )
   }
 

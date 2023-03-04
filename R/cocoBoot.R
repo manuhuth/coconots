@@ -32,6 +32,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   }
   
   if (!is.null(coco$julia_reg) & julia){
+    addJuliaFunctions()
     coco_boot <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoBoot", coco$julia_reg, 1:numb.lags, rep.Bootstrap, 1-confidence))
     acfdata <- coco_boot$values[[2]]
     confidence <- data.frame(cbind(coco_boot$values[[3]], coco_boot$values[[4]]))

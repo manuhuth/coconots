@@ -5,6 +5,7 @@
 #' @param ylab Label for the y-axis (default: "Relative frequency")
 #' @param xlab Label for the x-axis (default: "Probability integral transform")
 #' @param plot_main Title for the plot (default: "PIT")
+#' @param julia  if TRUE, the PIT is computed with Julia.
 #' @return A plot of the probability integral transform for the coco object.
 #' @references 
 #' Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.
@@ -13,7 +14,8 @@
 #' @author Manuel Huth
 #' @export
 
-cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probability integral transform", plot_main = "PIT") {
+cocoPit <- function(coco, J = 10, ylab = "Relative frequency",
+                    xlab = "Probability integral transform", plot_main = "PIT", julia=FALSE) {
   start.time <- Sys.time()
 
   
@@ -21,7 +23,14 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probabili
   if ((J != round(J)) | (J < 1)) {
     stop("The value of J must be a positive integer")
   }
-
+  
+  if (!is.null(coco$julia_reg) & julia){
+    addJuliaFunctions()
+    coco_pit <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPit", coco$julia_reg,J))
+    coco_pit$keys
+    u <- coco_pit$values[[2]]
+    d <- coco_pit$values[[1]]
+  } else {
 
   data <- coco$ts
   seasonality <- coco$seasonality
@@ -204,9 +213,11 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probabili
 
   PIT <- colMeans(meanPIT)
   d <- diff(PIT)
-
+  u <- u[-c(1)]
+  } #end julia
+  
   # pdf("PIT_mle_poisson.pdf", height = 5, width = 5)
-  plot(u[-c(1)], d,
+  plot(u, d,
     type = "h", lend = 1, lwd = 18, ylab = ylab, xlab = xlab, main = plot_main,
     ylim = c(0, max(d) * 2), xaxt = "n", col = "navyblue", yaxs = "i"
   )
@@ -217,7 +228,7 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency", xlab = "Probabili
 
   time <- end.time - start.time
   list <- list(
-    "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "cov" = xreg,
+    "type" = coco$type, "order" = coco$order, "ts" = coco$ts,
     "par" = par, "PIT" = p, "PIT values" = d, "duration" = time
   )
 

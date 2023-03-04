@@ -15,11 +15,12 @@
 #' @export
 
 
-cocoForecast <- function(coco, max=10, xcast=NULL, plot = TRUE, title = "Probability mass",
+cocoForecast <- function(coco, max=15, xcast=NULL, plot = TRUE, title = "Probability mass",
              xlab="x", ylab="Probabilities", width_bars = 0.04, seasonality=c(1,2), decimals = 4, julia=FALSE) {
-
+  
   if (!is.null(coco$julia_reg) & julia){
-    coco_forecast <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPredict", coco$julia_reg, 0:max))
+    addJuliaFunctions()
+    coco_forecast <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPredict", coco$julia_reg, 0:max, xcast))
     densities <- coco_forecast$values[[4]]
     x <- 0:(length(densities)-1)
     mode <- coco_forecast$values[[1]]
@@ -63,20 +64,20 @@ cocoForecast <- function(coco, max=10, xcast=NULL, plot = TRUE, title = "Probabi
         densities[number+1] <- dGP2(x=number, y=y, z=z, par=parameter)
       }
     }
+    
+    mode <- match(max(densities), densities) - 1
+    distribution_function <- cumsum(densities)
+    median <- min(which(distribution_function >= 0.5)) - 1
+    
   }
-  densities <- round(densities, decimals)
+  
+  densities_plot <- round(densities, decimals)
   
   if (isTRUE(plot)) {
-  plot <- ggplot2::ggplot(mapping = ggplot2::aes(x = x, y = densities)) + ggplot2::geom_bar(stat="identity", position="dodge", width=width_bars) + 
+  plot <- ggplot2::ggplot(mapping = ggplot2::aes(x = x, y = densities_plot)) + ggplot2::geom_bar(stat="identity", position="dodge", width=width_bars) + 
     ggplot2::labs(title = title, x = xlab, y = ylab) + ggplot2::scale_x_continuous(breaks=x) +
     ggplot2::theme_bw() + ggplot2::theme(text = ggplot2::element_text(size = 20)) 
   }
-  
-  mode <- match(max(densities), densities) - 1
-  
-  distribution_function <- cumsum(densities)
-  
-  median <- min(which(distribution_function >= 0.5)) - 1
   
   out <- list("plot" = plot, "density" = densities, "mode" = mode, "median" = median)
   
