@@ -6,7 +6,7 @@
 \usage{
 cocoForecast(
   coco,
-  max = 10,
+  max = 15,
   xcast = NULL,
   plot = TRUE,
   title = "Probability mass",

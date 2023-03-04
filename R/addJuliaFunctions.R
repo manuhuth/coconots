@@ -805,7 +805,7 @@ addJuliaFunctions <- function(){
         pacfs = compute_random_pacfs(cocoReg_fit, lags, Int(n_bootstrap), n_burn_in,
                                     Array{Float64}(undef, Int(n_bootstrap), length(lags)))
         for i in 1:length(lags)
-            store_matrix[ i, :] = quantile!(pacfs[:,i], [alpha, 1-alpha])
+            store_matrix[ i, :] = quantile!(pacfs[:,i], [alpha/2, (1-alpha)/2])
         end
     
         pacf_data = compute_partial_autocorrelation(Int.(cocoReg_fit["data"]), lags)
