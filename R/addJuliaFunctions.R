@@ -41,10 +41,10 @@ addJuliaFunctions <- function(){
     end
     
     function generalized_poisson_distribution(x, lambda, eta)
-        if x <= 20
+        if x < 20
             return exp(-lambda-x*eta) * lambda*(lambda+x*eta)^(x-1) / factorial(Int(x))
         else
-            return exp(-lambda-x*eta) * lambda*(lambda+x*eta)^(x-1) / factorial(big(Int(x)))
+            return exp(-lambda-x*eta) * lambda*(lambda+x*eta)^(x-1) / Float64(factorial(big(Int(x))))
         end
     end
     
@@ -60,7 +60,8 @@ addJuliaFunctions <- function(){
                 sum = sum + (lambda*U*(1-alpha1-alpha3) + eta*(y-j))^(y-j-1) *
                             (lambda*U*(1-alpha1-alpha3) + eta*(z-j))^(z-j-1) *
                             (lambda*U*(alpha1+alpha3) + eta*(j))^(j-1) /
-                            factorial(big(Int(j))) / factorial(big(Int(y-j))) / factorial(big(Int(z-j))) * exp(j*eta)
+                            Float64(factorial(big(Int(j)))) / Float64(factorial(big(Int(y-j)))) /
+                            Float64(factorial(big(Int(z-j)))) * exp(j*eta)
             end
         else
             for j in 0:min(y,z)
@@ -351,7 +352,8 @@ addJuliaFunctions <- function(){
                     (alpha + psi*r)^(r-1) * (1-alpha+psi*(y-r))^(y-r-1) /
                     (1+ psi*y)^(y-1)
         else
-            return factorial(big(Int(y))) / factorial(big(Int(r))) / factorial(big(Int(y-r))) * alpha *  (1-alpha) *
+            return Float64(factorial(big(Int(y)))) / Float64(factorial(big(Int(r)))) /
+                    Float64(factorial(big(Int(y-r)))) * alpha *  (1-alpha) *
                     (alpha + psi*r)^(r-1) * (1-alpha+psi*(y-r))^(y-r-1) /
                     (1+ psi*y)^(y-1)
         end
