@@ -824,7 +824,7 @@ addJuliaFunctions <- function(){
                      pacfs=Array{Float64}(undef, n_bootstrap, length(lags)))
         for b in 1:Int(n_bootstrap)
             pacfs[b,:] = compute_partial_autocorrelation(cocoSim(cocoReg_fit["type"], Int(cocoReg_fit["order"]), cocoReg_fit["parameter"],
-                    length(cocoReg_fit["data"]), cocoReg_fit["covariates"], cocoReg_fit["link"],
+                    length(cocoReg_fit["data"]), cocoReg_fit["covariates"], exponential_function,
                     n_burn_in, zeros(length(cocoReg_fit["data"]) + n_burn_in)), lags)
         end
         return pacfs

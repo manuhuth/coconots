@@ -32,6 +32,8 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     stop("The value of rep.Bootstrap must be a positive integer")
   }
   
+  data <- coco$ts
+  
   if (!is.null(coco$julia_reg) & julia){
     if (!is.null(julia_seed)){
       setJuliaSeed(julia_seed)
@@ -43,7 +45,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     #confidence_bands <- data.frame(cbind(coco_boot$values[[3]], coco_boot$values[[4]]))
     #colnames(confidence_bands) <- c("upper", "lower")
   } else {
-    data <- coco$ts
+    
     seasonality <- coco$seasonality
   
     conf.alpha <- 1 - confidence
@@ -191,7 +193,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     #  confidence[j, ] <- c(lower, upper)
     #}
   } #end julia
-  acfdata <- forecast::Acf(data, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
+  acfdata <- forecast::Acf(data, plot = FALSE, lag.max = numb.lags)$acf[2:(numb.lags + 1)]
   confidence_bands <- data.frame(matrixStats::rowQuantiles(ac, probs = c((1-confidence)/2, 1-(1-confidence)/2)))
   colnames(confidence_bands) <- c("lower", "upper")
   max <- max(c(acfdata, confidence_bands[, "upper"])) + 0.5 * abs(max(c(acfdata, confidence_bands[, "upper"])))
