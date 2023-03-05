@@ -16,7 +16,7 @@
 
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
                  confidence = 0.95, plot_main="Bootstrap", xlab = "Lag", 
-                 ylab= "Autocorrelation", julia = FALSE, julia_seed
+                 ylab= "Autocorrelation", julia = FALSE, julia_seed = NULL
                  ) {
   start.time <- Sys.time()
 
@@ -33,7 +33,9 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   }
   
   if (!is.null(coco$julia_reg) & julia){
-    setJuliaSeed(julia_seed)
+    if (!is.null(julia_seed)){
+      setJuliaSeed(julia_seed)
+    }
     addJuliaFunctions()
     coco_boot <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoBoot", coco$julia_reg, 1:numb.lags, rep.Bootstrap, 1-confidence))
     #acfdata <- coco_boot$values[[2]]

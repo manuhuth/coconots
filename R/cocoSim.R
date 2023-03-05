@@ -45,7 +45,9 @@ cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2)
     }
     
     if (julia){
-      setJuliaSeed(julia_seed)
+      if (!is.null(julia_seed)){
+        setJuliaSeed(julia_seed)
+      }
       return(cocoSimJulia(type, order, par, length, xreg))
     }
     
