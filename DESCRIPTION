@@ -20,6 +20,7 @@ Imports:
     graphics,
     grDevices,
     methods,
+    matrixStats,
     JuliaConnectoR
 LazyData: true
 LinkingTo: Rcpp, StanHeaders (>= 2.21.0), RcppParallel (>= 5.0.1)

@@ -12,7 +12,8 @@ cocoBoot(
   plot_main = "Bootstrap",
   xlab = "Lag",
   ylab = "Autocorrelation",
-  julia = FALSE
+  julia = FALSE,
+  julia_seed
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ cocoBoot(
 \item{ylab}{Y-axis label for the plot}
 
 \item{julia}{if TRUE, the bootstrap is run with Julia.}
+
+\item{julia_seed}{Seed for the julia implementation. Only used if julia equals TRUE.}
 }
 \value{
 A plot of the autocorrelations with bootstrap confidence intervals

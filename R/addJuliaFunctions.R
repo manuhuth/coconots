@@ -795,7 +795,7 @@ addJuliaFunctions <- function(){
     
     #----------------------cocoBoot-----------------------------------------------
     function compute_partial_autocorrelation(x, lags)
-        return autocov(x, lags, demean=true)
+        return autocor(x, lags, demean=true)
     end
     
     function cocoBoot(cocoReg_fit, lags=[1:1:21;],
@@ -814,6 +814,7 @@ addJuliaFunctions <- function(){
                     "lower" => store_matrix[:, 2],
                     "in_interval" => (store_matrix[:, 1] .< pacf_data) .& (store_matrix[:, 2] .> pacf_data),
                     "pacf_data" => pacf_data,
+                    "pacfs" => pacfs,
                     "lags" => lags
              )
     end

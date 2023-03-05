@@ -8,6 +8,7 @@
 #' @param xlab X-axis label for the plot
 #' @param ylab Y-axis label for the plot
 #' @param julia  if TRUE, the bootstrap is run with Julia.
+#' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
 #' @return A plot of the autocorrelations with bootstrap confidence intervals
 #' @references 
 #' Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
@@ -15,7 +16,7 @@
 
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
                  confidence = 0.95, plot_main="Bootstrap", xlab = "Lag", 
-                 ylab= "Autocorrelation", julia = FALSE
+                 ylab= "Autocorrelation", julia = FALSE, julia_seed
                  ) {
   start.time <- Sys.time()
 
@@ -32,11 +33,13 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   }
   
   if (!is.null(coco$julia_reg) & julia){
+    setJuliaSeed(julia_seed)
     addJuliaFunctions()
     coco_boot <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoBoot", coco$julia_reg, 1:numb.lags, rep.Bootstrap, 1-confidence))
-    acfdata <- coco_boot$values[[2]]
-    confidence <- data.frame(cbind(coco_boot$values[[3]], coco_boot$values[[4]]))
-    colnames(confidence) <- c("lower", "upper")
+    #acfdata <- coco_boot$values[[2]]
+    ac <- t(coco_boot$values[[1]]) 
+    #confidence_bands <- data.frame(cbind(coco_boot$values[[3]], coco_boot$values[[4]]))
+    #colnames(confidence_bands) <- c("upper", "lower")
   } else {
     data <- coco$ts
     seasonality <- coco$seasonality
@@ -175,40 +178,41 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     }
   
 
-    means <- rowMeans(ac)
-    var <- apply(ac, 1, var)
+    #means <- rowMeans(ac)
+    #var <- apply(ac, 1, var)
   
-    confidence <- matrix(NaN, nrow = nlags, ncol = 2)
-    colnames(confidence) <- c("lower", "upper")
-    for (j in 1:nlags) {
-      upper <- stats::qnorm(1 - conf / 2, means[j], var[j]^0.5)
-      lower <- stats::qnorm(conf / 2, means[j], var[j]^0.5)
-      confidence[j, ] <- c(lower, upper)
-    }
-    acfdata <- forecast::Acf(data, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
+    #confidence <- matrix(NaN, nrow = nlags, ncol = 2)
+    #colnames(confidence) <- c("lower", "upper")
+    #for (j in 1:nlags) {
+    #  upper <- stats::qnorm(1 - conf / 2, means[j], var[j]^0.5)
+    #  lower <- stats::qnorm(conf / 2, means[j], var[j]^0.5)
+    #  confidence[j, ] <- c(lower, upper)
+    #}
   } #end julia
-  
-  max <- max(c(acfdata, confidence[, "upper"])) + 0.5 * abs(max(c(acfdata, confidence[, "upper"])))
+  acfdata <- forecast::Acf(data, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
+  confidence_bands <- data.frame(matrixStats::rowQuantiles(ac, probs = c((1-confidence)/2, 1-(1-confidence)/2)))
+  colnames(confidence_bands) <- c("lower", "upper")
+  max <- max(c(acfdata, confidence_bands[, "upper"])) + 0.5 * abs(max(c(acfdata, confidence_bands[, "upper"])))
   
   if (max >= 1.1) {
     max <- 1.1
   }
 
-  min <- min(c(acfdata, confidence[, "lower"])) - 0.5 * abs(min(c(acfdata, confidence[, "lower"])))
+  min <- min(c(acfdata, confidence_bands[, "lower"])) - 0.5 * abs(min(c(acfdata, confidence_bands[, "lower"])))
   if (max <= -1.1) {
     max <- -1.1
   }
 
   plot(acfdata, ylab = ylab, xlab = xlab, ylim = c(min, max), main = plot_main)
-  graphics::points(confidence[, 1], pch = 3, col = c("red"))
-  graphics::points(confidence[, 2], pch = 3, col = c("red"))
+  graphics::points(confidence_bands[, "lower"], pch = 3, col = c("red"))
+  graphics::points(confidence_bands[, "upper"], pch = 3, col = c("red"))
   q <- grDevices::recordPlot()
 
   end.time <- Sys.time()
   time <- end.time - start.time
   list <- list(
     "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "cov" = coco$cov, means = acfdata,
-    "PBT.plot" = q, "confidence" = confidence, "duration" = time
+    "PBT.plot" = q, "confidence" = confidence_bands, "duration" = time
   )
 
   return(list)
