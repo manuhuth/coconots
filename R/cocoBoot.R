@@ -4,6 +4,7 @@
 #' @param numb.lags Number of lags for which to compute autocorrelations
 #' @param rep.Bootstrap Number of bootstrap replicates to use
 #' @param confidence Confidence level for the intervals
+#' @param plot_bootstrap if TRUE, a graph with the results is plotted
 #' @param plot_main Plot title
 #' @param xlab X-axis label for the plot
 #' @param ylab Y-axis label for the plot
@@ -28,7 +29,7 @@
 #' @export
 
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
-                 confidence = 0.95, plot = FALSE, plot_main="Bootstrap", xlab = "Lag", 
+                 confidence = 0.95, plot_bootstrap = FALSE, plot_main="Bootstrap", xlab = "Lag", 
                  ylab= "Autocorrelation", julia = FALSE, julia_seed = NULL
                  ) {
   start.time <- Sys.time()
@@ -200,7 +201,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   confidence_bands <- data.frame(matrixStats::rowQuantiles(ac, probs = c((1-confidence)/2, 1-(1-confidence)/2)))
   colnames(confidence_bands) <- c("lower", "upper")
   
-  if (plot){
+  if (plot_bootstrap){
     df_plot <- cbind(acfdata, 1:numb.lags, confidence_bands)
     colnames(df_plot) <- c("y", "x", "lower", "upper")
     (pl <- ggplot2::ggplot(df_plot, ggplot2::aes(x, y))+
