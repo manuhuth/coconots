@@ -25,7 +25,7 @@
 #' #assessment using bootstrap - R implementation
 #' boot_r <- cocoBoot(fit, rep.Bootstrap=50)
 #' #assessment using bootstrap - Julia implementation
-#' boot_julia <- cocoBoot(fit, rep.Bootstrap=50, julia = TRUE)
+#' #boot_julia <- cocoBoot(fit, rep.Bootstrap=50, julia = TRUE)
 #' @export
 
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
