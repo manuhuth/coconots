@@ -90,7 +90,7 @@ coco <- cocoReg(order = 1, type = "Poisson", data = data$data, julia_installed=T
 (scores <- cocoScore(coco, julia = TRUE))
 pit <- cocoPit(coco, julia = TRUE)
 boot_plot <- cocoBoot(coco, plot_bootstrap = TRUE, julia = TRUE)
-boot_plot$plot + ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::xlab("Autocorrelation")
+boot_plot$plot + ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::ylab("Autocorrelation")
 forecast <- cocoForecast(coco, plot = TRUE, julia = TRUE)
 forecast$plot
 ```

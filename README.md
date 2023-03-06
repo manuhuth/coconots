@@ -125,7 +125,7 @@ pit <- cocoPit(coco, julia = TRUE)
 
 ``` r
 boot_plot <- cocoBoot(coco, plot_bootstrap = TRUE, julia = TRUE)
-boot_plot$plot + ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::xlab("Autocorrelation")
+boot_plot$plot + ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::ylab("Autocorrelation")
 ```
 
 <img src="man/figures/README-example_assessment-2.png" width="100%" />
