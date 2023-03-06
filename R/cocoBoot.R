@@ -200,13 +200,13 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   if (plot_bootstrap){
     df_plot <- cbind(acfdata, 1:numb.lags, confidence_bands)
     colnames(df_plot) <- c("y", "x", "lower", "upper")
-    (pl <- ggplot2::ggplot(df_plot, ggplot2::aes(x, y))+
-        ggplot2::geom_point()+
-        ggplot2::geom_line()+
-        ggplot2::geom_ribbon(data=df_plot,ggplot2::aes(ymin=lower,ymax=upper),
-                             fill="steelblue", alpha=0.3)) +
-        ggplot2::theme_bw() + ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
-        ggplot2::ggtitle(plot_main)
+    (pl <- ggplot2::ggplot(df_plot, ggplot2::aes(x, y)) +
+            ggplot2::geom_point()+
+            ggplot2::geom_line()+
+            ggplot2::geom_ribbon(data=df_plot,ggplot2::aes(ymin=lower,ymax=upper),
+                                 fill="steelblue", alpha=0.3)) +
+            ggplot2::theme_bw() + ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
+            ggplot2::ggtitle(plot_main)
   }
 
   end.time <- Sys.time()
