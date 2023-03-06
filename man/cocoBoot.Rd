@@ -48,10 +48,10 @@ Computes bootstrap confidence intervals for the autocorrelations of a COCO model
 lambda <- 1
 alpha <- 0.4
 set.seed(12345)
-data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
+#data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
 #julia_installed = TRUE ensures that the fit object
 #is compatible with the julia cocoBoot implementation 
-fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+#fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 
 #assessment using bootstrap - R implementation
 #boot_r <- cocoBoot(fit, rep.Bootstrap=50)
