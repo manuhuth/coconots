@@ -92,6 +92,7 @@ pit <- cocoPit(coco, julia = TRUE)
 boot_plot <- cocoBoot(coco, plot_bootstrap = TRUE, julia = TRUE)
 boot_plot$plot + ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::xlab("Autocorrelation")
 forecast <- cocoForecast(coco, plot = TRUE, julia = TRUE)
+forecast$plot
 ```
 
 

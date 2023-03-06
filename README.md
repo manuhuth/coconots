@@ -91,16 +91,6 @@ length <- 500
 pars <- c(1, 0.4)
 data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length, julia = TRUE, julia_seed = 123)
 coco <- cocoReg(order = 1, type = "Poisson", data = data, julia = TRUE)
-cocoSummary(coco)
-#> Coefficients:
-#>     Estimate   Std. Error
-#> 1     0.9700       0.0678
-#> 2     0.4401       0.0340
-#> 
-#> Type: Poisson 
-#> Order: 1 
-#> 
-#> Log-likelihood: 762.5335
 ```
 
 ## Model assessment
@@ -142,4 +132,7 @@ boot_plot$plot + ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::xlab("Au
 
 ``` r
 forecast <- cocoForecast(coco, plot = TRUE, julia = TRUE)
+forecast$plot
 ```
+
+<img src="man/figures/README-example_assessment-3.png" width="100%" />
