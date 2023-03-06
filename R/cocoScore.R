@@ -16,7 +16,8 @@
 #' alpha <- 0.4
 #' set.seed(12345)
 #' data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
-#' #julia_installed = TRUE ensures that the fit object is compatible with the julia cocoScore implementation 
+#' #julia_installed = TRUE ensures that the fit object
+#' #is compatible with the julia cocoScore implementation 
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 #'
 #' #assessment using scoring rules - R implementation
