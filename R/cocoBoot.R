@@ -200,7 +200,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   acfdata <- forecast::Acf(data, plot = FALSE, lag.max = numb.lags)$acf[2:(numb.lags + 1)]
   confidence_bands <- data.frame(matrixStats::rowQuantiles(ac, probs = c((1-confidence)/2, 1-(1-confidence)/2)))
   colnames(confidence_bands) <- c("lower", "upper")
-  
+  pl = NULL
   if (plot_bootstrap){
     df_plot <- cbind(acfdata, 1:numb.lags, confidence_bands)
     colnames(df_plot) <- c("y", "x", "lower", "upper")
