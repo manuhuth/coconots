@@ -28,7 +28,7 @@
 #' @export
 
 
-cocoForecast <- function(coco, max=15, xcast=NULL, plot = TRUE, title = "Probability mass",
+cocoForecast <- function(coco, max=15, xcast=NULL, plot = FALSE, title = "Probability mass",
              xlab="x", ylab="Probabilities", width_bars = 0.04, seasonality=c(1,2), decimals = 4, julia=FALSE) {
   
   if (!is.null(coco$julia_reg) & julia){

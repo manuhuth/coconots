@@ -9,7 +9,7 @@ cocoBoot(
   numb.lags = 21,
   rep.Bootstrap = 400,
   confidence = 0.95,
-  plot = FALSE,
+  plot_bootstrap = FALSE,
   plot_main = "Bootstrap",
   xlab = "Lag",
   ylab = "Autocorrelation",
@@ -25,6 +25,8 @@ cocoBoot(
 \item{rep.Bootstrap}{Number of bootstrap replicates to use}
 
 \item{confidence}{Confidence level for the intervals}
+
+\item{plot_bootstrap}{if TRUE, a graph with the results is plotted}
 
 \item{plot_main}{Plot title}
 

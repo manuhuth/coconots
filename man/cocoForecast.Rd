@@ -8,7 +8,7 @@ cocoForecast(
   coco,
   max = 15,
   xcast = NULL,
-  plot = TRUE,
+  plot = FALSE,
   title = "Probability mass",
   xlab = "x",
   ylab = "Probabilities",
