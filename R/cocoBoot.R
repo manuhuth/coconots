@@ -22,9 +22,9 @@
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 #'
 #' #assessment using bootstrap - R implementation
-#' boot_r <- cocoBoot(fit, rep.bootstrap=50)
+#' boot_r <- cocoBoot(fit, rep.Bootstrap=50)
 #' #assessment using bootstrap - Julia implementation
-#' boot_julia <- cocoBoot(fit, rep.bootstrap=50, julia = TRUE)
+#' boot_julia <- cocoBoot(fit, rep.Bootstrap=50, julia = TRUE)
 #' @export
 
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
@@ -195,47 +195,28 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     }
   
 
-    #means <- rowMeans(ac)
-    #var <- apply(ac, 1, var)
-  
-    #confidence <- matrix(NaN, nrow = nlags, ncol = 2)
-    #colnames(confidence) <- c("lower", "upper")
-    #for (j in 1:nlags) {
-    #  upper <- stats::qnorm(1 - conf / 2, means[j], var[j]^0.5)
-    #  lower <- stats::qnorm(conf / 2, means[j], var[j]^0.5)
-    #  confidence[j, ] <- c(lower, upper)
-    #}
   } #end julia
   acfdata <- forecast::Acf(data, plot = FALSE, lag.max = numb.lags)$acf[2:(numb.lags + 1)]
   confidence_bands <- data.frame(matrixStats::rowQuantiles(ac, probs = c((1-confidence)/2, 1-(1-confidence)/2)))
   colnames(confidence_bands) <- c("lower", "upper")
   
   if (plot){
-    max <- max(c(acfdata, confidence_bands[, "upper"])) + 0.5 * abs(max(c(acfdata, confidence_bands[, "upper"])))
-    
-    if (max >= 1.1) {
-      max <- 1.1
-    }
-  
-    min <- min(c(acfdata, confidence_bands[, "lower"])) - 0.5 * abs(min(c(acfdata, confidence_bands[, "lower"])))
-    if (max <= -1.1) {
-      max <- -1.1
-    }
     df_plot <- cbind(acfdata, 1:numb.lags, confidence_bands)
     colnames(df_plot) <- c("y", "x", "lower", "upper")
-    
-    
-    plot(acfdata, ylab = ylab, xlab = xlab, ylim = c(min, max), main = plot_main)
-    graphics::points(confidence_bands[, "lower"], pch = 3, col = c("red"))
-    graphics::points(confidence_bands[, "upper"], pch = 3, col = c("red"))
-    q <- grDevices::recordPlot()
+    (pl <- ggplot2::ggplot(df_plot, ggplot2::aes(x, y))+
+        ggplot2::geom_point()+
+        ggplot2::geom_line()+
+        ggplot2::geom_ribbon(data=df_plot,ggplot2::aes(ymin=lower,ymax=upper),
+                             fill="steelblue", alpha=0.3)) +
+        ggplot2::theme_bw() + ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
+        ggplot2::ggtitle(plot_main)
   }
 
   end.time <- Sys.time()
   time <- end.time - start.time
   list <- list(
     "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "cov" = coco$cov, means = acfdata,
-    "PBT.plot" = q, "confidence" = confidence_bands, "duration" = time
+    "plot" = pl, "confidence" = confidence_bands, "duration" = time
   )
 
   return(list)
