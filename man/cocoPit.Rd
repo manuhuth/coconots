@@ -39,12 +39,10 @@ set.seed(12345)
 data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
 #julia_installed = TRUE ensures that the fit object
 #is compatible with the julia cocoPit implementation 
-fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+fit <- cocoReg(order = 1, type = "Poisson", data = data)
 
 #PIT R implementation
 pit_r <- cocoPit(fit)
-#PIT Julia implementation
-pit_julia <- cocoPit(fit, julia = TRUE)
 }
 \references{
 Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.

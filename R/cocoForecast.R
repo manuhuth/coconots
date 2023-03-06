@@ -19,12 +19,10 @@
 #' data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
 #' #julia_installed = TRUE ensures that the fit object
 #' #is compatible with the julia cocoForecast implementation 
-#' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+#' fit <- cocoReg(order = 1, type = "Poisson", data = data)
 #'
 #' #median, mode, and density forecasts - R implementation
 #' forecast_r <- cocoForecast(fit)
-#' #median, mode, and density forecasts - Julia implementation
-#' forecast_julia <- cocoForecast(fit, julia = TRUE)
 #' @export
 
 

@@ -18,12 +18,10 @@
 #' data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
 #' #julia_installed = TRUE ensures that the fit object
 #' #is compatible with the julia cocoScore implementation 
-#' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+#' fit <- cocoReg(order = 1, type = "Poisson", data = data)
 #'
 #' #assessment using scoring rules - R implementation
 #' score_r <- cocoScore(fit)
-#' #assessment using scoring rules - Julia implementation
-#' score_julia <- cocoScore(fit, julia = TRUE)
 #' @export
 
 cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
