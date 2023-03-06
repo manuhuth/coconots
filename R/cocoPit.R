@@ -12,6 +12,18 @@
 #' 
 #' Jung, R. C. and Tremayne, A. R. (2010) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
 #' @author Manuel Huth
+#' @examples
+#' lambda <- 1
+#' alpha <- 0.4
+#' set.seed(12345)
+#' data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
+#' #julia_installed = TRUE ensures that the fit object compatible with the julia cocoPit implementation 
+#' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+#'
+#' #PIT R implementation
+#' cocoPit(fit)
+#' #PIT Julia implementation
+#' cocoPit(fit, julia = TRUE)
 #' @export
 
 cocoPit <- function(coco, J = 10, ylab = "Relative frequency",

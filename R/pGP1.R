@@ -1,10 +1,3 @@
-#' @title Compute the cumulative distribution function (CDF) of the GP1 convolution
-#' @description Computes the CDF of the the GP2 convolution distribution with parameters lambda, alpha and eta, at a given quantile q, for a given value of y . 
-#' @param q Value at which to evaluate the CDF
-#' @param y non-negative integer 
-#' @param par A vector of 3 parameters: lambda, alpha and eta
-#' @return The CDF of the the GP1 convolution distribution at the given quantile
-#' @export
 pGP1 <- function(q, y, par) { # q is number we want to know the quantile of
   if ((round(y) != y) | (y < 0)) {
     stop("y must be a non-negative integer")

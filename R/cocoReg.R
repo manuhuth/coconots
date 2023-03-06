@@ -15,16 +15,16 @@
 #' @param order integer vector indicating the order of the model
 #' @param data time series data to be used in the analysis
 #' @param xreg optional matrix of explanatory variables for use in a regression model
-#' @param seasonality integer vector indicating the seasonal component of the model
-#' @param constrained.optim logical indicating whether optimization should be constrained
-#' @param b.beta numeric value indicating the lower bound for the parameters of the explanatory variables for the optimization
+#' @param seasonality integer vector indicating the seasonal component of the model, currently only available in the R version
+#' @param constrained.optim logical indicating whether optimization should be constrained, currently only available in the R version
+#' @param b.beta numeric value indicating the lower bound for the parameters of the explanatory variables for the optimization, currently only available in the R version
 #' @param start optional numeric vector of starting values for the optimization
-#' @param start.val.adjust logical indicating whether starting values should be adjusted
-#' @param method_optim character string indicating the optimization method to be used
-#' @param replace.start.val numeric value indicating the value to replace any invalid starting values
-#' @param iteration.start.val numeric value indicating the proportion of the interval to use as the new starting value
-#' @param method.hessian character string indicating the method to be used to approximate the Hessian matrix
-#' @param cores numeric indicating the number of cores to use
+#' @param start.val.adjust logical indicating whether starting values should be adjusted, currently only available in the R version
+#' @param method_optim character string indicating the optimization method to be used, currently only available in the R version. In the julia implementation this is by default the LBFGS algorithm
+#' @param replace.start.val numeric value indicating the value to replace any invalid starting values, currently only available in the R version
+#' @param iteration.start.val numeric value indicating the proportion of the interval to use as the new starting value, currently only available in the R version
+#' @param method.hessian character string indicating the method to be used to approximate the Hessian matrix, currently only available in the R version
+#' @param cores numeric indicating the number of cores to use, currently only available in the R version
 #' @param julia if TRUE, the model is estimated with Julia. This can improve the speed significantly since julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.
 #' @param julia_installed if TRUE, the model R output will contain a julia compatible output element.
 #' @author Manuel Huth

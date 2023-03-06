@@ -42,6 +42,16 @@ list containing 'time' and 'data' which are the computation time and generated t
 The cocoSim_base function generates a time series of a specified innovation distribution, size, order, and parameters. It also allows for the option of specifying the seasonality range and an initial set of data. 
 The function checks for valid input of the type, order, parameters, seasonality, and initial data before generating the time series.
 }
+\examples{
+lambda <- 1
+alpha <- 0.4
+set.seed(12345)
+
+# Simulate using the RCPP implementation
+data_rcpp <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
+# Simulate using the Julia implementation
+data_julia <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
+}
 \author{
 Manuel Huth
 }

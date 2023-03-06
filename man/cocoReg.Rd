@@ -32,25 +32,25 @@ cocoReg(
 
 \item{xreg}{optional matrix of explanatory variables for use in a regression model}
 
-\item{seasonality}{integer vector indicating the seasonal component of the model}
+\item{seasonality}{integer vector indicating the seasonal component of the model, currently only available in the R version}
 
-\item{constrained.optim}{logical indicating whether optimization should be constrained}
+\item{constrained.optim}{logical indicating whether optimization should be constrained, currently only available in the R version}
 
-\item{b.beta}{numeric value indicating the lower bound for the parameters of the explanatory variables for the optimization}
+\item{b.beta}{numeric value indicating the lower bound for the parameters of the explanatory variables for the optimization, currently only available in the R version}
 
 \item{start}{optional numeric vector of starting values for the optimization}
 
-\item{start.val.adjust}{logical indicating whether starting values should be adjusted}
+\item{start.val.adjust}{logical indicating whether starting values should be adjusted, currently only available in the R version}
 
-\item{method_optim}{character string indicating the optimization method to be used}
+\item{method_optim}{character string indicating the optimization method to be used, currently only available in the R version. In the julia implementation this is by default the LBFGS algorithm}
 
-\item{replace.start.val}{numeric value indicating the value to replace any invalid starting values}
+\item{replace.start.val}{numeric value indicating the value to replace any invalid starting values, currently only available in the R version}
 
-\item{iteration.start.val}{numeric value indicating the proportion of the interval to use as the new starting value}
+\item{iteration.start.val}{numeric value indicating the proportion of the interval to use as the new starting value, currently only available in the R version}
 
-\item{method.hessian}{character string indicating the method to be used to approximate the Hessian matrix}
+\item{method.hessian}{character string indicating the method to be used to approximate the Hessian matrix, currently only available in the R version}
 
-\item{cores}{numeric indicating the number of cores to use}
+\item{cores}{numeric indicating the number of cores to use, currently only available in the R version}
 
 \item{julia}{if TRUE, the model is estimated with Julia. This can improve the speed significantly since julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.}
 

@@ -47,3 +47,16 @@ A list containing the plot, density, mode, and median of the forecast
 \description{
 Computes forecast for a COCO model. The function can handle both Poisson and GP models, with order 1 or 2. The function also has options for the maximum number of forecast steps, covariates for forecasting, the plot, plot title, axis labels, width of bars, seasonality, and decimal precision.
 }
+\examples{
+lambda <- 1
+alpha <- 0.4
+set.seed(12345)
+data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
+#julia_installed = TRUE ensures that the fit object is compatible with the julia cocoForecast implementation 
+fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+
+#median, mode, and density forecasts - R implementation
+cocoForecast(fit)
+#median, mode, and density forecasts - Julia implementation
+cocoForecast(fit, julia = TRUE)
+}

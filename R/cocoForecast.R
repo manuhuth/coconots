@@ -12,6 +12,18 @@
 #' @param decimals Number of decimal places for the forecast probabilities
 #' @param julia  if TRUE, the estimate is predicted with Julia.
 #' @return A list containing the plot, density, mode, and median of the forecast
+#' @examples
+#' lambda <- 1
+#' alpha <- 0.4
+#' set.seed(12345)
+#' data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
+#' #julia_installed = TRUE ensures that the fit object is compatible with the julia cocoForecast implementation 
+#' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+#'
+#' #median, mode, and density forecasts - R implementation
+#' cocoForecast(fit)
+#' #median, mode, and density forecasts - Julia implementation
+#' cocoForecast(fit, julia = TRUE)
 #' @export
 
 

@@ -13,6 +13,15 @@
 #' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
 #' @return list containing 'time' and 'data' which are the computation time and generated time series respectively
 #' @author Manuel Huth
+#' @examples
+#' lambda <- 1
+#' alpha <- 0.4
+#' set.seed(12345)
+#' 
+#' # Simulate using the RCPP implementation
+#' data_rcpp <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
+#' # Simulate using the Julia implementation
+#' data_julia <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
 #' @export
 
 cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2), init = NULL, 

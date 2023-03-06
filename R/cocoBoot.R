@@ -12,6 +12,18 @@
 #' @return A plot of the autocorrelations with bootstrap confidence intervals
 #' @references 
 #' Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
+#' @examples
+#' lambda <- 1
+#' alpha <- 0.4
+#' set.seed(12345)
+#' data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
+#' #julia_installed = TRUE ensures that the fit object is compatible with the julia cocoBoot implementation 
+#' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+#'
+#' #assessment using bootstrap - R implementation
+#' cocoBoot(fit)
+#' #assessment using bootstrap - Julia implementation
+#' cocoBoot(fit, julia = TRUE)
 #' @export
 
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,

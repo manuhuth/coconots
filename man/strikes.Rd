@@ -1,14 +1,14 @@
-\name{strikes}
-\alias{strikes}
+\name{cuts}
+\alias{cuts}
 \title{
-  Strike Time Series
+  Cuts Time Series
 }
 \description{
   Add description (one sentence). 
 }
 
 \format{
-  A data frame with the strike counts.
+  A data frame with the cuts counts.
 }
 
 \source{

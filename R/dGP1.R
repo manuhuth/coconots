@@ -1,11 +1,3 @@
-#' @title Compute the probability density function (PDF) of GP1 convolution Distribution
-#' @description Computes the PDF of the GP1 convolution distribution with parameters lambda, alpha and eta, at a given value x, for a given value of y . 
-#' @param x The value at which to evaluate the PDF
-#' @param y non-negative integer 
-#' @param par A vector of 3 parameters: lambda, alpha and eta
-#' @return The PDF of the GP1 convolution distribution at the given value
-#' @export
-
 dGP1 <- function(x, y, par) {
   if ((round(y) != y) | (y < 0)) {
     stop("y must be a non-negative integer")

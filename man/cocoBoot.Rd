@@ -13,7 +13,7 @@ cocoBoot(
   xlab = "Lag",
   ylab = "Autocorrelation",
   julia = FALSE,
-  julia_seed
+  julia_seed = NULL
 )
 }
 \arguments{
@@ -40,6 +40,19 @@ A plot of the autocorrelations with bootstrap confidence intervals
 }
 \description{
 Computes bootstrap confidence intervals for the autocorrelations of a COCO model. The function can handle both Poisson and GP models, with order 1 or 2. The function also has options for the number of lags, the number of bootstrap replicates, the confidence level, and the labels for the plot.
+}
+\examples{
+lambda <- 1
+alpha <- 0.4
+set.seed(12345)
+data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
+#julia_installed = TRUE ensures that the fit object is compatible with the julia cocoBoot implementation 
+fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+
+#assessment using bootstrap - R implementation
+cocoBoot(fit)
+#assessment using bootstrap - Julia implementation
+cocoBoot(fit, julia = TRUE)
 }
 \references{
 Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.

@@ -32,6 +32,19 @@ A plot of the probability integral transform for the coco object.
 \description{
 Plots the probability integral transform (PIT) for a given coco object.
 }
+\examples{
+lambda <- 1
+alpha <- 0.4
+set.seed(12345)
+data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
+#julia_installed = TRUE ensures that the fit object compatible with the julia cocoPit implementation 
+fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+
+#PIT R implementation
+cocoPit(fit)
+#PIT Julia implementation
+cocoPit(fit, julia = TRUE)
+}
 \references{
 Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.
 
