@@ -54,7 +54,7 @@ data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 10
 fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 
 #assessment using bootstrap - R implementation
-boot_r <- cocoBoot(fit, rep.Bootstrap=50)
+#boot_r <- cocoBoot(fit, rep.Bootstrap=50)
 #assessment using bootstrap - Julia implementation
 #boot_julia <- cocoBoot(fit, rep.Bootstrap=50, julia = TRUE)
 }
