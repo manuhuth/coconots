@@ -22,13 +22,13 @@
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 #'
 #' #assessment using bootstrap - R implementation
-#' boot_r <- cocoBoot(fit)
+#' boot_r <- cocoBoot(fit, rep.bootstrap=50)
 #' #assessment using bootstrap - Julia implementation
-#' boot_julia <- cocoBoot(fit, julia = TRUE)
+#' boot_julia <- cocoBoot(fit, rep.bootstrap=50, julia = TRUE)
 #' @export
 
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
-                 confidence = 0.95, plot_main="Bootstrap", xlab = "Lag", 
+                 confidence = 0.95, plot = FALSE, plot_main="Bootstrap", xlab = "Lag", 
                  ylab= "Autocorrelation", julia = FALSE, julia_seed = NULL
                  ) {
   start.time <- Sys.time()
@@ -209,21 +209,27 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   acfdata <- forecast::Acf(data, plot = FALSE, lag.max = numb.lags)$acf[2:(numb.lags + 1)]
   confidence_bands <- data.frame(matrixStats::rowQuantiles(ac, probs = c((1-confidence)/2, 1-(1-confidence)/2)))
   colnames(confidence_bands) <- c("lower", "upper")
-  max <- max(c(acfdata, confidence_bands[, "upper"])) + 0.5 * abs(max(c(acfdata, confidence_bands[, "upper"])))
   
-  if (max >= 1.1) {
-    max <- 1.1
+  if (plot){
+    max <- max(c(acfdata, confidence_bands[, "upper"])) + 0.5 * abs(max(c(acfdata, confidence_bands[, "upper"])))
+    
+    if (max >= 1.1) {
+      max <- 1.1
+    }
+  
+    min <- min(c(acfdata, confidence_bands[, "lower"])) - 0.5 * abs(min(c(acfdata, confidence_bands[, "lower"])))
+    if (max <= -1.1) {
+      max <- -1.1
+    }
+    df_plot <- cbind(acfdata, 1:numb.lags, confidence_bands)
+    colnames(df_plot) <- c("y", "x", "lower", "upper")
+    
+    
+    plot(acfdata, ylab = ylab, xlab = xlab, ylim = c(min, max), main = plot_main)
+    graphics::points(confidence_bands[, "lower"], pch = 3, col = c("red"))
+    graphics::points(confidence_bands[, "upper"], pch = 3, col = c("red"))
+    q <- grDevices::recordPlot()
   }
-
-  min <- min(c(acfdata, confidence_bands[, "lower"])) - 0.5 * abs(min(c(acfdata, confidence_bands[, "lower"])))
-  if (max <= -1.1) {
-    max <- -1.1
-  }
-
-  plot(acfdata, ylab = ylab, xlab = xlab, ylim = c(min, max), main = plot_main)
-  graphics::points(confidence_bands[, "lower"], pch = 3, col = c("red"))
-  graphics::points(confidence_bands[, "upper"], pch = 3, col = c("red"))
-  q <- grDevices::recordPlot()
 
   end.time <- Sys.time()
   time <- end.time - start.time
