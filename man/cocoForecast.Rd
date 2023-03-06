@@ -57,7 +57,7 @@ data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 10
 fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 
 #median, mode, and density forecasts - R implementation
-cocoForecast(fit)
+forecast_r <- cocoForecast(fit)
 #median, mode, and density forecasts - Julia implementation
-cocoForecast(fit, julia = TRUE)
+forecast_julia <- cocoForecast(fit, julia = TRUE)
 }

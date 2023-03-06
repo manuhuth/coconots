@@ -42,9 +42,9 @@ data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 10
 fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 
 #PIT R implementation
-cocoPit(fit)
+pit_r <- cocoPit(fit)
 #PIT Julia implementation
-cocoPit(fit, julia = TRUE)
+pit_julia <- cocoPit(fit, julia = TRUE)
 }
 \references{
 Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.

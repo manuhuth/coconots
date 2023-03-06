@@ -29,9 +29,9 @@ data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 10
 fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 
 #assessment using scoring rules - R implementation
-cocoScore(fit)
+score_r <- cocoScore(fit)
 #assessment using scoring rules - Julia implementation
-cocoScore(fit, julia = TRUE)
+score_julia <- cocoScore(fit, julia = TRUE)
 }
 \references{
 Czado, C. and Gneitling, T. and Held, L. (2009) Predictive Model Assessment for Count Data. \emph{Biometrics}, \bold{65}, 4, 1254--1261.

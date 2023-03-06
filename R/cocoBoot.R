@@ -22,9 +22,9 @@
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 #'
 #' #assessment using bootstrap - R implementation
-#' cocoBoot(fit)
+#' boot_r <- cocoBoot(fit)
 #' #assessment using bootstrap - Julia implementation
-#' cocoBoot(fit, julia = TRUE)
+#' boot_julia <- cocoBoot(fit, julia = TRUE)
 #' @export
 
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,

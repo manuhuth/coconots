@@ -51,9 +51,9 @@ data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 10
 fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 
 #assessment using bootstrap - R implementation
-cocoBoot(fit)
+boot_r <- cocoBoot(fit)
 #assessment using bootstrap - Julia implementation
-cocoBoot(fit, julia = TRUE)
+boot_julia <- cocoBoot(fit, julia = TRUE)
 }
 \references{
 Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.

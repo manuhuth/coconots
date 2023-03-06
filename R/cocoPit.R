@@ -22,9 +22,9 @@
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 #'
 #' #PIT R implementation
-#' cocoPit(fit)
+#' pit_r <- cocoPit(fit)
 #' #PIT Julia implementation
-#' cocoPit(fit, julia = TRUE)
+#' pit_julia <- cocoPit(fit, julia = TRUE)
 #' @export
 
 cocoPit <- function(coco, J = 10, ylab = "Relative frequency",

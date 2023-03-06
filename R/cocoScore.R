@@ -21,9 +21,9 @@
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 #'
 #' #assessment using scoring rules - R implementation
-#' cocoScore(fit)
+#' score_r <- cocoScore(fit)
 #' #assessment using scoring rules - Julia implementation
-#' cocoScore(fit, julia = TRUE)
+#' score_julia <- cocoScore(fit, julia = TRUE)
 #' @export
 
 cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
