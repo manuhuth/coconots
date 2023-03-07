@@ -53,12 +53,13 @@ length <- 500
 
 pars <- c(1, 0.4)
 set.seed(12345)
-data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length)
+data <- cocoSim(order = 1, type = "Poisson", par = pars,
+                length = length)
 coco <- cocoReg(order = 1, type = "Poisson", data = data$data)
 #> Registered S3 method overwritten by 'quantmod':
 #>   method            from
 #>   as.zoo.data.frame zoo
-cocoSummary(coco)
+summary(coco)
 #> Coefficients:
 #>          Estimate   Std. Error
 #> lambda     0.9427       0.0678
@@ -89,7 +90,8 @@ library(coconots)
 length <- 500
 
 pars <- c(1, 0.4)
-data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length, julia = TRUE, julia_seed = 123)
+data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length,
+                julia = TRUE, julia_seed = 123)
 coco <- cocoReg(order = 1, type = "Poisson", data = data, julia = TRUE)
 ```
 
@@ -99,7 +101,10 @@ We provide different tools for model assessment. One can even use the
 RCPP implementation for the regression and do model assessment with the
 Julia implementation. If this is desired, one needs to specify in the
 output of the regression that it should be Julia compatible. Note that
-this is not necessary if the Julia option in the regression is true.
+this is not necessary if the Julia option in the regression is true. For
+the probability integral transform histogram, the histigram is plotted
+automatically. For the bootstrap and the forecast, the plots can be used
+using R’s plot function.
 
 ``` r
 library(coconots)
@@ -108,7 +113,8 @@ length <- 500
 pars <- c(1, 0.4)
 set.seed(12345)
 data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length)
-coco <- cocoReg(order = 1, type = "Poisson", data = data$data, julia_installed=TRUE)
+coco <- cocoReg(order = 1, type = "Poisson", data = data$data,
+                julia_installed=TRUE)
 (scores <- cocoScore(coco, julia = TRUE))
 #> $log.score
 #> [1] 1.501935
@@ -124,15 +130,15 @@ pit <- cocoPit(coco, julia = TRUE)
 <img src="man/figures/README-example_assessment-1.png" width="100%" />
 
 ``` r
-boot_plot <- cocoBoot(coco, plot_bootstrap = TRUE, julia = TRUE)
-boot_plot$plot + ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::ylab("Autocorrelation")
+boot <- cocoBoot(coco, julia = TRUE)
+plot(boot)
 ```
 
 <img src="man/figures/README-example_assessment-2.png" width="100%" />
 
 ``` r
-forecast <- cocoForecast(coco, plot = TRUE, julia = TRUE)
-forecast$plot
+forecast <- cocoForecast(coco, julia = TRUE)
+plot(forecast)
 ```
 
 <img src="man/figures/README-example_assessment-3.png" width="100%" />

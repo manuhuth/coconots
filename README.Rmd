@@ -53,9 +53,10 @@ length <- 500
 
 pars <- c(1, 0.4)
 set.seed(12345)
-data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length)
+data <- cocoSim(order = 1, type = "Poisson", par = pars,
+                length = length)
 coco <- cocoReg(order = 1, type = "Poisson", data = data$data)
-cocoSummary(coco)
+summary(coco)
 ```
 
 ## Example using Julia implementation
@@ -73,12 +74,14 @@ library(coconots)
 length <- 500
 
 pars <- c(1, 0.4)
-data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length, julia = TRUE, julia_seed = 123)
+data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length,
+                julia = TRUE, julia_seed = 123)
 coco <- cocoReg(order = 1, type = "Poisson", data = data, julia = TRUE)
 ```
 
 ## Model assessment
 We provide different tools for model assessment. One can even use the RCPP implementation for the regression and do model assessment with the Julia implementation. If this is desired, one needs to specify in the output of the regression that it should be Julia compatible. Note that this is not necessary if the Julia option in the regression is true.
+For the probability integral transform histogram, the histigram is plotted automatically. For the bootstrap and the forecast, the plots can be used using R's plot function.
 ```{r example_assessment, echo=TRUE}
 library(coconots)
 length <- 500
@@ -86,13 +89,14 @@ length <- 500
 pars <- c(1, 0.4)
 set.seed(12345)
 data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length)
-coco <- cocoReg(order = 1, type = "Poisson", data = data$data, julia_installed=TRUE)
+coco <- cocoReg(order = 1, type = "Poisson", data = data$data,
+                julia_installed=TRUE)
 (scores <- cocoScore(coco, julia = TRUE))
 pit <- cocoPit(coco, julia = TRUE)
-boot_plot <- cocoBoot(coco, plot_bootstrap = TRUE, julia = TRUE)
-boot_plot$plot + ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::ylab("Autocorrelation")
-forecast <- cocoForecast(coco, plot = TRUE, julia = TRUE)
-forecast$plot
+boot <- cocoBoot(coco, julia = TRUE)
+plot(boot)
+forecast <- cocoForecast(coco, julia = TRUE)
+plot(forecast)
 ```
 
 
