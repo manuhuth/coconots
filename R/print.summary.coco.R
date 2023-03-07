@@ -1,5 +1,5 @@
 #' @export
-print.summary.coco <- function(coco, score=FALSE, julia = FALSE) {
+print.summary.coco <- function(coco, ..., score=FALSE) {
   df <- data.frame(cbind(round(coco$par,4), round(coco$se,4)) )
   colnames(df) <- c("Estimate", "Std. Error")
   
