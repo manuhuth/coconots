@@ -1,4 +1,4 @@
-summary.coco.fit <- function(coco, ...) {
-  class(coco) <- "summary.coco.fit"
+summary.coco <- function(coco, ...) {
+  class(coco) <- "summary.coco"
   return(coco)
 }
