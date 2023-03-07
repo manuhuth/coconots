@@ -4,7 +4,6 @@
 #' @param max The maximum number of the forecast support for the plot. If NULL all values for which the cumulative distribution function is below 1- epsilon are used for the plot.
 #' @param epsilon If max is NULL, epsilon determines how big the support of the forecast is for the plot.
 #' @param xcast A vector of covariate values for forecasting 
-#' @param plot A logical value indicating whether to plot the forecast
 #' @param title Plot title
 #' @param xlab X-axis label for the plot
 #' @param ylab Y-axis label for the plot
@@ -27,8 +26,8 @@
 #' @export
 
 
-cocoForecast <- function(coco, max=NULL, epsilon=1e-5, xcast=NULL, plot = FALSE, title = "Probability mass",
-             xlab="x", ylab="Probabilities", width_bars = 0.04, seasonality=c(1,2), decimals = 4, julia=FALSE) {
+cocoForecast <- function(coco, max=NULL, epsilon=1e-5, xcast=NULL,
+                         seasonality=c(1,2), decimals = 4, julia=FALSE) {
   
   if (is.null(max)){
     max_use <- 60
@@ -45,7 +44,7 @@ cocoForecast <- function(coco, max=NULL, epsilon=1e-5, xcast=NULL, plot = FALSE,
       index_use <- min(which(cumulative >= 1-epsilon))
       densities <- densities[1:index_use]
     }
-    x <- 0:(length(densities)-1)
+    
     mode <- coco_forecast$values[[1]]
     median <- coco_forecast$values[[2]]
   } else {
@@ -100,13 +99,10 @@ cocoForecast <- function(coco, max=NULL, epsilon=1e-5, xcast=NULL, plot = FALSE,
   
   densities_plot <- round(densities, decimals)
   
-  if (isTRUE(plot)) {
-  plot <- ggplot2::ggplot(mapping = ggplot2::aes(x = x, y = densities_plot)) + ggplot2::geom_bar(stat="identity", position="dodge", width=width_bars) + 
-    ggplot2::labs(title = title, x = xlab, y = ylab) + ggplot2::scale_x_continuous(breaks=x) +
-    ggplot2::theme_bw() + ggplot2::theme(text = ggplot2::element_text(size = 20)) 
-  }
+  x <- 0:(length(densities)-1)
   
-  out <- list("plot" = plot, "density" = densities, "mode" = mode, "median" = median)
-  
+  out <- list("plot" = plot, "density" = densities, "mode" = mode,
+              "median" = median, "densities_plot" = densities_plot, "x" = x)
+  class(out) <- "cocoForecast"
   return(out) 
 }

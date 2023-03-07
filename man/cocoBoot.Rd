@@ -26,14 +26,6 @@ cocoBoot(
 
 \item{confidence}{Confidence level for the intervals}
 
-\item{plot_bootstrap}{if TRUE, a graph with the results is plotted}
-
-\item{plot_main}{Plot title}
-
-\item{xlab}{X-axis label for the plot}
-
-\item{ylab}{Y-axis label for the plot}
-
 \item{julia}{if TRUE, the bootstrap is run with Julia.}
 
 \item{julia_seed}{Seed for the julia implementation. Only used if julia equals TRUE.}

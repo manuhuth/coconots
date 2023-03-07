@@ -4,10 +4,6 @@
 #' @param numb.lags Number of lags for which to compute autocorrelations
 #' @param rep.Bootstrap Number of bootstrap replicates to use
 #' @param confidence Confidence level for the intervals
-#' @param plot_bootstrap if TRUE, a graph with the results is plotted
-#' @param plot_main Plot title
-#' @param xlab X-axis label for the plot
-#' @param ylab Y-axis label for the plot
 #' @param julia  if TRUE, the bootstrap is run with Julia.
 #' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
 #' @return A plot of the autocorrelations with bootstrap confidence intervals
@@ -196,26 +192,16 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   } #end julia
   acfdata <- forecast::Acf(data, plot = FALSE, lag.max = numb.lags)$acf[2:(numb.lags + 1)]
   confidence_bands <- data.frame(matrixStats::rowQuantiles(ac, probs = c((1-confidence)/2, 1-(1-confidence)/2)))
-  colnames(confidence_bands) <- c("lower", "upper")
-  pl = NULL
-  if (plot_bootstrap){
-    df_plot <- cbind(acfdata, 1:numb.lags, confidence_bands)
-    colnames(df_plot) <- c("y", "x", "lower", "upper")
-    (pl <- ggplot2::ggplot(df_plot, ggplot2::aes(x, y)) +
-            ggplot2::geom_point()+
-            ggplot2::geom_line()+
-            ggplot2::geom_ribbon(data=df_plot,ggplot2::aes(ymin=lower,ymax=upper),
-                                 fill="steelblue", alpha=0.3)) +
-            ggplot2::theme_bw() + ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
-            ggplot2::ggtitle(plot_main)
-  }
+  df_plot <- cbind(acfdata, 1:numb.lags, confidence_bands)
+  colnames(df_plot) <- c("y", "x", "lower", "upper")
+  
 
   end.time <- Sys.time()
   time <- end.time - start.time
-  list <- list(
+  list_out <- list(
     "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "cov" = coco$cov, means = acfdata,
-    "plot" = pl, "confidence" = confidence_bands, "duration" = time
+    "confidence" = confidence_bands, "duration" = time, "df_plot" = df_plot
   )
-
-  return(list)
+  class(list_out) <- "cocoBoot"
+  return(list_out)
 } # end function

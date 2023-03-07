@@ -9,11 +9,6 @@ cocoForecast(
   max = NULL,
   epsilon = 1e-05,
   xcast = NULL,
-  plot = FALSE,
-  title = "Probability mass",
-  xlab = "x",
-  ylab = "Probabilities",
-  width_bars = 0.04,
   seasonality = c(1, 2),
   decimals = 4,
   julia = FALSE
@@ -28,7 +23,11 @@ cocoForecast(
 
 \item{xcast}{A vector of covariate values for forecasting}
 
-\item{plot}{A logical value indicating whether to plot the forecast}
+\item{seasonality}{A vector of two integers indicating the seasonalities of the time series}
+
+\item{decimals}{Number of decimal places for the forecast probabilities}
+
+\item{julia}{if TRUE, the estimate is predicted with Julia.}
 
 \item{title}{Plot title}
 
@@ -37,12 +36,6 @@ cocoForecast(
 \item{ylab}{Y-axis label for the plot}
 
 \item{width_bars}{Width of bars in the plot}
-
-\item{seasonality}{A vector of two integers indicating the seasonalities of the time series}
-
-\item{decimals}{Number of decimal places for the forecast probabilities}
-
-\item{julia}{if TRUE, the estimate is predicted with Julia.}
 }
 \value{
 A list containing the plot, density, mode, and median of the forecast

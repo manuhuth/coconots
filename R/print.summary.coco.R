@@ -1,13 +1,18 @@
 #' @export
-print.summary.coco <- function(coco, ...) {
+print.summary.coco <- function(x, ...) {
+  coco <- x
   df <- data.frame(cbind(round(coco$par,4), round(coco$se,4)) )
   colnames(df) <- c("Estimate", "Std. Error")
   
   cat("Coefficients:\n")
   print(df, print.gap=3, quote=FALSE, na.print="")
+  if (is.null(coco$julia_reg)){
+    julia = FALSE
+  } else{
+    julia = TRUE
+  }
   
-  
-  if (isTRUE(score)) { 
+  if (isTRUE(coco$score)) { 
     sc <- cocoScore(coco, julia=julia)
     cat("\nType:", coco$type,    "\nOrder:", coco$order,
         "\n\nLog-likelihood:", round(coco$likelihood,4),
