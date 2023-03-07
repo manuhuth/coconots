@@ -19,7 +19,7 @@ A list with the elements:
   - varX: a vector of the conditional variances of the residuals
 }
 \description{
-The function calculates the residuals of a coco model object.
+Calculates the residuals of a fitted model for model evaluation purposes.
 }
 \author{
 Manuel Huth

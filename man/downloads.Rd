@@ -1,23 +1,11 @@
 \name{downloads}
 \alias{downloads}
 \title{
-  Time Series of Downloads
+  Time Series of daily downloads of a TeX-editor
 }
 \description{
-  Add description (one sentence). 
-}
-\usage{
-  downloads
-}
-
-\format{
-  A data frame with the download counts.
-}
-
-\source{
-  source
-
-  references to?  
+  The data represent the number of daily downloads of a TeX-editor between June 2006 and February
+2007 and has a sample size of 267. The data have been provided by Christian Weiss. 
 }
 
 

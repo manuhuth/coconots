@@ -1,5 +1,5 @@
 #' @title cocoScore
-#' @description The function calculates the log, quadratic and ranked probability scores for a coco model object.
+#' @description The function calculates the log, quadratic and ranked probability scores for assessing relative performance of a fitted model as proposed by Czado et al. (2009).
 #' @param coco An object of class "coco.fit" or "coco.fit.c"
 #' @param val.num A non-negative real number which is used to stop the calculation of the score in case of GP models. The default value is 1e-10
 #' @param julia if TRUE, the scores are computed with Julia.

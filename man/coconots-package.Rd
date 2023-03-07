@@ -6,14 +6,15 @@
   Analysis of Convolution-closed Nonlinear Count Time Series XXX
 }
 \description{
-  We provide R functions to conduct Likelihood-based methods for model fitting, assessment and prediction analysis of some convolution-closed count time series model. The marginal distribution can be Poisson or Generalized Poisson. Regression effects can be modelled via time varying innovation rates.
+  Functions to analyse time series consisting of low counts are provided. The focus in the current version is on practical models that can  capture first and higher-order dependence based on the work of Joe (1996). Both equidispersed and overdispersed marginal distributions of data can be modelled. Regression effects can be included. Fast and efficient procedures for likelihood based inference and probabilistic forecasting are provided as well as useful tools for model validation and diagnostics. 
 }
 \details{
-The package allows simulation of convolution-closed count time series models with the \code{\link{cocoSim}} function. Model fitting is performed with the \code{\link{cocoReg}} routine. By passing a cocoReg-type object, \code{\link{cocoForecast}} computes the probability mass of the one-step ahead forecast. \code{\link{cocoBoot}}, \code{\link{cocoPit}}, \code{\link{cocoScore}}, and \code{\link{cocoResid}} provide routines for model assessment. 
-
-
-The main usage of the package is illustrated within the \code{\link{cocoReg}} function chapter. For more details and examples of the functions see the respective sections within this vignette. 
-
+The package allows simulation of convolution-closed count time series models with the cocoSim
+function. Model fitting is performed with the \code{\link{cocoReg}} routine. By passing a cocoReg-type object,
+\code{\link{cocoForecast}} computes the one-step ahead forecasting distribution. \code{\link{cocoBoot}}, \code{\link{cocoPit}},
+\code{\link{cocoScore}}, and \code{\link{cocoResid}} provide routines for model assessment.
+The main usage of the package is illustrated within the cocoReg function chapter. For more details
+and examples of the functions see the respective sections within this vignette.
 }
 \author{
 Maintainer: Manuel Huth <manuel.huth@yahoo.com>

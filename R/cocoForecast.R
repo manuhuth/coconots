@@ -1,7 +1,8 @@
 #' @title Forecast for COCO models
-#' @description Computes forecast for a COCO model. The function can handle both Poisson and GP models, with order 1 or 2. The function also has options for the maximum number of forecast steps, covariates for forecasting, the plot, plot title, axis labels, width of bars, seasonality, and decimal precision.
+#' @description Computes the one-step ahead forecast distribution for the models included in the coconots package. 
 #' @param coco An object of class coco.fit or coco.fit.c
-#' @param max The maximum number of forecast steps
+#' @param max The maximum number of the forecast support for the plot. If NULL all values for which the cumulative distribution function is below 1- epsilon are used for the plot.
+#' @param epsilon If max is NULL, epsilon determines how big the support of the forecast is for the plot.
 #' @param xcast A vector of covariate values for forecasting (only required for coco.fit.c class)
 #' @param plot A logical value indicating whether to plot the forecast
 #' @param title Plot title
@@ -26,13 +27,24 @@
 #' @export
 
 
-cocoForecast <- function(coco, max=15, xcast=NULL, plot = FALSE, title = "Probability mass",
+cocoForecast <- function(coco, max=NULL, epsilon=1e-5, xcast=NULL, plot = FALSE, title = "Probability mass",
              xlab="x", ylab="Probabilities", width_bars = 0.04, seasonality=c(1,2), decimals = 4, julia=FALSE) {
+  
+  if (is.null(max)){
+    max_use <- 60
+  } else{
+    max_use <- max
+  }
   
   if (!is.null(coco$julia_reg) & julia){
     addJuliaFunctions()
-    coco_forecast <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPredict", coco$julia_reg, 0:max, xcast))
+    coco_forecast <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPredict", coco$julia_reg, 0:max_use, xcast))
     densities <- coco_forecast$values[[4]]
+    if (is.null(max)){
+      cumulative <- cumsum(densities)
+      index_use <- min(which(cumulative >= 1-epsilon))
+      densities <- densities[1:index_use]
+    }
     x <- 0:(length(densities)-1)
     mode <- coco_forecast$values[[1]]
     median <- coco_forecast$values[[2]]
@@ -60,7 +72,7 @@ cocoForecast <- function(coco, max=15, xcast=NULL, plot = FALSE, title = "Probab
     
     densities <- c()
     
-    x <- 0:max
+    x <- 0:max_use
     
     if (order == 1){
       if (type == "Poisson"){parameter <- c(parameter,0)}
@@ -79,7 +91,11 @@ cocoForecast <- function(coco, max=15, xcast=NULL, plot = FALSE, title = "Probab
     mode <- match(max(densities), densities) - 1
     distribution_function <- cumsum(densities)
     median <- min(which(distribution_function >= 0.5)) - 1
-    
+    if (is.null(max)){
+      cumulative <- cumsum(densities)
+      index_use <- min(which(cumulative >= 1-epsilon))
+      densities <- densities[1:index_use]
+    }
   }
   
   densities_plot <- round(densities, decimals)

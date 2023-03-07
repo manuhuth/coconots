@@ -1,16 +1,15 @@
 #' @title cocoReg
-#' @description The function \code{cocoReg} fits first and second order (Generalized) Poisson #'  Autoregressive (G)PAR models presented in (Jung and Tremayne, 2010). Lags enter the
-#'  process via a random operator that accounts for the count structure of the data (Joe, 1996). The models can be thought of as
-#'  stationary Markov chains of finite order, where the distribution of the innovations can
-#'  either be Poisson or Generalized Poisson.
-#'
-#'  Maximum likelihood is used for estimation and the user can choose to include linear
-#'  constraints or not. If linear constraints are not included, it cannot be guaranteed that
-#'  the parameters will lie in the theoretically feasible parameter space, but the
-#'  optimization process will be faster.
-#'
-#'  The function uses method of moments estimators to obtain starting values for the numerical
-#'  optimization, but the user can also specify their own starting values if desired.
+#' @description The function fits first and second order (Generalized) Poisson Autoregressive (G)PAR
+#' models presented in (Jung and Tremayne, 2010). Autoregressive dependence on past counts is modelled by a special random operator that not only preserve integer status, but also, via the property of closure under
+#' convolution, ensure that the marginal distribution of the observed counts is from the same family as the innovations. 
+#' The models can be thought of as stationary Markov chains of finite order, where the distribution of the innovations can either be Poisson or Generalized Poisson, where the latter can account for overdispersed data.
+#' Maximum likelihood is used for estimation and the user can choose to include linear constraints or
+#' not. If linear constraints are not included, it cannot be guaranteed that the parameters will lie in the
+#' theoretically feasible parameter space, but the optimization process might be faster.
+#' The function uses method of moments estimators to obtain starting values for the numerical optimization,
+#' but the user can also specify their own starting values if desired. If Julia is installed, the user can choose whether the optimization is run in Julia
+#' which might yield faster results, especially for large models with many observations, due to the use of automatic differentiation.
+#' 
 #' @param type character string indicating the type of model to be fitted
 #' @param order integer vector indicating the order of the model
 #' @param data time series data to be used in the analysis
@@ -25,21 +24,19 @@
 #' @param iteration.start.val numeric value indicating the proportion of the interval to use as the new starting value, currently only available in the R version
 #' @param method.hessian character string indicating the method to be used to approximate the Hessian matrix, currently only available in the R version
 #' @param cores numeric indicating the number of cores to use, currently only available in the R version
-#' @param julia if TRUE, the model is estimated with Julia. This can improve the speed significantly since julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.
-#' @param julia_installed if TRUE, the model R output will contain a julia compatible output element.
+#' @param julia if TRUE, the model is estimated with Julia. This can improve the speed significantly since Julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.
+#' @param julia_installed if TRUE, the model R output will contain a Julia compatible output element.
 #' @author Manuel Huth
 #' @return output of the regression analysis
 #' 
 #' @details 
-#' \emph{General introduction to the methods with formulas (math-heaviest part of the vignette)}
-#' 
 #' Let a time series of counts be \eqn{\{X_t\}}, a random operator be \eqn{R(\cdot)}, the relevant past history of \eqn{X_t} be \eqn{\mathcal{F}_{t-1}} and \eqn{W_t} be i.i.d discrete innovations. The general model is of the form
 #' \deqn{X_t = R(\mathcal{F}_{t-1}) + W_t.}
 #' For first-order and second-order models the relevant past history depends on the model's order and is defined by \eqn{\mathcal{F}_{t-1} = X_{t-s_1}} and \eqn{\mathcal{F}_{t-1} = (X_{t-s_1}, X_{t-s_2})}, respectively. \eqn{s_1} < \eqn{s_2} are the parameters indicating the degree of stochastic seasonality.
 #' The innovations follow either a Poisson or a generalized Poisson distribution. Such that either \eqn{W_t \sim Pois(\lambda_t)} or \eqn{W_t \sim GP(\lambda_t, \eta)}.
 #' If no covariates are used \eqn{\lambda_t = \lambda} and if covariates are used \deqn{\lambda_t = \exp{\left(\beta_0 + \sum_{j = 1}^p \beta_j \cdot y_{t,j} \right)},} whereby \eqn{y_{t,j}} is the \eqn{j}-th covariate at time \eqn{t}.
 #' Standard errors are computed by the square root of the diagonal elements of the inverse hessian.
-#' 
+#' Add more on julia usage
 #' @references 
 #' Jung, R. C. and Tremayne, A. R. (2010) Convolution-closed models for count timeseries with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
 #' 

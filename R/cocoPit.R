@@ -1,5 +1,5 @@
 #' @title Probability integral transform plot for coco
-#' @description Plots the probability integral transform (PIT) for a given coco object. 
+#' @description Computes the probability integral transform (PIT) and provides the non-randomized PIT histogram for assessing absolute performance of a fitted model as proposed by Czado et al. (2009).
 #' @param coco An object of class coco.fit or coco.fit.c
 #' @param J Number of bins for the histogram (default: 10)
 #' @param ylab Label for the y-axis (default: "Relative frequency")

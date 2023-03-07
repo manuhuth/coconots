@@ -1,5 +1,5 @@
 #' @title Bootstrap Confidence Intervals for Autocorrelations of a COCO Model
-#' @description Computes bootstrap confidence intervals for the autocorrelations of a COCO model. The function can handle both Poisson and GP models, with order 1 or 2. The function also has options for the number of lags, the number of bootstrap replicates, the confidence level, and the labels for the plot.
+#' @description Model checking procedure emphasizing reproducibility in fitted models to provide an overall evaluation of fit as proposed by Tsay (1992).
 #' @param coco An object of class coco.fit or coco.fit.c
 #' @param numb.lags Number of lags for which to compute autocorrelations
 #' @param rep.Bootstrap Number of bootstrap replicates to use
@@ -11,6 +11,7 @@
 #' @param julia  if TRUE, the bootstrap is run with Julia.
 #' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
 #' @return A plot of the autocorrelations with bootstrap confidence intervals
+#' @details Computes bootstrap confidence intervals for the autocorrelations of a fitted model and compares them to the sample autocorrelations of the data. 
 #' @references 
 #' Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
 #' @examples

@@ -39,8 +39,13 @@ cocoSim(
 list containing 'time' and 'data' which are the computation time and generated time series respectively
 }
 \description{
-The cocoSim_base function generates a time series of a specified innovation distribution, size, order, and parameters. It also allows for the option of specifying the seasonality range and an initial set of data. 
-The function checks for valid input of the type, order, parameters, seasonality, and initial data before generating the time series.
+The function generates a time series of low counts for a specified innovation distribution, sample size, lag order,
+and parameter values.
+}
+\details{
+It also allows for the option of specifying the seasonality range and an initial set of
+data. The function checks for valid input of the type, order, parameters, seasonality, and initial data
+before generating the time series.
 }
 \examples{
 lambda <- 1

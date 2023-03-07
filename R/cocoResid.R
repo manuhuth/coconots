@@ -1,5 +1,5 @@
 #' @title cocoResid
-#' @description The function calculates the residuals of a coco model object.
+#' @description Calculates the residuals of a fitted model for model evaluation purposes.
 #' @param coco An object of class "coco.fit" or "coco.fit.c"
 #' @param val.num A non-negative real number which is used to stop the calculation of
 #' @author Manuel Huth

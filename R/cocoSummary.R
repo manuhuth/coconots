@@ -1,4 +1,4 @@
-#' @title cocoSummary
+#' @title print.summary.cocoReg
 #' @description Summarizes the results of a cocoReg analysis
 #' @param coco an object of class cocoReg
 #' @param score logical indicating whether to include score statistics in the summary
@@ -7,7 +7,7 @@
 #' @author Manuel Huth
 #' @export
 
-cocoSummary <- function(coco, score=FALSE, julia = FALSE) {
+print.summary.coco.fit <- function(coco, score=FALSE, julia = FALSE, ...) {
   df <- data.frame(cbind(round(coco$par,4), round(coco$se,4)) )
   colnames(df) <- c("Estimate", "Std. Error")
   
@@ -28,6 +28,4 @@ cocoSummary <- function(coco, score=FALSE, julia = FALSE) {
         "\n\nLog-likelihood:", round(coco$likelihood,4)
     )
   }
-
-
 }

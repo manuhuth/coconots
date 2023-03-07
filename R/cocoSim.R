@@ -1,7 +1,6 @@
 #' @title Simulation of time series data 
-#' @description 
-#' The cocoSim_base function generates a time series of a specified innovation distribution, size, order, and parameters. It also allows for the option of specifying the seasonality range and an initial set of data. 
-#' The function checks for valid input of the type, order, parameters, seasonality, and initial data before generating the time series.
+#' @description The function generates a time series of low counts for a specified innovation distribution, sample size, lag order,
+#' and parameter values. 
 #' @param type character, either "Poisson" or "GP" indicating the type of the innovation distribution
 #' @param order integer, either 1 or 2 indicating the order of the model
 #' @param par numeric vector, the parameters of the model, the number of elements in the vector depends on the type and order specified
@@ -12,6 +11,9 @@
 #' @param julia If TRUE, the julia implementation is used. In this case, seasonality and init are ignored but it might be faster.
 #' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
 #' @return list containing 'time' and 'data' which are the computation time and generated time series respectively
+#' @details It also allows for the option of specifying the seasonality range and an initial set of
+#' data. The function checks for valid input of the type, order, parameters, seasonality, and initial data
+#' before generating the time series.
 #' @author Manuel Huth
 #' @examples
 #' lambda <- 1

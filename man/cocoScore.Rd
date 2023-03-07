@@ -17,7 +17,7 @@ cocoScore(coco, val.num = 1e-10, julia = FALSE)
 A list containing the log score, quadratic score and ranked probability score.
 }
 \description{
-The function calculates the log, quadratic and ranked probability scores for a coco model object.
+The function calculates the log, quadratic and ranked probability scores for assessing relative performance of a fitted model as proposed by Czado et al. (2009).
 }
 \examples{
 lambda <- 1

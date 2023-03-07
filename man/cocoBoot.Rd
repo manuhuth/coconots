@@ -42,7 +42,10 @@ cocoBoot(
 A plot of the autocorrelations with bootstrap confidence intervals
 }
 \description{
-Computes bootstrap confidence intervals for the autocorrelations of a COCO model. The function can handle both Poisson and GP models, with order 1 or 2. The function also has options for the number of lags, the number of bootstrap replicates, the confidence level, and the labels for the plot.
+Model checking procedure emphasizing reproducibility in fitted models to provide an overall evaluation of fit as proposed by Tsay (1992).
+}
+\details{
+Computes bootstrap confidence intervals for the autocorrelations of a fitted model and compares them to the sample autocorrelations of the data.
 }
 \examples{
 lambda <- 1

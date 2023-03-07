@@ -30,7 +30,7 @@ cocoPit(
 A plot of the probability integral transform for the coco object.
 }
 \description{
-Plots the probability integral transform (PIT) for a given coco object.
+Computes the probability integral transform (PIT) and provides the non-randomized PIT histogram for assessing absolute performance of a fitted model as proposed by Czado et al. (2009).
 }
 \examples{
 lambda <- 1

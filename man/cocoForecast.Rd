@@ -6,7 +6,8 @@
 \usage{
 cocoForecast(
   coco,
-  max = 15,
+  max = NULL,
+  epsilon = 1e-05,
   xcast = NULL,
   plot = FALSE,
   title = "Probability mass",
@@ -21,7 +22,9 @@ cocoForecast(
 \arguments{
 \item{coco}{An object of class coco.fit or coco.fit.c}
 
-\item{max}{The maximum number of forecast steps}
+\item{max}{The maximum number of the forecast support for the plot. If NULL all values for which the cumulative distribution function is below 1- epsilon are used for the plot.}
+
+\item{epsilon}{If max is NULL, epsilon determines how big the support of the forecast is for the plot.}
 
 \item{xcast}{A vector of covariate values for forecasting (only required for coco.fit.c class)}
 
@@ -45,7 +48,7 @@ cocoForecast(
 A list containing the plot, density, mode, and median of the forecast
 }
 \description{
-Computes forecast for a COCO model. The function can handle both Poisson and GP models, with order 1 or 2. The function also has options for the maximum number of forecast steps, covariates for forecasting, the plot, plot title, axis labels, width of bars, seasonality, and decimal precision.
+Computes the one-step ahead forecast distribution for the models included in the coconots package.
 }
 \examples{
 lambda <- 1
