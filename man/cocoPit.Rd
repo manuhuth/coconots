@@ -2,7 +2,7 @@
 % Please edit documentation in R/cocoPit.R
 \name{cocoPit}
 \alias{cocoPit}
-\title{Probability integral transform plot for coco}
+\title{Probability integral transform based model assessment procedure}
 \usage{
 cocoPit(
   coco,

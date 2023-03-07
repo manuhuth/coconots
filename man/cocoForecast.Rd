@@ -2,7 +2,7 @@
 % Please edit documentation in R/cocoForecast.R
 \name{cocoForecast}
 \alias{cocoForecast}
-\title{Forecast for COCO models}
+\title{One-step ahead forecast distribution}
 \usage{
 cocoForecast(
   coco,

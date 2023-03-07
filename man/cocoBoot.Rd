@@ -2,7 +2,7 @@
 % Please edit documentation in R/cocoBoot.R
 \name{cocoBoot}
 \alias{cocoBoot}
-\title{Bootstrap Confidence Intervals for Autocorrelations of a COCO Model}
+\title{Bootstrap based model assessment procedure}
 \usage{
 cocoBoot(
   coco,

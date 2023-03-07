@@ -1,4 +1,4 @@
-#' @title cocoResid
+#' @title Residual based model assessment procedure
 #' @description Calculates the residuals of a fitted model for model evaluation purposes.
 #' @param coco An object of class "coco
 #' @param val.num A non-negative real number which is used to stop the calculation of

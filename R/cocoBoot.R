@@ -1,4 +1,4 @@
-#' @title Bootstrap Confidence Intervals for Autocorrelations of a COCO Model
+#' @title Bootstrap based model assessment procedure
 #' @description Model checking procedure emphasizing reproducibility in fitted models to provide an overall evaluation of fit as proposed by Tsay (1992).
 #' @param coco An object of class coco
 #' @param numb.lags Number of lags for which to compute autocorrelations

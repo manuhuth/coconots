@@ -1,4 +1,4 @@
-#' @title Probability integral transform plot for coco
+#' @title Probability integral transform based model assessment procedure
 #' @description Computes the probability integral transform (PIT) and provides the non-randomized PIT histogram for assessing absolute performance of a fitted model as proposed by Czado et al. (2009).
 #' @param coco An object of class coco
 #' @param J Number of bins for the histogram (default: 10)

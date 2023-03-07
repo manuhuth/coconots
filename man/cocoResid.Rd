@@ -2,7 +2,7 @@
 % Please edit documentation in R/cocoResid.R
 \name{cocoResid}
 \alias{cocoResid}
-\title{cocoResid}
+\title{Residual based model assessment procedure}
 \usage{
 cocoResid(coco, val.num = 1e-05)
 }

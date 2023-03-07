@@ -2,7 +2,7 @@
 % Please edit documentation in R/cocoScore.R
 \name{cocoScore}
 \alias{cocoScore}
-\title{cocoScore}
+\title{Scoring rule based model assessment procedure}
 \usage{
 cocoScore(coco, val.num = 1e-10, julia = FALSE)
 }

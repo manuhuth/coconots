@@ -1,4 +1,4 @@
-#' @title Forecast for COCO models
+#' @title One-step ahead forecast distribution
 #' @description Computes the one-step ahead forecast distribution for the models included in the coconots package. 
 #' @param coco An object of class coco
 #' @param max The maximum number of the forecast support for the plot. If NULL all values for which the cumulative distribution function is below 1- epsilon are used for the plot.
