@@ -20,13 +20,13 @@ cocoForecast(
 )
 }
 \arguments{
-\item{coco}{An object of class coco.fit or coco.fit.c}
+\item{coco}{An object of class coco}
 
 \item{max}{The maximum number of the forecast support for the plot. If NULL all values for which the cumulative distribution function is below 1- epsilon are used for the plot.}
 
 \item{epsilon}{If max is NULL, epsilon determines how big the support of the forecast is for the plot.}
 
-\item{xcast}{A vector of covariate values for forecasting (only required for coco.fit.c class)}
+\item{xcast}{A vector of covariate values for forecasting}
 
 \item{plot}{A logical value indicating whether to plot the forecast}
 

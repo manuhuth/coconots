@@ -1,6 +1,6 @@
 #' @title Bootstrap Confidence Intervals for Autocorrelations of a COCO Model
 #' @description Model checking procedure emphasizing reproducibility in fitted models to provide an overall evaluation of fit as proposed by Tsay (1992).
-#' @param coco An object of class coco.fit or coco.fit.c
+#' @param coco An object of class coco
 #' @param numb.lags Number of lags for which to compute autocorrelations
 #' @param rep.Bootstrap Number of bootstrap replicates to use
 #' @param confidence Confidence level for the intervals
@@ -61,7 +61,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   
     conf.alpha <- 1 - confidence
     
-    if ( (methods::is(coco, "coco.fit")) ) {
+    if ( is.null(coco$cov) ) {
       if ((coco$type == "GP") & (coco$order == 2)) {
         par <- coco$par
         lambda <- par[1]
@@ -100,7 +100,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     }
   
   
-    if ( (methods::is(coco, "coco.fit.c")) )  {
+    if ( !is.null(coco$cov) )  {
       if ((coco$type == "Poisson") & (coco$order == 1)) {
         par <- coco$par
         alpha <- par[1]

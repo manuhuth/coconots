@@ -7,7 +7,7 @@
 cocoResid(coco, val.num = 1e-05)
 }
 \arguments{
-\item{coco}{An object of class "coco.fit" or "coco.fit.c"}
+\item{coco}{An object of class "coco}
 
 \item{val.num}{A non-negative real number which is used to stop the calculation of}
 }

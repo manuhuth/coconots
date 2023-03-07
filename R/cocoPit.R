@@ -1,6 +1,6 @@
 #' @title Probability integral transform plot for coco
 #' @description Computes the probability integral transform (PIT) and provides the non-randomized PIT histogram for assessing absolute performance of a fitted model as proposed by Czado et al. (2009).
-#' @param coco An object of class coco.fit or coco.fit.c
+#' @param coco An object of class coco
 #' @param J Number of bins for the histogram (default: 10)
 #' @param ylab Label for the y-axis (default: "Relative frequency")
 #' @param xlab Label for the x-axis (default: "Probability integral transform")
@@ -46,7 +46,7 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency",
   data <- coco$ts
   seasonality <- coco$seasonality
 
-  if(methods::is(coco, "coco.fit")) {
+  if ( is.null(coco$cov) ) {
     if ((coco$type == "GP") & (coco$order == 2)) {
       par <- coco$par
       lambda <- rep(par[1], length(data))
@@ -86,7 +86,7 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency",
 
 
 
-  if (methods::is(coco, "coco.fit.c")) {
+  if ( !is.null(coco$cov) ) {
     if ((coco$type == "Poisson") & (coco$order == 1)) {
       par <- coco$par
       alpha <- par[1]

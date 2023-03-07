@@ -1,4 +1,5 @@
-summary.coco <- function(coco, ...) {
-  class(coco) <- "summary.coco"
-  return(coco)
+#' @export
+summary.coco <- function(object, ...) {
+  class(object) <- "summary.coco"
+  return(object)
 }

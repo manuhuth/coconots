@@ -14,7 +14,7 @@ cocoPit(
 )
 }
 \arguments{
-\item{coco}{An object of class coco.fit or coco.fit.c}
+\item{coco}{An object of class coco}
 
 \item{J}{Number of bins for the histogram (default: 10)}
 

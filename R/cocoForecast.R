@@ -1,9 +1,9 @@
 #' @title Forecast for COCO models
 #' @description Computes the one-step ahead forecast distribution for the models included in the coconots package. 
-#' @param coco An object of class coco.fit or coco.fit.c
+#' @param coco An object of class coco
 #' @param max The maximum number of the forecast support for the plot. If NULL all values for which the cumulative distribution function is below 1- epsilon are used for the plot.
 #' @param epsilon If max is NULL, epsilon determines how big the support of the forecast is for the plot.
-#' @param xcast A vector of covariate values for forecasting (only required for coco.fit.c class)
+#' @param xcast A vector of covariate values for forecasting 
 #' @param plot A logical value indicating whether to plot the forecast
 #' @param title Plot title
 #' @param xlab X-axis label for the plot
@@ -58,7 +58,7 @@ cocoForecast <- function(coco, max=NULL, epsilon=1e-5, xcast=NULL, plot = FALSE,
     z <- data[length(data) - seasonality[2] + 1]
     parameter <-coco$par
     
-    if (methods::is(coco, "coco.fit.c")) { 
+    if ( !is.null(coco$cov) ){ 
       number_covariates <- ncol(coco$cov) 
       betas <- parameter[(length(parameter)-number_covariates+1):length(parameter)]
       parameter <- utils::head(parameter, -number_covariates)

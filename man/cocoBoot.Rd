@@ -18,7 +18,7 @@ cocoBoot(
 )
 }
 \arguments{
-\item{coco}{An object of class coco.fit or coco.fit.c}
+\item{coco}{An object of class coco}
 
 \item{numb.lags}{Number of lags for which to compute autocorrelations}
 

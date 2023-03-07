@@ -1,6 +1,6 @@
 #' @title cocoResid
 #' @description Calculates the residuals of a fitted model for model evaluation purposes.
-#' @param coco An object of class "coco.fit" or "coco.fit.c"
+#' @param coco An object of class "coco
 #' @param val.num A non-negative real number which is used to stop the calculation of
 #' @author Manuel Huth
 #' @return A list with the elements:
@@ -12,17 +12,13 @@
 cocoResid <- function(coco, val.num = 1e-5) {
   start.time <- Sys.time()
 
-  if (!((methods::is(coco, "coco.fit")) | (methods::is(coco, "coco.fit.c")))) {
-    stop("The coco object must be from class coco.fit or coco.fit.c")
-  }
-
   if (val.num <= 0) {
     stop("Option val.num must be a non-negative real number")
   }
 
   seasonality <- coco$seasonality
 
-  if (methods::is(coco, "coco.fit")) {
+  if ( is.null(coco$cov) ) {
     xreg <- NULL
     ### PAR1
     if ((coco$type == "Poisson") & (coco$order == 1)) {
@@ -184,7 +180,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
     )
   } # end no covariates
 
-  if (methods::is(coco, "coco.fit.c")) {
+  if ( !is.null(coco$cov) ) {
     ### PAR1
     if ((coco$type == "Poisson") & (coco$order == 1)) {
       par <- coco$par

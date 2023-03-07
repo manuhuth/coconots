@@ -230,7 +230,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         "seasonality" = seasonality, "likelihood" = likelihood,
         "duration" = end_time - start_time, julia_reg = julia_reg
       )
-      class(list_func) <- "coco.fit.c"
+      
       return(list_func)
     } # end PAR1
     return(PAR1(data))
@@ -406,7 +406,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         "seasonality" = seasonality, "likelihood" = likelihood, "duration" = end_time - start_time,
         julia_reg = julia_reg
       )
-      class(list_func) <- "coco.fit.c"
+ 
       return(list_func)
     } # end PGP1
     return(GP1(data))
@@ -624,7 +624,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         "order" = 2, "seasonality" = seasonality, "likelihood" = likelihood,
         "duration" = end_time - start_time, julia_reg = julia_reg
       )
-      class(list_func) <- "coco.fit.c"
+
       return(list_func)
     } # end PAR2
     return(PAR2(data))
@@ -882,7 +882,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         "seasonality" = seasonality, "likelihood" = likelihood,
         "duration" = end_time - start_time, julia_reg = julia_reg
       )
-      class(list_func) <- "coco.fit.c"
+
       return(list_func)
     } # end GP2
     return(GP2(data))

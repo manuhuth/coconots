@@ -102,6 +102,8 @@ cocoReg <- function(type, order, data, xreg = NULL, seasonality = c(1, 2),
       iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed
     )
   }
+  
+  class(output) <- "coco"
 
   return(output)
 }

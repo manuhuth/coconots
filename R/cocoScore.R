@@ -1,6 +1,6 @@
 #' @title cocoScore
 #' @description The function calculates the log, quadratic and ranked probability scores for assessing relative performance of a fitted model as proposed by Czado et al. (2009).
-#' @param coco An object of class "coco.fit" or "coco.fit.c"
+#' @param coco An object of class coco
 #' @param val.num A non-negative real number which is used to stop the calculation of the score in case of GP models. The default value is 1e-10
 #' @param julia if TRUE, the scores are computed with Julia.
 #' @return A list containing the log score, quadratic score and ranked probability score.
@@ -38,7 +38,7 @@ cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
   seas <- coco$seasonality
   data <- coco$ts
 
-  if (methods::is(coco, "coco.fit")){
+  if ( is.null(coco$cov) ){
 
 
   #Poisson 1
@@ -225,7 +225,7 @@ cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
 
 
 ##covariates
-  if (methods::is(coco, "coco.fit.c")){
+  if ( !is.null(coco$cov) ){
     xreg <- coco$cov
 
 

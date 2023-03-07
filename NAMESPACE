@@ -2,6 +2,7 @@
 
 S3method(print,summary.coco)
 S3method(print,summary.coco.fit)
+S3method(summary,coco)
 export(cocoBoot)
 export(cocoForecast)
 export(cocoPit)

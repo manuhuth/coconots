@@ -7,7 +7,7 @@
 cocoScore(coco, val.num = 1e-10, julia = FALSE)
 }
 \arguments{
-\item{coco}{An object of class "coco.fit" or "coco.fit.c"}
+\item{coco}{An object of class coco}
 
 \item{val.num}{A non-negative real number which is used to stop the calculation of the score in case of GP models. The default value is 1e-10}
 
