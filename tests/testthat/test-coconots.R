@@ -15,7 +15,7 @@ test_that("GP2Works", {
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
     cocoResid(fit)
-    cocoSummary(fit, julia=i)
+    summary(fit, julia=i)
     cocoScore(fit, julia=i)
     cocoForecast(fit, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
@@ -36,7 +36,7 @@ test_that("Poisson2Works", {
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
     cocoResid(fit)
-    cocoSummary(fit, julia=i)
+    summary(fit, julia=i)
     cocoScore(fit, julia=i)
     cocoForecast(fit, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
@@ -56,7 +56,7 @@ test_that("GP1Works", {
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
     cocoResid(fit)
-    cocoSummary(fit, julia=i)
+    summary(fit, julia=i)
     cocoScore(fit, julia=i)
     cocoForecast(fit, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
@@ -76,7 +76,7 @@ test_that("Poisson1Works", {
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
     cocoResid(fit)
-    cocoSummary(fit, julia=i)
+    summary(fit, julia=i)
     cocoScore(fit, julia=i)
     cocoForecast(fit, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
@@ -104,7 +104,7 @@ test_that("Poisson1Works_cov", {
  for (i in c(TRUE, FALSE)){
    cocoPit(fit, julia=i)
    cocoResid(fit)
-   cocoSummary(fit, julia=i)
+   summary(fit, julia=i)
    cocoScore(fit, julia=i)
    cocoForecast(fit, xcast = cov[1,], julia=i)
    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
@@ -131,7 +131,7 @@ test_that("GP1Works_cov", {
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
     cocoResid(fit)
-    cocoSummary(fit, julia=i)
+    summary(fit, julia=i)
     cocoScore(fit, julia=i)
     cocoForecast(fit, xcast = cov[1,], julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
@@ -157,7 +157,7 @@ test_that("Poisson2Works_cov", {
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
     cocoResid(fit)
-    cocoSummary(fit, julia=i)
+    summary(fit, julia=i)
     cocoScore(fit, julia=i)
     cocoForecast(fit, xcast = cov[1,], julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
@@ -183,7 +183,7 @@ test_that("GP2Works_cov", {
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
     cocoResid(fit)
-    cocoSummary(fit, julia=i)
+    summary(fit, julia=i)
     cocoScore(fit, julia=i)
     cocoForecast(fit, xcast = cov[1,], julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
@@ -369,7 +369,7 @@ test_that("GP1Works_cov_2", {
   fit <- cocoReg(order = 1, type = "GP", data = data, xreg = cov)
   cocoPit(fit)
   cocoResid(fit)
-  cocoSummary(fit)
+  summary(fit)
   cocoScore(fit)
   cocoForecast(fit, xcast = cov[1,])
   cocoBoot(fit, rep.Bootstrap = 6)
@@ -390,7 +390,7 @@ test_that("Poisson2Works_cov_2", {
   fit <- cocoReg(order = 2, type = "Poisson", data = data, xreg = cov)
   cocoPit(fit)
   cocoResid(fit)
-  cocoSummary(fit)
+  summary(fit)
   cocoScore(fit)
   cocoForecast(fit, xcast = cov[1,])
   cocoBoot(fit, rep.Bootstrap = 6)
@@ -411,7 +411,7 @@ test_that("GP2Works_cov_2", {
   fit <- cocoReg(order = 2, type = "GP", data = data, xreg = cov)
   cocoPit(fit)
   cocoResid(fit)
-  cocoSummary(fit)
+  summary(fit)
   cocoScore(fit)
   cocoForecast(fit, xcast = cov[1,])
   cocoBoot(fit, rep.Bootstrap = 6)

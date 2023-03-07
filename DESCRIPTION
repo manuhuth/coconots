@@ -7,7 +7,7 @@ Author: Manuel Huth [aut,cre],
 	Robert C. Jung [aut],
 	A. R. Tremanye [aut]
 Maintainer: Manuel Huth <manuel.huth@yahoo.com>
-Description: Useful tools for fitting, validating,  and forecasting of practical convolution-closed count time series models for low counts are provided. The marginal distribution can be Poisson or Generalized Poisson. Regression effects can be modelled via time varying innovation rates.
+Description: Useful tools for fitting, validating, and forecasting of practical convolution-closed count time series models for low counts are provided. The marginal distribution can be Poisson or Generalized Poisson. Regression effects can be modelled via time varying innovation rates.
 Imports:
     Rcpp,
     forecast,
