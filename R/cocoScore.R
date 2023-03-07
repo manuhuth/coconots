@@ -4,6 +4,14 @@
 #' @param val.num A non-negative real number which is used to stop the calculation of the score in case of GP models. The default value is 1e-10
 #' @param julia if TRUE, the scores are computed with Julia.
 #' @return A list containing the log score, quadratic score and ranked probability score.
+#' @details Scoring rules assign a numerical score based on the predictive distribution and the observed data  to measure the quality of probabilistic predictions.
+#' They are provided here as a model selection tool and are computed as averages over the relevant set of (in-sample) predictions. Scoring rules are, generally, negatively oriented
+#' penalties that one seeks to minimize. The literature has developed a large number of scoring
+#' rules and, unless there is a unique and clearly defined underlying decision problem,
+#' there is no automatic choice of a (proper) scoring rule to be used in any given situation.
+#' Therefore, the use of a variety of scoring rules may be appropriate to take advantage of
+#' specific emphases and strengths. Three proper scoring rules (for a definition of the concept of propriety see Gneiting and Raftery, 2007) which Jung, McCabe and Tremayne (2015) found to be particularly useful are implemented.
+#' For more information see the references listed below.
 #' @references 
 #' Czado, C. and Gneitling, T. and Held, L. (2009) Predictive Model Assessment for Count Data. \emph{Biometrics}, \bold{65}, 4, 1254--1261.
 #'

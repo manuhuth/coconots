@@ -19,6 +19,16 @@ A list containing the log score, quadratic score and ranked probability score.
 \description{
 The function calculates the log, quadratic and ranked probability scores for assessing relative performance of a fitted model as proposed by Czado et al. (2009).
 }
+\details{
+Scoring rules assign a numerical score based on the predictive distribution and the observed data  to measure the quality of probabilistic predictions.
+They are provided here as a model selection tool and are computed as averages over the relevant set of (in-sample) predictions. Scoring rules are, generally, negatively oriented
+penalties that one seeks to minimize. The literature has developed a large number of scoring
+rules and, unless there is a unique and clearly defined underlying decision problem,
+there is no automatic choice of a (proper) scoring rule to be used in any given situation.
+Therefore, the use of a variety of scoring rules may be appropriate to take advantage of
+specific emphases and strengths. Three proper scoring rules (for a definition of the concept of propriety see Gneiting and Raftery, 2007) which Jung, McCabe and Tremayne (2015) found to be particularly useful are implemented.
+For more information see the references listed below.
+}
 \examples{
 lambda <- 1
 alpha <- 0.4
