@@ -4,10 +4,6 @@
 #' @param max The maximum number of the forecast support for the plot. If NULL all values for which the cumulative distribution function is below 1- epsilon are used for the plot.
 #' @param epsilon If max is NULL, epsilon determines how big the support of the forecast is for the plot.
 #' @param xcast A vector of covariate values for forecasting 
-#' @param title Plot title
-#' @param xlab X-axis label for the plot
-#' @param ylab Y-axis label for the plot
-#' @param width_bars Width of bars in the plot
 #' @param seasonality A vector of two integers indicating the seasonalities of the time series
 #' @param decimals Number of decimal places for the forecast probabilities
 #' @param julia  if TRUE, the estimate is predicted with Julia.

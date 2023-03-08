@@ -9,10 +9,6 @@ cocoBoot(
   numb.lags = 21,
   rep.Bootstrap = 400,
   confidence = 0.95,
-  plot_bootstrap = FALSE,
-  plot_main = "Bootstrap",
-  xlab = "Lag",
-  ylab = "Autocorrelation",
   julia = FALSE,
   julia_seed = NULL
 )

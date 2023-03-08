@@ -28,14 +28,6 @@ cocoForecast(
 \item{decimals}{Number of decimal places for the forecast probabilities}
 
 \item{julia}{if TRUE, the estimate is predicted with Julia.}
-
-\item{title}{Plot title}
-
-\item{xlab}{X-axis label for the plot}
-
-\item{ylab}{Y-axis label for the plot}
-
-\item{width_bars}{Width of bars in the plot}
 }
 \value{
 A list containing the plot, density, mode, and median of the forecast
