@@ -46,7 +46,7 @@ Jung, R. C. and Tremayne, A. R. (2011) Convolution-closed models for count time 
 
 Jung, Robert C., Brendan P. M. McCabe, and Andrew R. Tremayne. 2016. Model validation and diagnostics. \emph{In Handbook of Discrete
 Valued Time Series}. Edited by Richard A. Davis, Scott H. Holan, Robert Lund and Nalini Ravishanker. Boca Raton: Chapman and
-Hall, pp. 189–-218.
+Hall, pp. 189--218.
 
 Joe, H. (1996) Time series models with univariate margins in the convolution-closed infinitely divisible class. \emph{Journal of Applied Probability}, 664--677.
 

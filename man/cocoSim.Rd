@@ -10,7 +10,6 @@ cocoSim(
   par,
   length,
   xreg = NULL,
-  seasonality = c(1, 2),
   init = NULL,
   julia = FALSE,
   julia_seed = NULL
@@ -31,8 +30,7 @@ in the vector depends on the type and order specified.}
 \item{init}{numeric vector, initial data to use, default is NULL. See details
 for more information on the usage.}
 
-\item{julia}{If TRUE, the Julia implementation is used. In this case,
-seasonality and init are ignored but it might be faster.}
+\item{julia}{If TRUE, the Julia implementation is used. In this case, init is ignored but it might be faster.}
 
 \item{julia_seed}{Seed for the Julia implementation. Only used if Julia equals TRUE.}
 }
@@ -45,7 +43,7 @@ The function generates a time series of low counts for a specified
 and parameter values.
 }
 \details{
-The function checks for valid input of the type, order, parameters, seasonality, and initial data
+The function checks for valid input of the type, order, parameters, and initial data
 before generating the time series.
 
 The init parameter allows users to set a custom burn-in period

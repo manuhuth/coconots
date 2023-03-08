@@ -10,11 +10,10 @@
 #' @param xreg data.frame, data frame of control variables
 #' @param init numeric vector, initial data to use, default is NULL. See details
 #' for more information on the usage.
-#' @param julia If TRUE, the Julia implementation is used. In this case,
-#'  seasonality and init are ignored but it might be faster.
+#' @param julia If TRUE, the Julia implementation is used. In this case, init is ignored but it might be faster.
 #' @param julia_seed Seed for the Julia implementation. Only used if Julia equals TRUE.
 #' @return The generated time series
-#' @details The function checks for valid input of the type, order, parameters, seasonality, and initial data
+#' @details The function checks for valid input of the type, order, parameters, and initial data
 #' before generating the time series.
 #'
 #'The init parameter allows users to set a custom burn-in period
@@ -41,7 +40,7 @@
 #' data_julia <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
 #' @export
 
-cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2), init = NULL, 
+cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL, 
                     julia=FALSE, julia_seed = NULL) {
   seasonality <- c(1, 2) #will be used as argument in future versions
   
