@@ -93,7 +93,6 @@ coco <- cocoReg(order = 1, type = "Poisson", data = data,
                 julia_installed=TRUE)
 (scores <- cocoScore(coco, julia = TRUE))
 pit <- cocoPit(coco, julia = TRUE)
-pit$confidence_bands
 plot(pit)
 boot <- cocoBoot(coco, julia = TRUE)
 plot(boot)

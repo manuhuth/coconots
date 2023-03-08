@@ -32,6 +32,7 @@ cocoPit <- function(coco, J = 10, alpha = 0.05, julia=FALSE) {
   }
   
   if (!is.null(coco$julia_reg) & julia){
+    data <- coco$ts
     addJuliaFunctions()
     coco_pit <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPit", coco$julia_reg,J))
     J_test <- J
