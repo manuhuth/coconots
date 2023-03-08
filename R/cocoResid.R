@@ -4,7 +4,7 @@
 #' @param val.num A non-negative real number which is used to stop the calculation of
 #' @author Manuel Huth
 #' @return A list with the vector of conditional means, conditional variances,
-#'  residuals, pearson residuals.
+#'  residuals, Pearson residuals.
 #'@details Returns the (Pearson) residuals which are computed as the scaled
 #'deviation of the observed count  from its conditional expectation given the relevant 
 #'past history,  including possible covariates.  If a fitted model is correctly specified, these residuals

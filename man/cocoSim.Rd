@@ -2,7 +2,7 @@
 % Please edit documentation in R/cocoSim.R
 \name{cocoSim}
 \alias{cocoSim}
-\title{Simulation of time series data}
+\title{Simulation of Count Time Series}
 \usage{
 cocoSim(
   type,
@@ -38,7 +38,7 @@ for more information on the usage.}
 The generated time series
 }
 \description{
-The function generates a time series of low counts for a specified
+The function generates a time series of low counts from the (G)PAR model class for a specified
  innovation distribution, sample size, lag order,
 and parameter values.
 }

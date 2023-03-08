@@ -1,5 +1,5 @@
-#' @title Simulation of time series data 
-#' @description The function generates a time series of low counts for a specified
+#' @title Simulation of Count Time Series
+#' @description The function generates a time series of low counts from the (G)PAR model class for a specified
 #'  innovation distribution, sample size, lag order,
 #' and parameter values. 
 #' @param type character, either "Poisson" or "GP" indicating the type of the innovation distribution
@@ -44,9 +44,14 @@ cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL,
                     julia=FALSE, julia_seed = NULL) {
   seasonality <- c(1, 2) #will be used as argument in future versions
   
+  init_add <- 0
+  
   if (is.null(init)) {
     length_burn_in <- 200
-  } else {length_burn_in <- 0}
+  } else {
+    length_burn_in <- 0
+    init_add <- order
+  }
   
   if (is.null(xreg)) {
     if (order == 2){
@@ -81,7 +86,7 @@ cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL,
       return(cocoSimJulia(type, order, par, length, xreg))
     }
     
-    size <- length + length_burn_in
+    size <- length + length_burn_in + init_add
     output <- cocoSim_base(type = type, order = order, par = par, size = size,
                            seasonality = seasonality, init = init)
     output$data <- output$data[(length_burn_in+1):(length+length_burn_in)]

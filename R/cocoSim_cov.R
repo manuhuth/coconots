@@ -75,9 +75,9 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       data[t] <- stats::rpois(n = 1, lambda_start1)
     }
 
-    if (!is.null(init)) {
-      data <- init
-    }
+    if (!is.null(init) ) {
+      data <- init[(length(init) - length(data)+1):(length(init))]
+    } 
 
     lambdas <- exp(xreg %*% vec_lambda)
 
@@ -121,9 +121,9 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       data[t] <- rgenpois(n = 1, lambda_start1, eta)
     }
 
-    if (!is.null(init)) {
-      data <- init
-    }
+    if (!is.null(init) ) {
+      data <- init[(length(init) - length(data)+1):(length(init))]
+    } 
 
     lambdas <- exp(xreg %*% vec_lambda)
 
@@ -169,9 +169,9 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       data[t] <- stats::rpois(n = 1, lambda_start1)
     }
 
-    if (!is.null(init)) {
-      data <- init
-    }
+    if (!is.null(init) ) {
+      data <- init[(length(init) - length(data)+1):(length(init))]
+    } 
 
     lambdas <- exp(xreg %*% vec_lambda)
 
@@ -218,9 +218,9 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       data[t] <- rgenpois(n = 1, lambda_start1, eta)
     }
 
-    if (!is.null(init)) {
-      data <- init
-    }
+    if (!is.null(init) ) {
+      data <- init[(length(init) - length(data)+1):(length(init))]
+    } 
 
     lambdas <- exp( xreg %*% vec_lambda)
 
@@ -246,7 +246,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
   if (is.null(init)){
     warning("No burn-in period is specified using the init argument. Hence, the resulting simulated time series might not be stationary. You can add a custom burn-in period by passing it to the init argument. This could be, for example, done by simulating a burn-in period with appropriate covariates using cocoSim and passing the resulting time series to the init argument of a new cocoSim run.") 
   } else {
-    output$data <- output$data[(length(init) + 1):length(output$data)]
+    output$data <- output$data[(order + 1):length(output$data)]
   }
   
   return(output)

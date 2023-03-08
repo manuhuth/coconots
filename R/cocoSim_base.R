@@ -70,7 +70,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     
     data <- stats::rpois(n = seasonality[1], lambda)
     if (!is.null(init) ) {
-      data <- init
+      data <- init[(length(init) - length(data)+1):(length(init))]
     } 
     
     N <- length(data)
@@ -100,7 +100,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     data <- rgenpois(n = seasonality[1], lambda, eta)
 
     if (!is.null(init) ) {
-      data <- init
+      data <- init[(length(init) - length(data)+1):(length(init))]
     }
 
     N <- length(data)
@@ -130,7 +130,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     data <- stats::rpois(n = seasonality[2], lambda)
 
     if (!is.null(init) ) {
-      data <- init
+      data <- init[(length(init) - length(data)+1):(length(init))]
     }
 
     N <- length(data)
@@ -163,7 +163,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     data <- rgenpois(n = seasonality[2], lambda, eta)
 
     if (!is.null(init) ) {
-      data <- init
+      data <- init[(length(init) - length(data)+1):(length(init))]
     }
 
     N <- length(data)
@@ -181,7 +181,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
   } # end GP2
   
   if (!is.null(init)){
-    output$data <- output$data[(length(init) + 1):length(output$data)]
+    output$data <- output$data[(order+1):length(output$data)]
   }
 
   return(output)

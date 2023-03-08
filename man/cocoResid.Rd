@@ -13,7 +13,7 @@ cocoResid(coco, val.num = 1e-05)
 }
 \value{
 A list with the vector of conditional means, conditional variances,
- residuals, pearson residuals.
+ residuals, Pearson residuals.
 }
 \description{
 Calculates the residuals of a fitted model for model evaluation purposes.

@@ -91,13 +91,13 @@ Standard errors are computed by the square root of the diagonal elements of the 
 This function is implemented in 2 versions. The default runs on RCPP. 
 An alternative version uses a Julia implementation which can be chosen by 
 setting the argument julia to TRUE. In order to
-use this feature, a running Julia installation is needed on the system.
+use this feature, a running Julia installation is required on the system.
 The RCPP implementation uses the derivative-free Nelder-Mead optimizer
 to obtain parameter estimates. The Julia implementation makes use of Julia's
 automatic differentiation in order to obtain gradients such that it can use the LBFGS algorithm for
 optimization. This enhances the numeric stability of the optimization and yields 
 an internal validation if both methods yield qualitatively same parameter estimates.
-Furthermore, the Julia implementation can increase the speed of the regression
+Furthermore, the Julia implementation can increase the computational speed
 significantly, especially for large models. 
 
 The model assessment tools \code{\link{cocoBoot}}, \code{\link{cocoPit}}, and \code{\link{cocoScore}}

@@ -7,7 +7,7 @@
 #' @param julia  if TRUE, the bootstrap is run with Julia.
 #' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
 #' @return Bootstraped confidence intervals of the autocorrelations
-#' @details Computes bootstrap confidence intervals for the autocorrelations of a fitted model and compares them to the sample autocorrelations of the data. 
+#' @details Computes bootstrap confidence intervals for the autocorrelations of a fitted model. 
 #' @references 
 #' Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
 #' @examples

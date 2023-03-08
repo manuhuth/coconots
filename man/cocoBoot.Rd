@@ -33,7 +33,7 @@ Bootstraped confidence intervals of the autocorrelations
 Model checking procedure emphasizing reproducibility in fitted models to provide an overall evaluation of fit as proposed by Tsay (1992).
 }
 \details{
-Computes bootstrap confidence intervals for the autocorrelations of a fitted model and compares them to the sample autocorrelations of the data.
+Computes bootstrap confidence intervals for the autocorrelations of a fitted model.
 }
 \examples{
 lambda <- 1
