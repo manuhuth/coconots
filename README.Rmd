@@ -31,10 +31,10 @@ knitr::opts_chunk$set(
 ![alt text](https://github.com/manuhuth/coconots/blob/main/images/functionality.png?raw=true)
 
 ## Details
-The package allows simulation of convolution-closed count time series models with the \code{cocoSim}
-function. Model fitting is performed with the \code{cocoReg} routine. By passing a cocoReg-type object,
-\code{cocoForecast} computes the one-step ahead forecasting distribution. \code{cocoBoot}, \code{cocoPit},
-\code{cocoScore}, and \code{cocoResid} provide routines for model assessment.
+The package allows simulation of convolution-closed count time series models with the cocoSim
+function. Model fitting is performed with the cocoReg routine. By passing a cocoReg-type object,
+cocoForecast computes the one-step ahead forecasting distribution. cocoBoot, cocoPit,
+cocoScore, and cocoResid provide routines for model assessment.
 The main usage of the package is illustrated within the cocoReg function chapter. For more details
 and examples of the functions see the respective sections within this vignette. 
 

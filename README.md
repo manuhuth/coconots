@@ -24,12 +24,13 @@ text](https://github.com/manuhuth/coconots/blob/main/images/functionality.png?ra
 ## Details
 
 The package allows simulation of convolution-closed count time series
-models with the function. Model fitting is performed with the routine.
-By passing a cocoReg-type object, computes the one-step ahead
-forecasting distribution. , , , and provide routines for model
-assessment. The main usage of the package is illustrated within the
-cocoReg function chapter. For more details and examples of the functions
-see the respective sections within this vignette.
+models with the cocoSim function. Model fitting is performed with the
+cocoReg routine. By passing a cocoReg-type object, cocoForecast computes
+the one-step ahead forecasting distribution. cocoBoot, cocoPit,
+cocoScore, and cocoResid provide routines for model assessment. The main
+usage of the package is illustrated within the cocoReg function chapter.
+For more details and examples of the functions see the respective
+sections within this vignette.
 
 By default, our functions make use of an RCPP implementation. However,
 users with a running Julia installation can choose to call Julia in the

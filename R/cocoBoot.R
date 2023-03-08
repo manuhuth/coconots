@@ -171,7 +171,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
   
     if ((is.null(coco$cov)) ) {
       for (b in 1:nB) {
-        help <- cocoSim(order = coco$order, type = coco$type, par = par, length = (T + 10), seasonality = seasonality)[11:(T + 10)]
+        help <- cocoSim(order = coco$order, type = coco$type, par = par, length = (T + 10))[11:(T + 10)]
         B[, b] <- help
         ac[, b] <- forecast::Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
       }
@@ -181,7 +181,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     if (!is.null(coco$cov)) {
       xreg <- as.matrix(xreg)
       for (b in 1:nB) {
-        help <- cocoSim(type = coco$type, order = coco$order, par = par, length = T, xreg = xreg, seasonality = seasonality)
+        help <- cocoSim(type = coco$type, order = coco$order, par = par, length = T, xreg = xreg)
         B[, b] <- help
         ac[, b] <- forecast::Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
       }
