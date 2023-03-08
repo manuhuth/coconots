@@ -11,7 +11,7 @@ autoplot.cocoPit <- function(object, ...){
   df_bands <- df
   df_bands$bins[1] <- df$bins[1] - 0.25
   df_bands$bins[length(df$bins)] <- df$bins[length(df$bins)] + 0.25
-  
+  print(df_bands)
   pl <- ggplot2::ggplot(data=df, mapping = ggplot2::aes(x = bins, y = pit)) +
       ggplot2::geom_bar(stat="identity", position="dodge", width=0.3) + 
       ggplot2::labs(title = "Pit histogram", x = "Bins", y = "") +
