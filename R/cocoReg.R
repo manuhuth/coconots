@@ -12,7 +12,6 @@
 #' If Julia is installed, the user can choose whether the optimization is run in Julia
 #' which might faster yield results and increased numeric stability due to the use of automatic differentiation.
 #' See details for more information on the Julia implementation.
-#' 
 #' @param type character string indicating the type of model to be fitted
 #' @param order integer vector indicating the order of the model
 #' @param data time series data to be used in the analysis
