@@ -15,7 +15,7 @@
 #' lambda <- 1
 #' alpha <- 0.4
 #' set.seed(12345)
-#' data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
+#' data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
 #' #julia_installed = TRUE ensures that the fit object
 #' #is compatible with the julia cocoPit implementation 
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data)

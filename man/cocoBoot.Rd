@@ -39,7 +39,7 @@ Computes bootstrap confidence intervals for the autocorrelations of a fitted mod
 lambda <- 1
 alpha <- 0.4
 set.seed(12345)
-data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)$data
+data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
 fit <- cocoReg(order = 1, type = "Poisson", data = data)
 
 #assessment using bootstrap - R implementation
