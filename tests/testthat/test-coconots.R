@@ -7,10 +7,10 @@ test_that("GP2Works", {
   length <- 300
   par <- c(0.5,0.2,0.05,0.3,0.3)
   set.seed(123499)
-  data.sim <- cocoSim(order = 2, type = "GP", par = par, length = length)
+  data <- cocoSim(order = 2, type = "GP", par = par, length = length)
   cocoSim(order = 2, type = "GP", par = par, length = length, julia = TRUE,
           julia_seed = 123499)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 2, type = "GP", data = data, julia_installed = TRUE)
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
@@ -27,11 +27,11 @@ test_that("Poisson2Works", {
   length <- 300
   par <- c(0.5, 0.2, 0.05, 0.3)
   set.seed(12347)
-  data.sim <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
+  data <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
   cocoSim(order = 2, type = "Poisson", par = par, length = length, 
                       julia = TRUE,
                       julia_seed = 12342399)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 2, type = "Poisson", data = data, julia_installed = TRUE)
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
@@ -47,11 +47,11 @@ test_that("GP1Works", {
   length <- 300
   par <- c(0.5, 0.2, 0.2)
   set.seed(12341)
-  data.sim <- cocoSim(order = 1, type = "GP", par = par, length = length)
+  data <- cocoSim(order = 1, type = "GP", par = par, length = length)
   cocoSim(order = 1, type = "GP", par = par, length = length, 
           julia = TRUE,
           julia_seed = 123423299)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 1, type = "GP", data = data, julia_installed = TRUE)
   for (i in c(TRUE, FALSE)){
     cocoPit(fit, julia=i)
@@ -67,8 +67,8 @@ test_that("Poisson1Works", {
   length <- 300
   par <- c(0.5, 0.2)
   set.seed(12345)
-  data.sim <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
+  
   cocoSim(order = 1, type = "Poisson", par = par, length = length, 
           julia = TRUE,
           julia_seed = 1234232199)
@@ -93,9 +93,9 @@ test_that("Poisson1Works_cov", {
  cov <- cbind(sin, cos)
  par <- c(0.8, 0.2, -0.2)
  set.seed(1234)
- data.sim <- cocoSim(order = 1, type = "Poisson", par = par,
+ data <- cocoSim(order = 1, type = "Poisson", par = par,
                      xreg = cov, length = length)
- data <- data.sim$data
+ 
  cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, length = length, 
          julia = TRUE,
          julia_seed = 123499)
@@ -121,9 +121,9 @@ test_that("GP1Works_cov", {
   cov <- cbind(sin, cos)
   par <- c(0.8, 0.2, 0.2, -0.2)
   set.seed(1234567)
-  data.sim <- cocoSim(order = 1, type = "GP", par = par,
+  data <- cocoSim(order = 1, type = "GP", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   cocoSim(order = 1, type = "GP", par = par, xreg = cov, length = length, 
           julia = TRUE,
           julia_seed = 123499)
@@ -147,9 +147,9 @@ test_that("Poisson2Works_cov", {
   cov <- cbind(sin, cos)
   par <- c(0.2, 0.05, 0.3, 0.2, -0.2)
   set.seed(12345678)
-  data.sim <- cocoSim(order = 2, type = "Poisson", par = par,
+  data <- cocoSim(order = 2, type = "Poisson", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   cocoSim(order = 2, type = "Poisson", par = par, xreg = cov, length = length, 
           julia = TRUE,
           julia_seed = 123499)
@@ -173,9 +173,9 @@ test_that("GP2Works_cov", {
   cov <- cbind(sin, cos)
   par <- c(0.2, 0.05, 0.3, 0.2, 0.2, -0.2)
   set.seed(123456798)
-  data.sim <- cocoSim(order = 2, type = "GP", par = par,
+  data <- cocoSim(order = 2, type = "GP", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   cocoSim(order = 2, type = "GP", par = par, xreg = cov, length = length, 
           julia = TRUE,
           julia_seed = 123499)
@@ -195,8 +195,8 @@ test_that("GP2Works_constr", {
   length <- 300
   par <- c(0.5,0.2,0.05,0.3,0.3)
   set.seed(123499)
-  data.sim <- cocoSim(order = 2, type = "GP", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 2, type = "GP", par = par, length = length)
+  
   fit <- cocoReg(order = 2, type = "GP", data = data, constrained.optim = FALSE)
   
 })
@@ -205,8 +205,8 @@ test_that("Poisson2Works_constr", {
   length <- 300
   par <- c(0.5, 0.2, 0.05, 0.3)
   set.seed(12347)
-  data.sim <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
+  
   fit <- cocoReg(order = 2, type = "Poisson", data = data, constrained.optim = FALSE)
 })
 
@@ -214,8 +214,8 @@ test_that("GP1Works_constr", {
   length <- 300
   par <- c(0.5, 0.2, 0.2)
   set.seed(12341)
-  data.sim <- cocoSim(order = 1, type = "GP", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 1, type = "GP", par = par, length = length)
+  
   fit <- cocoReg(order = 1, type = "GP", data = data, constrained.optim = FALSE)
 })
 
@@ -223,8 +223,8 @@ test_that("Poisson1Works_constr", {
   length <- 300
   par <- c(0.5, 0.2)
   set.seed(12345)
-  data.sim <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
+  
   fit <- cocoReg(order = 1, type = "Poisson", data = data, constrained.optim = FALSE)
 })
 
@@ -238,9 +238,9 @@ test_that("Poisson1Works_cov_constr", {
   cov <- cbind(sin, cos)
   par <- c(0.8, 0.2, -0.2)
   set.seed(1234)
-  data.sim <- cocoSim(order = 1, type = "Poisson", par = par,
+  data <- cocoSim(order = 1, type = "Poisson", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov, constrained.optim = FALSE)
 })
 
@@ -253,9 +253,9 @@ test_that("GP1Works_cov_constr", {
   cov <- cbind(sin, cos)
   par <- c(0.8, 0.2, 0.2, -0.2)
   set.seed(1234567)
-  data.sim <- cocoSim(order = 1, type = "GP", par = par,
+  data <- cocoSim(order = 1, type = "GP", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 1, type = "GP", data = data, xreg = cov, constrained.optim = FALSE)
 })
 
@@ -268,9 +268,9 @@ test_that("GP2Works_cov_uncosntrained", {
   cov <- cbind(sin, cos)
   par <- c(0.2, 0.05, 0.3, 0.2, 0.2, -0.2)
   set.seed(123456798)
-  data.sim <- cocoSim(order = 2, type = "GP", par = par,
+  data <- cocoSim(order = 2, type = "GP", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 2, type = "GP", data = data, xreg = cov,
                  constrained.optim = FALSE)
 })
@@ -284,9 +284,9 @@ test_that("Poisson2Works_cov_constr", {
   cov <- cbind(sin, cos)
   par <- c(0.2, 0.05, 0.3, 0.2, -0.2)
   set.seed(12345678)
-  data.sim <- cocoSim(order = 2, type = "Poisson", par = par,
+  data <- cocoSim(order = 2, type = "Poisson", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 2, type = "Poisson", data = data, xreg = cov, constrained.optim = FALSE)
 })
 
@@ -297,9 +297,9 @@ test_that("initialize_time_series", {
   length <- 300
   par <- c(0.5,0.2,0.05,0.3,0.3)
   set.seed(123499)
-  data.sim <- cocoSim(order = 2, type = "GP", par = par, length = length)
-  data <- data.sim$data
-  data.sim2 <- cocoSim(order = 2, type = "GP", par = par, length = length,
+  data <- cocoSim(order = 2, type = "GP", par = par, length = length)
+  
+  data2 <- cocoSim(order = 2, type = "GP", par = par, length = length,
                       init = data)
 })
 #----------------Custom starting values covariates------------------------------
@@ -307,8 +307,8 @@ test_that("custom_start_values_GP2", {
   length <- 300
   par <- c(0.5,0.2,0.05,0.3,0.3)
   set.seed(122133499)
-  data.sim <- cocoSim(order = 2, type = "GP", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 2, type = "GP", par = par, length = length)
+  
   fit <- cocoReg(order = 2, type = "GP", data = data, start = par)
 })
 
@@ -316,8 +316,8 @@ test_that("custom_start_values_Poisson2", {
   length <- 300
   par <- c(0.5, 0.2, 0.05, 0.3)
   set.seed(13423499)
-  data.sim <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
+  
   fit <- cocoReg(order = 2, type = "Poisson", data = data, start = par)
 })
 
@@ -325,8 +325,8 @@ test_that("custom_start_values_GP1", {
   length <- 300
   par <- c(0.5,0.2,0.3)
   set.seed(12323499)
-  data.sim <- cocoSim(order = 1, type = "GP", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 1, type = "GP", par = par, length = length)
+  
   fit <- cocoReg(order = 1, type = "GP", data = data, start = par)
 })
 
@@ -334,8 +334,8 @@ test_that("custom_start_values_Poisson1", {
   length <- 300
   par <- c(0.5,0.2)
   set.seed(12349923)
-  data.sim <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
+  
   fit <- cocoReg(order = 1, type = "Poisson", data = data, start = par)
 })
 #----------------Custom starting values covariates------------------------------
@@ -348,9 +348,9 @@ test_that("Poisson1Works_cov_2", {
   cov <- cbind(sin, cos)
   par <- c(0.8, 0.2, -0.2)
   set.seed(1234)
-  data.sim <- cocoSim(order = 1, type = "Poisson", par = par,
+  data <- cocoSim(order = 1, type = "Poisson", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
 })
 
@@ -363,9 +363,9 @@ test_that("GP1Works_cov_2", {
   cov <- cbind(sin, cos)
   par <- c(0.8, 0.2, 0.2, -0.2)
   set.seed(1234567)
-  data.sim <- cocoSim(order = 1, type = "GP", par = par,
+  data <- cocoSim(order = 1, type = "GP", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 1, type = "GP", data = data, xreg = cov)
   cocoPit(fit)
   cocoResid(fit)
@@ -384,9 +384,9 @@ test_that("Poisson2Works_cov_2", {
   cov <- cbind(sin, cos)
   par <- c(0.2, 0.05, 0.3, 0.2, -0.2)
   set.seed(12345678)
-  data.sim <- cocoSim(order = 2, type = "Poisson", par = par,
+  data <- cocoSim(order = 2, type = "Poisson", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 2, type = "Poisson", data = data, xreg = cov)
   cocoPit(fit)
   cocoResid(fit)
@@ -405,9 +405,9 @@ test_that("GP2Works_cov_2", {
   cov <- cbind(sin, cos)
   par <- c(0.2, 0.05, 0.3, 0.2, 0.2, -0.2)
   set.seed(123456798)
-  data.sim <- cocoSim(order = 2, type = "GP", par = par,
+  data <- cocoSim(order = 2, type = "GP", par = par,
                       xreg = cov, length = length)
-  data <- data.sim$data
+  
   fit <- cocoReg(order = 2, type = "GP", data = data, xreg = cov)
   cocoPit(fit)
   cocoResid(fit)
@@ -421,8 +421,8 @@ test_that("wrong_modelsGP2", {
   length <- 300
   par <- c(0.5,0.2,0.05,0.3,0.3)
   set.seed(123499)
-  data.sim <- cocoSim(order = 2, type = "GP", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 2, type = "GP", par = par, length = length)
+  
   for (julia in c(TRUE, FALSE)){
     fit <- cocoReg(order = 1, type = "Poisson", data = data, julia = julia)
     fit <- cocoReg(order = 2, type = "Poisson", data = data, julia = julia)
@@ -434,8 +434,8 @@ test_that("wrong_modelsPoisson2", {
   length <- 300
   par <- c(0.5, 0.2, 0.05, 0.3)
   set.seed(12347)
-  data.sim <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
+  
   for (julia in c(TRUE, FALSE)){
     fit <- cocoReg(order = 1, type = "Poisson", data = data,  julia = julia)
     fit <- cocoReg(order = 1, type = "GP", data = data,  julia = julia)
@@ -448,8 +448,8 @@ test_that("wrong_modelsGP1", {
   length <- 300
   par <- c(0.5, 0.2, 0.2)
   set.seed(12341)
-  data.sim <- cocoSim(order = 1, type = "GP", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 1, type = "GP", par = par, length = length)
+  
   for (julia in c(TRUE, FALSE)){
     fit <- cocoReg(order = 1, type = "Poisson", data = data,  julia = julia)
     fit <- cocoReg(order = 2, type = "Poisson", data = data,  julia = julia)
@@ -461,8 +461,8 @@ test_that("wrong_modelsPoisson1", {
   length <- 300
   par <- c(0.5, 0.2)
   set.seed(12345)
-  data.sim <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
-  data <- data.sim$data
+  data <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
+  
   for (julia in c(TRUE, FALSE)){
     fit <- cocoReg(order = 2, type = "Poisson", data = data,  julia = julia)
     fit <- cocoReg(order = 1, type = "GP", data = data,  julia = julia)
