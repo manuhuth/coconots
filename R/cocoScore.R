@@ -15,12 +15,17 @@
 #' Therefore, the use of a variety of scoring rules may be appropriate to take advantage of
 #' specific emphases and strengths. Three proper scoring rules
 #' (for a definition of the concept of propriety see Gneiting and Raftery, 2007)
-#' which Jung, McCabe and Tremayne (2015) found to be particularly useful are implemented.
+#' which Jung, McCabe and Tremayne (2016) found to be particularly useful are implemented.
 #' For more information see the references listed below.
 #' @references 
 #' Czado, C. and Gneitling, T. and Held, L. (2009) Predictive Model Assessment for Count Data. \emph{Biometrics}, \bold{65}, 4, 1254--1261.
 #'
-#' Jung, R. C. and McCabe, B. P. and Tremayne, A. R. (2016) Model validation and diagnostics. \emph{Handbook of discrete-valued time series}, 189--218.
+#' Gneiting, T. and Raftery, A. E. (2007). Strictly proper scoring rules, prediction, and estimation. Journal
+#' of the American Statistical Association, 102:359-378.
+#'
+#' Jung, Robert C., Brendan P. M. McCabe, and Andrew R. Tremayne. 2016. Model validation and diagnostics. \emph{In Handbook of Discrete
+#' Valued Time Series}. Edited by Richard A. Davis, Scott H. Holan, Robert Lund and Nalini Ravishanker. Boca Raton: Chapman and
+#' Hall, pp. 189--218.
 #'
 #' Jung, R. C. and Tremayne, A. R. (2011) Convolution-closed models for count timeseries with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
 #' @author Manuel Huth

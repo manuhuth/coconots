@@ -75,7 +75,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       data[t] <- stats::rpois(n = 1, lambda_start1)
     }
 
-    if (length(init) > 0) {
+    if (!is.null(init)) {
       data <- init
     }
 
@@ -121,7 +121,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       data[t] <- rgenpois(n = 1, lambda_start1, eta)
     }
 
-    if (length(init) > 0) {
+    if (!is.null(init)) {
       data <- init
     }
 
@@ -169,7 +169,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       data[t] <- stats::rpois(n = 1, lambda_start1)
     }
 
-    if (length(init) > 0) {
+    if (!is.null(init)) {
       data <- init
     }
 
@@ -218,7 +218,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       data[t] <- rgenpois(n = 1, lambda_start1, eta)
     }
 
-    if (length(init) > 0) {
+    if (!is.null(init)) {
       data <- init
     }
 

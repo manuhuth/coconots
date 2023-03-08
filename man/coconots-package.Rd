@@ -42,6 +42,12 @@ Maintainer: Manuel Huth <manuel.huth@yahoo.com>
 \references{
 Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.
 
+Gneiting, T. and Raftery, A. E. (2007). Strictly proper scoring rules, prediction, and estimation. Journal
+of the American Statistical Association, 102:359-378.
+
+R.C. Jung, A.R. Tremayne (2006) Coherent forecasting in integer time series models. 
+  \emph{International Journal of Forecasting} \bold{22}, 223--238
+  
 Jung, R. C. and Tremayne, A. R. (2011) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
 
 Jung, Robert C., Brendan P. M. McCabe, and Andrew R. Tremayne. 2016. Model validation and diagnostics. \emph{In Handbook of Discrete
@@ -52,5 +58,8 @@ Joe, H. (1996) Time series models with univariate margins in the convolution-clo
 
 Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
 
+Westgren, A. (1916). Die Veraenderungsgeschwindigkeit der lokalen
+Teilchenkonzentration in kollioden Systemen (Erste Mitteilung).
+\emph{Arkiv foer Matematik, Astronomi och Fysik}, \bold{11}, 1--24.
 
 }

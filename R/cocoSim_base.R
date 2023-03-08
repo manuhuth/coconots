@@ -69,13 +69,10 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
 
     
     data <- stats::rpois(n = seasonality[1], lambda)
-    if (length(init) > 0) {
+    if (!is.null(init) ) {
       data <- init
-    } else{
-      
+    } 
     
-    }
-
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
     innovations <- stats::rpois(n = T, lambda)
@@ -102,7 +99,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
 
     data <- rgenpois(n = seasonality[1], lambda, eta)
 
-    if (length(init) > 0) {
+    if (!is.null(init) ) {
       data <- init
     }
 
@@ -132,7 +129,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
 
     data <- stats::rpois(n = seasonality[2], lambda)
 
-    if (length(init) > 0) {
+    if (!is.null(init) ) {
       data <- init
     }
 
@@ -165,7 +162,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
 
     data <- rgenpois(n = seasonality[2], lambda, eta)
 
-    if (length(init) > 0) {
+    if (!is.null(init) ) {
       data <- init
     }
 

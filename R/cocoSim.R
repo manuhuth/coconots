@@ -44,6 +44,10 @@ cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL,
                     julia=FALSE, julia_seed = NULL) {
   seasonality <- c(1, 2) #will be used as argument in future versions
   
+  if (is.null(init)) {
+    length_burn_in <- 200
+  } else {length_burn_in <- length(init)}
+  
   if (is.null(xreg)) {
     if (order == 2){
       
@@ -76,10 +80,6 @@ cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL,
       }
       return(cocoSimJulia(type, order, par, length, xreg))
     }
-    
-    if (is.null(init)) {
-      length_burn_in <- 200
-    } else {length_burn_in <- 0}
     
     size <- length + length_burn_in
     output <- cocoSim_base(type = type, order = order, par = par, size = size,
@@ -118,6 +118,7 @@ cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL,
       type = type, order = order, par = par, size = length, xreg = xreg,
       seasonality = seasonality, init = init
     )
+    output$data <- output$data[(length_burn_in+1):(length+length_burn_in)]
   }
 
   return(output$data)

@@ -11,9 +11,12 @@ in Westgren (1916) and used in Jung and Tremanye (2006).
 }
 
 \source{
-  source
-
-  references to?  
+R.C. Jung, A.R. Tremayne (2006) Coherent forecasting in integer time series models. 
+  \emph{International Journal of Forecasting} \bold{22}, 223--238
+  
+Westgren, A. (1916). Die Veraenderungsgeschwindigkeit der lokalen
+Teilchenkonzentration in kollioden Systemen (Erste Mitteilung).
+\emph{Arkiv foer Matematik, Astronomi och Fysik}, \bold{11}, 1--24.
 }
 
 
