@@ -225,8 +225,8 @@ cocoPit <- function(coco, J = 10, alpha = 0.05, julia=FALSE) {
   u <- u[-c(1)]
   } #end julia
   
-  pval <- pchisq(sum((d * length(data) - length(data) / J_test)^2 / (length(data) / J_test)), J_test-1)
-  diff <- (sqrt(qchisq(1-alpha, J_test-1)/J_test^2*length(data)) ) / length(data)
+  pval <- stats::pchisq(sum((d * length(data) - length(data) / J_test)^2 / (length(data) / J_test)), J_test-1)
+  diff <- (sqrt(stats::qchisq(1-alpha, J_test-1)/J_test^2*length(data)) ) / length(data)
   confidence_band_values <- 1 / J_test + c(-1, 1) * diff 
   
   end.time <- Sys.time()

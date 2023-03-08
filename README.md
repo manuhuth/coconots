@@ -9,11 +9,14 @@
 coverage](https://codecov.io/gh/manuhuth/coconots/branch/main/graph/badge.svg)](https://app.codecov.io/gh/manuhuth/coconots?branch=main)
 <!-- badges: end -->
 
-Likelihood-based methods for model fitting, assessment and prediction
-analysis of some convolution-closed count time series model are
-provided. The marginal distribution can be Poisson or Generalized
-Poisson. Regression effects can be modelled via time varying innovation
-rates.
+Functions to analyse time series consisting of low counts are provided.
+The focus in the current version is on practical models that can capture
+first and higher-order dependence based on the work of Joe (1996). Both
+equidispersed and overdispersed marginal distributions of data can be
+modelled. Regression effects can be included. Fast and efficient
+procedures for likelihood based inference and probabilistic forecasting
+are provided as well as useful tools for model validation and
+diagnostics.
 
 ![alt
 text](https://github.com/manuhuth/coconots/blob/main/images/functionality.png?raw=true)
@@ -21,10 +24,26 @@ text](https://github.com/manuhuth/coconots/blob/main/images/functionality.png?ra
 ## Details
 
 The package allows simulation of convolution-closed count time series
-models with the cocoSim function. Model fitting is performed with the
-cocoReg routine. By passing a cocoReg-type object, cocoForecast computes
-the probability mass of the one-step ahead forecast. cocoBoot, cocoPIT,
-cocoScore, and cocoResid provide routines for model assessment.
+models with the function. Model fitting is performed with the routine.
+By passing a cocoReg-type object, computes the one-step ahead
+forecasting distribution. , , , and provide routines for model
+assessment. The main usage of the package is illustrated within the
+cocoReg function chapter. For more details and examples of the functions
+see the respective sections within this vignette.
+
+By default, our functions make use of an RCPP implementation. However,
+users with a running Julia installation can choose to call Julia in the
+background to run their functions by specifying it in the R function
+input. This option is particularly useful for the regression (), where a
+complex likelihood function must be numerically evaluated to obtain
+parameter estimates. By leveraging Julia’s automatic differentiation
+capabilities, our functions can take advantage of numerical gradients,
+leading to increased numerical stability and faster convergence.
+
+Despite these advantages, we found that both the Julia and RCPP
+implementations produced qualitatively similar results in all our tests.
+As a result, we have decided to use the RCPP implementation as the
+default option to make our package accessible to non-Julia users.
 
 ## Model
 
@@ -101,10 +120,7 @@ We provide different tools for model assessment. One can even use the
 RCPP implementation for the regression and do model assessment with the
 Julia implementation. If this is desired, one needs to specify in the
 output of the regression that it should be Julia compatible. Note that
-this is not necessary if the Julia option in the regression is true. For
-the probability integral transform histogram, the histigram is plotted
-automatically. For the bootstrap and the forecast, the plots can be used
-using R’s plot function.
+this is not necessary if the Julia option in the regression is true.
 
 ``` r
 library(coconots)
@@ -126,17 +142,6 @@ coco <- cocoReg(order = 1, type = "Poisson", data = data,
 #> [1] 0.619761
 pit <- cocoPit(coco, julia = TRUE)
 plot(pit)
-#>           pit  bins     lower     upper
-#> 1  0.10464508  0.75 0.0816049 0.1183951
-#> 2  0.09256958  2.00 0.0816049 0.1183951
-#> 3  0.09402658  3.00 0.0816049 0.1183951
-#> 4  0.09923618  4.00 0.0816049 0.1183951
-#> 5  0.09712294  5.00 0.0816049 0.1183951
-#> 6  0.09776946  6.00 0.0816049 0.1183951
-#> 7  0.10359217  7.00 0.0816049 0.1183951
-#> 8  0.10835606  8.00 0.0816049 0.1183951
-#> 9  0.11238213  9.00 0.0816049 0.1183951
-#> 10 0.09029981 10.25 0.0816049 0.1183951
 ```
 
 <img src="man/figures/README-example_assessment-1.png" width="100%" />

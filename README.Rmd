@@ -20,15 +20,37 @@ knitr::opts_chunk$set(
   [![Codecov test coverage](https://codecov.io/gh/manuhuth/coconots/branch/main/graph/badge.svg)](https://app.codecov.io/gh/manuhuth/coconots?branch=main)
   <!-- badges: end -->
 
-Likelihood-based methods for model fitting, assessment and prediction analysis of some convolution-closed count time series model are provided. The marginal distribution can be Poisson or Generalized Poisson. Regression effects can be modelled via time varying innovation rates.
+  Functions to analyse time series consisting of low counts are provided. The 
+  focus in the current version is on practical models that can  capture first 
+  and higher-order dependence based on the work of Joe (1996). Both equidispersed 
+  and overdispersed marginal distributions of data can be modelled. Regression 
+  effects can be included. Fast and efficient procedures for likelihood based 
+  inference and probabilistic forecasting are provided as well as useful tools 
+  for model validation and diagnostics. 
 
 ![alt text](https://github.com/manuhuth/coconots/blob/main/images/functionality.png?raw=true)
 
 ## Details
-The package allows simulation of convolution-closed count time series models with the cocoSim
-function. Model fitting is performed with the cocoReg routine. By passing a cocoReg-type object,
-cocoForecast computes the probability mass of the one-step ahead forecast. cocoBoot, cocoPIT,
-cocoScore, and cocoResid provide routines for model assessment.
+The package allows simulation of convolution-closed count time series models with the \code{cocoSim}
+function. Model fitting is performed with the \code{cocoReg} routine. By passing a cocoReg-type object,
+\code{cocoForecast} computes the one-step ahead forecasting distribution. \code{cocoBoot}, \code{cocoPit},
+\code{cocoScore}, and \code{cocoResid} provide routines for model assessment.
+The main usage of the package is illustrated within the cocoReg function chapter. For more details
+and examples of the functions see the respective sections within this vignette. 
+
+By default, our functions make use of an RCPP implementation. However, users
+with a running Julia installation can choose to call Julia in the background
+to run their functions by specifying it in the R function input. This option
+is particularly useful for the regression (\code{cocoReg}), where a complex likelihood function
+must be numerically evaluated to obtain parameter estimates. By leveraging
+Julia's automatic differentiation capabilities,
+our functions can take advantage of numerical gradients,
+leading to increased numerical stability and faster convergence.
+
+Despite these advantages, we found that both the Julia and RCPP
+implementations produced qualitatively similar results in all our tests.
+As a result, we have decided to use the RCPP implementation as
+the default option to make our package accessible to non-Julia users.
 
 ## Model
 
@@ -81,7 +103,6 @@ coco <- cocoReg(order = 1, type = "Poisson", data = data, julia = TRUE)
 
 ## Model assessment
 We provide different tools for model assessment. One can even use the RCPP implementation for the regression and do model assessment with the Julia implementation. If this is desired, one needs to specify in the output of the regression that it should be Julia compatible. Note that this is not necessary if the Julia option in the regression is true.
-For the probability integral transform histogram, the histigram is plotted automatically. For the bootstrap and the forecast, the plots can be used using R's plot function.
 ```{r example_assessment, echo=TRUE}
 library(coconots)
 length <- 500
