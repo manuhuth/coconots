@@ -1,19 +1,34 @@
 #' @title Simulation of time series data 
-#' @description The function generates a time series of low counts for a specified innovation distribution, sample size, lag order,
+#' @description The function generates a time series of low counts for a specified
+#'  innovation distribution, sample size, lag order,
 #' and parameter values. 
 #' @param type character, either "Poisson" or "GP" indicating the type of the innovation distribution
 #' @param order integer, either 1 or 2 indicating the order of the model
-#' @param par numeric vector, the parameters of the model, the number of elements in the vector depends on the type and order specified
+#' @param par numeric vector, the parameters of the model, the number of elements
+#'  in the vector depends on the type and order specified. 
 #' @param length integer, the number of observations in the generated time series
 #' @param xreg data.frame, data frame of control variables
-#' @param seasonality integer vector, the range of seasonality, default is c(1,2)
-#' @param init numeric vector, initial data to use, default is NULL
-#' @param julia If TRUE, the julia implementation is used. In this case, seasonality and init are ignored but it might be faster.
-#' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
-#' @return list containing 'time' and 'data' which are the computation time and generated time series respectively
-#' @details It also allows for the option of specifying the seasonality range and an initial set of
-#' data. The function checks for valid input of the type, order, parameters, seasonality, and initial data
+#' @param init numeric vector, initial data to use, default is NULL. See details
+#' for more information on the usage.
+#' @param julia If TRUE, the Julia implementation is used. In this case,
+#'  seasonality and init are ignored but it might be faster.
+#' @param julia_seed Seed for the Julia implementation. Only used if Julia equals TRUE.
+#' @return The generated time series
+#' @details The function checks for valid input of the type, order, parameters, seasonality, and initial data
 #' before generating the time series.
+#'
+#'The init parameter allows users to set a custom burn-in period
+#'for the simulation. By default, when simulating with covariates, no burn-in
+#'period is specified since there is no clear choice on the covariates.
+#'However, the init argument gives users the flexibility to select an
+#'appropriate burn-in period for the covariate case. One way to do this is to
+#'simulate a time series using \code{\link{cocoSim}} with appropriate covariates and pass the
+#'resulting time series to the
+#'init argument of a new \code{\link{cocoSim}} run so that the first time series is used as
+#'the burn-in period. 
+#'If init is not specified for the covariate case, a warning will be returned
+#'to prompt the user to specify a custom burn-in period. This helps ensure that
+#'the simulation accurately captures the dynamics of the system being modeled.
 #' @author Manuel Huth
 #' @examples
 #' lambda <- 1
@@ -28,6 +43,7 @@
 
 cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2), init = NULL, 
                     julia=FALSE, julia_seed = NULL) {
+  seasonality <- c(1, 2) #will be used as argument in future versions
   
   if (is.null(xreg)) {
     if (order == 2){
@@ -99,12 +115,11 @@ cocoSim <- function(type, order, par, length, xreg = NULL, seasonality = c(1, 2)
       return(cocoSimJulia(type, order, par, length, xreg))
     }
     
-    
     output <- cocoSim_cov(
       type = type, order = order, par = par, size = length, xreg = xreg,
       seasonality = seasonality, init = init
     )
   }
 
-  return(output)
+  return(output$data)
 }

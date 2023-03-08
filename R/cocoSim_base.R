@@ -182,7 +182,10 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     time <- end_time - start_time
     output <- list("time" = time, "data" = data)
   } # end GP2
-
+  
+  if (!is.null(init)){
+    output$data <- output$data[(length(init) + 1):length(output$data)]
+  }
 
   return(output)
 }

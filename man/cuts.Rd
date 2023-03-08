@@ -1,8 +1,8 @@
 \name{cuts}
 \alias{cuts}
 \title{
-  Time series of monthly counts of claimants collecting wage loss benefit for injuries in
-the workplace
+  Time Series of Monthly Counts of Claimants Collecting Wage Loss Benefit for Injuries in
+the Workplace
 }
 \description{
   Monthly counts of claimants collecting wage loss benefit for injuries in

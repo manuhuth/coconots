@@ -2,7 +2,7 @@
 % Please edit documentation in R/cocoResid.R
 \name{cocoResid}
 \alias{cocoResid}
-\title{Residual based model assessment procedure}
+\title{Residual Based Model Assessment Procedure}
 \usage{
 cocoResid(coco, val.num = 1e-05)
 }
@@ -12,14 +12,17 @@ cocoResid(coco, val.num = 1e-05)
 \item{val.num}{A non-negative real number which is used to stop the calculation of}
 }
 \value{
-A list with the elements:
-
-  - fitted: a vector of the fitted values
-  
-  - varX: a vector of the conditional variances of the residuals
+A list with the vector of conditional means, conditional variances,
+ residuals, pearson residuals.
 }
 \description{
 Calculates the residuals of a fitted model for model evaluation purposes.
+}
+\details{
+Returns the (Pearson) residuals which are computed as the scaled
+deviation of the observed count  from its conditional expectation given the relevant 
+past history,  including possible covariates.  If a fitted model is correctly specified, these residuals
+should exhibit: mean zero, variance one, and no significant serial correlation.
 }
 \author{
 Manuel Huth

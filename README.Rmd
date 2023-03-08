@@ -55,7 +55,7 @@ pars <- c(1, 0.4)
 set.seed(12345)
 data <- cocoSim(order = 1, type = "Poisson", par = pars,
                 length = length)
-coco <- cocoReg(order = 1, type = "Poisson", data = data$data)
+coco <- cocoReg(order = 1, type = "Poisson", data = data)
 summary(coco)
 ```
 
@@ -89,10 +89,11 @@ length <- 500
 pars <- c(1, 0.4)
 set.seed(12345)
 data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length)
-coco <- cocoReg(order = 1, type = "Poisson", data = data$data,
+coco <- cocoReg(order = 1, type = "Poisson", data = data,
                 julia_installed=TRUE)
 (scores <- cocoScore(coco, julia = TRUE))
 pit <- cocoPit(coco, julia = TRUE)
+plot(pit)
 boot <- cocoBoot(coco, julia = TRUE)
 plot(boot)
 forecast <- cocoForecast(coco, julia = TRUE)

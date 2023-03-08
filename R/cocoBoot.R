@@ -1,4 +1,4 @@
-#' @title Bootstrap based model assessment procedure
+#' @title Bootstrap Based Model Assessment Procedure
 #' @description Model checking procedure emphasizing reproducibility in fitted models to provide an overall evaluation of fit as proposed by Tsay (1992).
 #' @param coco An object of class coco
 #' @param numb.lags Number of lags for which to compute autocorrelations
@@ -6,7 +6,7 @@
 #' @param confidence Confidence level for the intervals
 #' @param julia  if TRUE, the bootstrap is run with Julia.
 #' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
-#' @return A plot of the autocorrelations with bootstrap confidence intervals
+#' @return Bootstraped confidence intervals of the autocorrelations
 #' @details Computes bootstrap confidence intervals for the autocorrelations of a fitted model and compares them to the sample autocorrelations of the data. 
 #' @references 
 #' Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
@@ -18,7 +18,7 @@
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data)
 #'
 #' #assessment using bootstrap - R implementation
-#' #boot_r <- cocoBoot(fit, rep.Bootstrap=50)
+#' #boot_r <- cocoBoot(fit, rep.Bootstrap=400)
 #' @export
 
 cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
@@ -52,7 +52,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
     #colnames(confidence_bands) <- c("upper", "lower")
   } else {
     
-    seasonality <- coco$seasonality
+    seasonality <- c(1,2) #will be used as argument in future versions
   
     conf.alpha <- 1 - confidence
     

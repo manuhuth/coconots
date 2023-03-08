@@ -1,14 +1,15 @@
-#' @title Residual based model assessment procedure
+#' @title Residual Based Model Assessment Procedure
 #' @description Calculates the residuals of a fitted model for model evaluation purposes.
 #' @param coco An object of class "coco
 #' @param val.num A non-negative real number which is used to stop the calculation of
 #' @author Manuel Huth
-#' @return A list with the elements:
-#' 
-#'   - fitted: a vector of the fitted values
-#'   
-#'   - varX: a vector of the conditional variances of the residuals
-#' @export
+#' @return A list with the vector of conditional means, conditional variances,
+#'  residuals, pearson residuals.
+#'@details Returns the (Pearson) residuals which are computed as the scaled
+#'deviation of the observed count  from its conditional expectation given the relevant 
+#'past history,  including possible covariates.  If a fitted model is correctly specified, these residuals
+#'should exhibit: mean zero, variance one, and no significant serial correlation. 
+#'@export
 cocoResid <- function(coco, val.num = 1e-5) {
   start.time <- Sys.time()
 
@@ -16,7 +17,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
     stop("Option val.num must be a non-negative real number")
   }
 
-  seasonality <- coco$seasonality
+  seasonality <- c(1, 2) #will be used as argument in future versions coco$seasonality
 
   if ( is.null(coco$cov) ) {
     xreg <- NULL

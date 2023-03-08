@@ -1,17 +1,13 @@
 \name{goldparticle}
 \alias{goldparticle}
 \title{
-  Goldparticle Time Series
+  Time Series of Gold particles Counts in a well-efined Colloidal
+Solution
 }
 \description{
-  Add description (one sentence). 
-}
-\usage{
-  goldparticle
-}
-
-\format{
-  A data frame with the goldparticle counts.
+  A sample of 370 counts of gold particles in a well-defined colloidal
+solution at equidistant points in time, originally published
+in Westgren (1916) and used in Jung and Tremanye (2006).  
 }
 
 \source{

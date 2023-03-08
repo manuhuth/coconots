@@ -21,31 +21,45 @@ cocoSim(
 
 \item{order}{integer, either 1 or 2 indicating the order of the model}
 
-\item{par}{numeric vector, the parameters of the model, the number of elements in the vector depends on the type and order specified}
+\item{par}{numeric vector, the parameters of the model, the number of elements
+in the vector depends on the type and order specified.}
 
 \item{length}{integer, the number of observations in the generated time series}
 
 \item{xreg}{data.frame, data frame of control variables}
 
-\item{seasonality}{integer vector, the range of seasonality, default is c(1,2)}
+\item{init}{numeric vector, initial data to use, default is NULL. See details
+for more information on the usage.}
 
-\item{init}{numeric vector, initial data to use, default is NULL}
+\item{julia}{If TRUE, the Julia implementation is used. In this case,
+seasonality and init are ignored but it might be faster.}
 
-\item{julia}{If TRUE, the julia implementation is used. In this case, seasonality and init are ignored but it might be faster.}
-
-\item{julia_seed}{Seed for the julia implementation. Only used if julia equals TRUE.}
+\item{julia_seed}{Seed for the Julia implementation. Only used if Julia equals TRUE.}
 }
 \value{
-list containing 'time' and 'data' which are the computation time and generated time series respectively
+The generated time series
 }
 \description{
-The function generates a time series of low counts for a specified innovation distribution, sample size, lag order,
+The function generates a time series of low counts for a specified
+ innovation distribution, sample size, lag order,
 and parameter values.
 }
 \details{
-It also allows for the option of specifying the seasonality range and an initial set of
-data. The function checks for valid input of the type, order, parameters, seasonality, and initial data
+The function checks for valid input of the type, order, parameters, seasonality, and initial data
 before generating the time series.
+
+The init parameter allows users to set a custom burn-in period
+for the simulation. By default, when simulating with covariates, no burn-in
+period is specified since there is no clear choice on the covariates.
+However, the init argument gives users the flexibility to select an
+appropriate burn-in period for the covariate case. One way to do this is to
+simulate a time series using \code{\link{cocoSim}} with appropriate covariates and pass the
+resulting time series to the
+init argument of a new \code{\link{cocoSim}} run so that the first time series is used as
+the burn-in period. 
+If init is not specified for the covariate case, a warning will be returned
+to prompt the user to specify a custom burn-in period. This helps ensure that
+the simulation accurately captures the dynamics of the system being modeled.
 }
 \examples{
 lambda <- 1

@@ -1,17 +1,16 @@
-#' @title Probability integral transform based model assessment procedure
+#' @title Probability Integral Transform Based Model Assessment Procedure
 #' @description Computes the probability integral transform (PIT) and provides the non-randomized PIT histogram for assessing absolute performance of a fitted model as proposed by Czado et al. (2009).
 #' @param coco An object of class coco
 #' @param J Number of bins for the histogram (default: 10)
-#' @param ylab Label for the y-axis (default: "Relative frequency")
-#' @param xlab Label for the x-axis (default: "Probability integral transform")
-#' @param plot_main Title for the plot (default: "PIT")
+#' @param alpha Confidence level for the chi square test of equal distributions.
 #' @param julia  if TRUE, the PIT is computed with Julia.
-#' @return A plot of the probability integral transform for the coco object.
+#' @return The probability integral transform and p-values for the coco object.
 #' @references 
 #' Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.
 #' 
-#' Jung, R. C. and Tremayne, A. R. (2010) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
+#' Jung, R. C. and Tremayne, A. R. (2011) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
 #' @author Manuel Huth
+#' @details Details need to be added
 #' @examples
 #' lambda <- 1
 #' alpha <- 0.4
@@ -25,11 +24,8 @@
 #' pit_r <- cocoPit(fit)
 #' @export
 
-cocoPit <- function(coco, J = 10, ylab = "Relative frequency",
-                    xlab = "Probability integral transform", plot_main = "PIT", julia=FALSE) {
+cocoPit <- function(coco, J = 10, alpha = 0.05, julia=FALSE) {
   start.time <- Sys.time()
-
-  
 
   if ((J != round(J)) | (J < 1)) {
     stop("The value of J must be a positive integer")
@@ -38,13 +34,13 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency",
   if (!is.null(coco$julia_reg) & julia){
     addJuliaFunctions()
     coco_pit <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPit", coco$julia_reg,J))
-    coco_pit$keys
+    J_test <- J
     u <- coco_pit$values[[2]]
     d <- coco_pit$values[[1]]
   } else {
 
   data <- coco$ts
-  seasonality <- coco$seasonality
+  seasonality <- c(1, 2) #will be used as argument in future versions coco$seasonality
 
   if ( is.null(coco$cov) ) {
     if ((coco$type == "GP") & (coco$order == 2)) {
@@ -158,6 +154,7 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency",
 
   ### PIT
   T <- length(data)
+  J_test <- J
   J <- J + 1 # add 1 because the first bin is not used
   meanPIT <- matrix(0, nrow = T, ncol = J)
 
@@ -227,21 +224,19 @@ cocoPit <- function(coco, J = 10, ylab = "Relative frequency",
   u <- u[-c(1)]
   } #end julia
   
-  # pdf("PIT_mle_poisson.pdf", height = 5, width = 5)
-  plot(u, d,
-    type = "h", lend = 1, lwd = 18, ylab = ylab, xlab = xlab, main = plot_main,
-    ylim = c(0, max(d) * 2), xaxt = "n", col = "navyblue", yaxs = "i"
-  )
-  graphics::axis(1, at = seq(0.1, 0.9, 0.1), labels = as.character(seq(0.1, 0.9, 0.1)))
-  p <- grDevices::recordPlot()
-
+  pval <- pchisq(sum((d * length(data) - length(data) / J_test)^2 / (length(data) / J_test)), J_test-1)
+  diff <- (sqrt(qchisq(1-alpha, J_test-1)/J_test^2*length(data)) ) / length(data)
+  confidence_band_values <- 1 / J_test + c(-1, 1) * diff 
+  
   end.time <- Sys.time()
 
   time <- end.time - start.time
-  list <- list(
-    "type" = coco$type, "order" = coco$order, "ts" = coco$ts,
-    "par" = par, "PIT" = p, "PIT values" = d, "duration" = time
+  list_out <- list(
+    "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "alpha" = alpha,
+    "par" = par, "PIT values" = d, "duration" = time, "p_value" = pval,
+    "confidence_bands" = confidence_band_values
   )
-
-  return(list)
+  
+  class(list_out) <- "cocoPit"
+  return(list_out)
 }

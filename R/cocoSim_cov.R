@@ -242,5 +242,12 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
 
   end_time <- Sys.time()
   time <- end_time - start_time
+  
+  if (is.null(init)){
+    warning("No burn-in period is specified using the init argument. Hence, the resulting simulated time series might not be stationary. You can add a custom burn-in period by passing it to the init argument. This could be, for example, done by simulating a burn-in period with appropriate covariates using cocoSim and passing the resulting time series to the init argument of a new cocoSim run.") 
+  } else {
+    output$data <- output$data[(length(init) + 1):length(output$data)]
+  }
+  
   return(output)
 }

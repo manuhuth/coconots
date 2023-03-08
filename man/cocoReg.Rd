@@ -9,7 +9,6 @@ cocoReg(
   order,
   data,
   xreg = NULL,
-  seasonality = c(1, 2),
   constrained.optim = TRUE,
   b.beta = -10,
   start = NULL,
@@ -31,8 +30,6 @@ cocoReg(
 \item{data}{time series data to be used in the analysis}
 
 \item{xreg}{optional matrix of explanatory variables for use in a regression model}
-
-\item{seasonality}{integer vector indicating the seasonal component of the model, currently only available in the R version}
 
 \item{constrained.optim}{logical indicating whether optimization should be constrained, currently only available in the R version}
 
@@ -68,17 +65,46 @@ Maximum likelihood is used for estimation and the user can choose to include lin
 not. If linear constraints are not included, it cannot be guaranteed that the parameters will lie in the
 theoretically feasible parameter space, but the optimization process might be faster.
 The function uses method of moments estimators to obtain starting values for the numerical optimization,
-but the user can also specify their own starting values if desired. If Julia is installed, the user can choose whether the optimization is run in Julia
-which might yield faster results, especially for large models with many observations, due to the use of automatic differentiation.
+but the user can also specify their own starting values if desired. 
+
+If Julia is installed, the user can choose whether the optimization is run in Julia
+which might faster yield results and increased numeric stability due to the use of automatic differentiation.
+See details for more information on the Julia implementation.
 }
 \details{
-Let a time series of counts be \eqn{\{X_t\}}, a random operator be \eqn{R(\cdot)}, the relevant past history of \eqn{X_t} be \eqn{\mathcal{F}_{t-1}} and \eqn{W_t} be i.i.d discrete innovations. The general model is of the form
-\deqn{X_t = R(\mathcal{F}_{t-1}) + W_t.}
-For first-order and second-order models the relevant past history depends on the model's order and is defined by \eqn{\mathcal{F}_{t-1} = X_{t-s_1}} and \eqn{\mathcal{F}_{t-1} = (X_{t-s_1}, X_{t-s_2})}, respectively. \eqn{s_1} < \eqn{s_2} are the parameters indicating the degree of stochastic seasonality.
-The innovations follow either a Poisson or a generalized Poisson distribution. Such that either \eqn{W_t \sim Pois(\lambda_t)} or \eqn{W_t \sim GP(\lambda_t, \eta)}.
-If no covariates are used \eqn{\lambda_t = \lambda} and if covariates are used \deqn{\lambda_t = \exp{\left(\beta_0 + \sum_{j = 1}^p \beta_j \cdot y_{t,j} \right)},} whereby \eqn{y_{t,j}} is the \eqn{j}-th covariate at time \eqn{t}.
-Standard errors are computed by the square root of the diagonal elements of the inverse hessian.
-Add more on julia usage
+Let a time series of counts be \eqn{\{X_t\}} and be \eqn{R(\cdot)} a random operator that differs between model specifications.
+For more details on the random operator, see Jung and Tremayne (2011) and Joe (1996).
+The general first-order model is of the form
+\deqn{X_t = R(X_{t-1}) + I_t,}
+and the general secon-order model of the form
+\deqn{X_t = R(X_{t-1}, X_{t-2}) + I_t,}
+where \eqn{I_t} are i.i.d Poisson (\eqn{I_t \sim Po(\lambda_t)}) or Generalized
+Poisson (\eqn{I_t \sim GP(\lambda_t, \eta)}) innovations. Through closure under convolution
+the marginal distributions of \eqn{\{X_t\}} are therefore Poisson or Generalized Poisson distributions, respectively.
+
+If no covariates are used \eqn{\lambda_t = \lambda \in \mathbb{R}} and if covariates are used
+\deqn{\lambda_t = \exp{\left(\beta_0 + \sum_{j = 1}^k \beta_j \cdot z_{t,j} \right)},}
+whereby \eqn{z_{t,j}} is the \eqn{j}-th covariate at time \eqn{t}.
+
+Standard errors are computed by the square root of the diagonal elements of the inverse Hessian.
+
+This function is implemented in 2 versions. The default runs on RCPP. 
+An alternative version uses a Julia implementation which can be chosen by 
+setting the argument julia to TRUE. In order to
+use this feature, a running Julia installation is needed on the system.
+The RCPP implementation uses the derivative-free Nelder-Mead optimizer
+to obtain parameter estimates. The Julia implementation makes use of Julia's
+automatic differentiation in order to obtain gradients such that it can use the LBFGS algorithm for
+optimization. This enhances the numeric stability of the optimization and yields 
+an internal validation if both methods yield qualitatively same parameter estimates.
+Furthermore, the Julia implementation can increase the speed of the regression
+significantly, especially for large models. 
+
+The model assessment tools \code{\link{cocoBoot}}, \code{\link{cocoPit}}, and \code{\link{cocoScore}}
+will use a Julia implementation as well, if the \code{\link{cocoReg}} was run with Julia.
+Additionally, one can make the RCPP output of \code{\link{cocoReg}} compatible with the Julia
+model assessments by setting julia_installed to true. In this case, the user can choose
+between the RCPP and the Julia implementation for model assessment.
 }
 \examples{
 ## GP2 model without covariates
@@ -100,7 +126,7 @@ data <- data.sim$data
 fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
 }
 \references{
-Jung, R. C. and Tremayne, A. R. (2010) Convolution-closed models for count timeseries with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
+Jung, R. C. and Tremayne, A. R. (2011) Convolution-closed models for count timeseries with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
 
 Joe, H. (1996) Time series models with univariate margins in the convolution-closed infinitely divisible class. \emph{Journal of Applied Probability}, 664--677.
 }

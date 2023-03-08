@@ -55,7 +55,7 @@ pars <- c(1, 0.4)
 set.seed(12345)
 data <- cocoSim(order = 1, type = "Poisson", par = pars,
                 length = length)
-coco <- cocoReg(order = 1, type = "Poisson", data = data$data)
+coco <- cocoReg(order = 1, type = "Poisson", data = data)
 #> Registered S3 method overwritten by 'quantmod':
 #>   method            from
 #>   as.zoo.data.frame zoo
@@ -113,7 +113,7 @@ length <- 500
 pars <- c(1, 0.4)
 set.seed(12345)
 data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length)
-coco <- cocoReg(order = 1, type = "Poisson", data = data$data,
+coco <- cocoReg(order = 1, type = "Poisson", data = data,
                 julia_installed=TRUE)
 (scores <- cocoScore(coco, julia = TRUE))
 #> $log.score
@@ -125,6 +125,9 @@ coco <- cocoReg(order = 1, type = "Poisson", data = data$data,
 #> $rps.score
 #> [1] 0.619761
 pit <- cocoPit(coco, julia = TRUE)
+plot(pit)
+#> Warning in max(ids, na.rm = TRUE): no non-missing arguments to max; returning
+#> -Inf
 ```
 
 <img src="man/figures/README-example_assessment-1.png" width="100%" />

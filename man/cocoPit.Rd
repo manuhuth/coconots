@@ -2,35 +2,27 @@
 % Please edit documentation in R/cocoPit.R
 \name{cocoPit}
 \alias{cocoPit}
-\title{Probability integral transform based model assessment procedure}
+\title{Probability Integral Transform Based Model Assessment Procedure}
 \usage{
-cocoPit(
-  coco,
-  J = 10,
-  ylab = "Relative frequency",
-  xlab = "Probability integral transform",
-  plot_main = "PIT",
-  julia = FALSE
-)
+cocoPit(coco, J = 10, alpha = 0.05, julia = FALSE)
 }
 \arguments{
 \item{coco}{An object of class coco}
 
 \item{J}{Number of bins for the histogram (default: 10)}
 
-\item{ylab}{Label for the y-axis (default: "Relative frequency")}
-
-\item{xlab}{Label for the x-axis (default: "Probability integral transform")}
-
-\item{plot_main}{Title for the plot (default: "PIT")}
+\item{alpha}{Confidence level for the chi square test of equal distributions.}
 
 \item{julia}{if TRUE, the PIT is computed with Julia.}
 }
 \value{
-A plot of the probability integral transform for the coco object.
+The probability integral transform and p-values for the coco object.
 }
 \description{
 Computes the probability integral transform (PIT) and provides the non-randomized PIT histogram for assessing absolute performance of a fitted model as proposed by Czado et al. (2009).
+}
+\details{
+Details need to be added
 }
 \examples{
 lambda <- 1
@@ -47,7 +39,7 @@ pit_r <- cocoPit(fit)
 \references{
 Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.
 
-Jung, R. C. and Tremayne, A. R. (2010) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
+Jung, R. C. and Tremayne, A. R. (2011) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
 }
 \author{
 Manuel Huth

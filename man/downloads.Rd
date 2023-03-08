@@ -1,7 +1,7 @@
 \name{downloads}
 \alias{downloads}
 \title{
-  Time Series of daily downloads of a TeX-editor
+  Time Series of Daily Downloads of a TeX-Editor
 }
 \description{
   The data represent the number of daily downloads of a TeX-editor between June 2006 and February
