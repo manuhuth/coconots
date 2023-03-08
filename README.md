@@ -125,6 +125,8 @@ coco <- cocoReg(order = 1, type = "Poisson", data = data,
 #> $rps.score
 #> [1] 0.619761
 pit <- cocoPit(coco, julia = TRUE)
+pit$confidence_bands
+#> [1] -0.3113268  0.5113268
 plot(pit)
 #>           pit  bins      lower     upper
 #> 1  0.10464508  0.75 -0.3113268 0.5113268
@@ -144,8 +146,6 @@ plot(pit)
 <img src="man/figures/README-example_assessment-1.png" width="100%" />
 
 ``` r
-"a"
-#> [1] "a"
 boot <- cocoBoot(coco, julia = TRUE)
 plot(boot)
 ```
