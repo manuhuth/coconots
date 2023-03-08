@@ -11,7 +11,7 @@ cocoPit(coco, J = 10, alpha = 0.05, julia = FALSE)
 
 \item{J}{Number of bins for the histogram (default: 10)}
 
-\item{alpha}{Confidence level for the chi square test of equal distributions.}
+\item{alpha}{Confidence level for the confidence bands.}
 
 \item{julia}{if TRUE, the PIT is computed with Julia.}
 }

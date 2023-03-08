@@ -133,6 +133,8 @@ plot(pit)
 <img src="man/figures/README-example_assessment-1.png" width="100%" />
 
 ``` r
+"a"
+#> [1] "a"
 boot <- cocoBoot(coco, julia = TRUE)
 plot(boot)
 ```

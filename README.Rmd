@@ -94,6 +94,7 @@ coco <- cocoReg(order = 1, type = "Poisson", data = data,
 (scores <- cocoScore(coco, julia = TRUE))
 pit <- cocoPit(coco, julia = TRUE)
 plot(pit)
+"a"
 boot <- cocoBoot(coco, julia = TRUE)
 plot(boot)
 forecast <- cocoForecast(coco, julia = TRUE)

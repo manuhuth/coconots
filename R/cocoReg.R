@@ -74,8 +74,7 @@
 #' ## GP2 model without covariates
 #' length <- 1000
 #' par <- c(0.5,0.2,0.05,0.3,0.3)
-#' data.sim <- cocoSim(order = 2, type = "GP", par = par, length = length)
-#' data <- data.sim$data
+#' data <- cocoSim(order = 2, type = "GP", par = par, length = length)
 #' fit <- cocoReg(order = 2, type = "GP", data = data)
 #' 
 #' ##Poisson1 model with covariates
@@ -85,8 +84,7 @@
 #' cos <- cos(2*pi/period*(1:length))
 #' cov <- cbind(sin, cos)
 #' par <- c(0.2, 0.2, -0.2)
-#' data.sim <- cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, length = length)
-#' data <- data.sim$data
+#' data <- cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, length = length)
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
 #' @export
 

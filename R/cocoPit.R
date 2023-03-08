@@ -2,7 +2,7 @@
 #' @description Computes the probability integral transform (PIT) and provides the non-randomized PIT histogram for assessing absolute performance of a fitted model as proposed by Czado et al. (2009).
 #' @param coco An object of class coco
 #' @param J Number of bins for the histogram (default: 10)
-#' @param alpha Confidence level for the chi square test of equal distributions.
+#' @param alpha Confidence level for the confidence bands.
 #' @param julia  if TRUE, the PIT is computed with Julia.
 #' @return The probability integral transform and p-values for the coco object.
 #' @references 
