@@ -21,10 +21,6 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
     stop("Option 'start.val.adjust' must be either TRUE or False")
   }
 
-  if ((type != "GP") & (type != "Poisson")) {
-    stop("Option 'type' must be either Poisson or GP")
-  }
-
   if (is.data.frame(data)) {
     data <- as.matrix(data)
   }

@@ -95,6 +95,10 @@ cocoReg <- function(type, order, data, xreg = NULL,
                     julia_installed=FALSE) {
   seasonality <- c(1, 2) #will be used as argument in future versions
   
+  if ((type != "GP") & (type != "Poisson")) {
+    stop("Option 'type' must be either Poisson or GP")
+  }
+  
   if (julia){
     start_time <- Sys.time()
     fit_julia <- cocoRegJulia(type, order, data, xreg, start)
