@@ -16,9 +16,6 @@ Imports:
     stats,
     ggplot2,
     utils,
-    graphics,
-    grDevices,
-    methods,
     matrixStats,
     JuliaConnectoR
 LazyData: true
