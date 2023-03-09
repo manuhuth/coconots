@@ -1,6 +1,6 @@
 Package: coconots
 Type: Package
-Title: Convolution-closed Models for Count Time Series
+Title: Convolution-Closed Models for Count Time Series
 Version: 1.0
 Date: 2022-4-28
 Author: Manuel Huth [aut,cre],
