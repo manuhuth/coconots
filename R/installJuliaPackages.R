@@ -3,8 +3,6 @@
 #' @export
 installJuliaPackages <- function(){
   
-  JuliaCall::julia_setup(installJulia = TRUE)
-  
   strings1 <- c('"Random"', '"Distributions"', 
     '"ForwardDiff"', '"Optim"', '"StatsBase"', '"LineSearches"', '"LinearAlgebra"')
   strings2 <- c("Random", "Distributions", 
