@@ -1,5 +1,7 @@
 addJuliaFunctions <- function(){
   
+  JuliaCall::julia_setup(installJulia = TRUE)
+  
   if (JuliaConnectoR::juliaEval("isdefined(Main, :cocoReg)")) {
   } else {
     #----------------Add Julia functions-----------------------------------
