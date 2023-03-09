@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
   inference and probabilistic forecasting are provided as well as useful tools 
   for model validation and diagnostics. 
 
-![alt text](https://github.com/manuhuth/coconots/blob/main/images/functionality.png?raw=true)
+![alt text](https://github.com/manuhuth/coconots/blob/main/man/figures/functionality.png?raw=true)
 
 ## Details
 The package allows simulation of convolution-closed count time series models with the cocoSim
@@ -54,7 +54,7 @@ the default option to make our package accessible to non-Julia users.
 
 ## Model
 
-![alt text](https://github.com/manuhuth/coconots/blob/main/images/dgp.png?raw=true)
+![alt text](https://github.com/manuhuth/coconots/blob/main/man/figures/dgp.png?raw=true)
 
 ## Installation
 

@@ -19,7 +19,7 @@ are provided as well as useful tools for model validation and
 diagnostics.
 
 ![alt
-text](https://github.com/manuhuth/coconots/blob/main/images/functionality.png?raw=true)
+text](https://github.com/manuhuth/coconots/blob/main/man/figures/functionality.png?raw=true)
 
 ## Details
 
@@ -49,7 +49,7 @@ default option to make our package accessible to non-Julia users.
 ## Model
 
 ![alt
-text](https://github.com/manuhuth/coconots/blob/main/images/dgp.png?raw=true)
+text](https://github.com/manuhuth/coconots/blob/main/man/figures/dgp.png?raw=true)
 
 ## Installation
 
