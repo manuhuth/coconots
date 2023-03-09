@@ -17,7 +17,8 @@ Imports:
     ggplot2,
     utils,
     matrixStats,
-    JuliaConnectoR
+    JuliaConnectoR,
+    JuliaCall
 LazyData: true
 LinkingTo: Rcpp, StanHeaders (>= 2.21.0), RcppParallel (>= 5.0.1)
 RoxygenNote: 7.2.3

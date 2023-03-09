@@ -1,8 +1,8 @@
 #' @export
 print.summary.coco <- function(x, ...) {
   coco <- x
-  df <- data.frame(cbind(round(coco$par,4), round(coco$se,4)) )
-  colnames(df) <- c("Estimate", "Std. Error")
+  df <- data.frame(cbind(round(coco$par,4), round(coco$se,4), round(coco$par/coco$se,4)) )
+  colnames(df) <- c("Estimate", "Std. Error", "t")
   
   cat("Coefficients:\n")
   print(df, print.gap=3, quote=FALSE, na.print="")

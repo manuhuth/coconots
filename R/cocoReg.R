@@ -90,7 +90,7 @@
 cocoReg <- function(type, order, data, xreg = NULL, 
                     constrained.optim = TRUE, b.beta = -10,
                     start = NULL, start.val.adjust = TRUE, method_optim = "Nelder-Mead",
-                    replace.start.val = 1e-5, iteration.start.val = 0.99,
+                    replace.start.val = 1e-5, iteration.start.val = 0.6,
                     method.hessian = "Richardson", cores=2, julia=FALSE, 
                     julia_installed=FALSE) {
   seasonality <- c(1, 2) #will be used as argument in future versions
@@ -100,17 +100,19 @@ cocoReg <- function(type, order, data, xreg = NULL,
     fit_julia <- cocoRegJulia(type, order, data, xreg, start)
     end_time <- Sys.time()
     fit_R <- JuliaConnectoR::juliaGet(fit_julia)
-    return(transformJuliaRegOutputToR(xreg=xreg, pars=fit_R[["values"]][[8]],
-                                      grad=NULL, hes=NULL,
-                               inv_hes=fit_R[["values"]][[7]],
-                               se=fit_R[["values"]][[11]],
-                               data=data,
-                               type=type,
-                               order=order,
-                               likelihood=-fit_R[["values"]][[1]],
-                               end_time = end_time,
-                               start_time=start_time, 
-                               julia_reg=fit_julia))
+    julia_out <- transformJuliaRegOutputToR(xreg=xreg, pars=fit_R[["values"]][[8]],
+                                            grad=NULL, hes=NULL,
+                                            inv_hes=fit_R[["values"]][[7]],
+                                            se=fit_R[["values"]][[11]],
+                                            data=data,
+                                            type=type,
+                                            order=order,
+                                            likelihood=fit_R[["values"]][[1]],
+                                            end_time = end_time,
+                                            start_time=start_time, 
+                                            julia_reg=fit_julia)
+    class(julia_out) <- "coco"
+    return(julia_out)
   }
   
   if (is.null(xreg)) {

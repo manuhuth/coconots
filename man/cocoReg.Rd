@@ -15,7 +15,7 @@ cocoReg(
   start.val.adjust = TRUE,
   method_optim = "Nelder-Mead",
   replace.start.val = 1e-05,
-  iteration.start.val = 0.99,
+  iteration.start.val = 0.6,
   method.hessian = "Richardson",
   cores = 2,
   julia = FALSE,
