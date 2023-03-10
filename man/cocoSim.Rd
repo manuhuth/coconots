@@ -35,7 +35,7 @@ for more information on the usage.}
 \item{julia_seed}{Seed for the Julia implementation. Only used if Julia equals TRUE.}
 }
 \value{
-The generated time series
+a vector of the simulated time series.
 }
 \description{
 The function generates a time series of low counts from the (G)PAR model class for a specified

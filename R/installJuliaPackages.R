@@ -1,5 +1,6 @@
 #' @title installJuliaPackages
 #' @description checks for needed Julia packages and installs them if not installed.
+#' @return no return value, called to install Julia packages in Julia.
 #' @export
 installJuliaPackages <- function(){
   

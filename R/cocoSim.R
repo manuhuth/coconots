@@ -12,7 +12,7 @@
 #' for more information on the usage.
 #' @param julia If TRUE, the Julia implementation is used. In this case, init is ignored but it might be faster.
 #' @param julia_seed Seed for the Julia implementation. Only used if Julia equals TRUE.
-#' @return The generated time series
+#' @return a vector of the simulated time series. 
 #' @details The function checks for valid input of the type, order, parameters, and initial data
 #' before generating the time series.
 #'

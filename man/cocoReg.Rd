@@ -54,7 +54,10 @@ cocoReg(
 \item{julia_installed}{if TRUE, the model R output will contain a Julia compatible output element.}
 }
 \value{
-output of the regression analysis
+an object of class coco. It contains the parameter estimates, standard errors, the log-likelihood, 
+and information on the model specifications. If Julia is used for parameter estimation or the Julia installation
+parameter is set to TRUE, the results contain an additional Julia element that is called from the model Julia
+assessment tools if they are run with the Julia implementation.
 }
 \description{
 The function fits first and second order (Generalized) Poisson Autoregressive (G)PAR

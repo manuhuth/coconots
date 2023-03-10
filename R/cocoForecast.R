@@ -6,7 +6,8 @@
 #' @param xcast A vector of covariate values for forecasting 
 #' @param decimals Number of decimal places for the forecast probabilities
 #' @param julia  if TRUE, the estimate is predicted with Julia.
-#' @return A list containing the probability mass, mode, and median of the forecast
+#' @return an object of class cocoBoot. It contains the the probability mass, mode,
+#' and median of the forecast.
 #' @details Returns forecasts for each mass point of the one-step ahead
 #' distribution for the fitted model. The exact predictive distributions for
 #' the models included here are provided in Jung and Tremayne (2011), maximum

@@ -1,16 +1,16 @@
 #' @title Residual Based Model Assessment Procedure
-#' @description Calculates the residuals of a fitted model for model evaluation purposes.
+#' @description Calculates the (Pearson) residuals of a fitted model for model evaluation purposes.
 #' @param coco An object of class "coco
 #' @param val.num A non-negative real number which is used to stop the calculation of
 #' @author Manuel Huth
-#' @return A list with the vector of conditional means, conditional variances,
-#'  residuals, Pearson residuals.
-#'@details Returns the (Pearson) residuals which are computed as the scaled
-#'deviation of the observed count  from its conditional expectation given the relevant 
-#'past history,  including possible covariates.  If a fitted model is correctly specified, these residuals
-#'should exhibit: mean zero, variance one, and no significant serial correlation. 
+#' @return a list that includes the (Pearson) residuals, conditional expectations, conditional variances,
+#' and information on the model specifications.
+#'@details The Pearson residuals are computed as the scaled
+#'deviation of the observed count from its conditional expectation given the relevant 
+#'past history, including covariates, if applicable. If a fitted model is correctly specified,
+#'the Pearson residuals should exhibit mean zero, variance one, and no significant serial correlation. 
 #'@export
-cocoResid <- function(coco, val.num = 1e-5) {
+cocoResid <- function(coco, val.num = 1e-11) {
   start.time <- Sys.time()
 
   if (val.num <= 0) {
@@ -361,7 +361,7 @@ cocoResid <- function(coco, val.num = 1e-5) {
     end.time <- Sys.time()
     time <- end.time - start.time
 
-    list <- list(
+    list_out <- list(
       "cond.expec" = fitted, "resdiuals" = residuals, "pe.resid" = peResid,
       "cond.var" = varX, "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "cov" = xreg,
       "par" = par, "duration" = time
@@ -369,5 +369,5 @@ cocoResid <- function(coco, val.num = 1e-5) {
   } # end covariates
 
 
-  return(list)
+  return(list_out)
 } # end function

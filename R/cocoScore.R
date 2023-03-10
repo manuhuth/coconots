@@ -4,7 +4,7 @@
 #' @param val.num A non-negative real number which is used to stop the calculation
 #'  of the score in case of GP models. The default value is 1e-10
 #' @param julia if TRUE, the scores are computed with Julia.
-#' @return A list containing the log score, quadratic score and ranked probability score.
+#' @return a list containing the log score, quadratic score and ranked probability score.
 #' @details Scoring rules assign a numerical score based on the predictive
 #'  distribution and the observed data  to measure the quality of probabilistic predictions.
 #' They are provided here as a model selection tool and are computed as
@@ -238,7 +238,7 @@ cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
     rps.score <- rps.score / (T-seas[2])
   }# GP2
 
-  list <- list("log.score" = log.score, "quad.score" = quad.score, "rps.score" = rps.score)
+  list_out <- list("log.score" = log.score, "quad.score" = quad.score, "rps.score" = rps.score)
 }
 
 
@@ -436,11 +436,11 @@ cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
       rps.score <- rps.score / (T-seas[2])
     }# GP2
 
-    list <- list("log.score" = log.score, "quad.score" = quad.score, "rps.score" = rps.score)
+    list_out <- list("log.score" = log.score, "quad.score" = quad.score, "rps.score" = rps.score)
   }
   }#end julia if
 
 
-  return(list)
+  return(list_out)
 
 }# end function

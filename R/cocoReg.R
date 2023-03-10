@@ -28,8 +28,10 @@
 #' @param julia if TRUE, the model is estimated with Julia. This can improve the speed significantly since Julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.
 #' @param julia_installed if TRUE, the model R output will contain a Julia compatible output element.
 #' @author Manuel Huth
-#' @return output of the regression analysis
-#' 
+#' @return an object of class coco. It contains the parameter estimates, standard errors, the log-likelihood, 
+#' and information on the model specifications. If Julia is used for parameter estimation or the Julia installation
+#' parameter is set to TRUE, the results contain an additional Julia element that is called from the model Julia
+#' assessment tools if they are run with the Julia implementation.
 #' @details 
 #' Let a time series of counts be \eqn{\{X_t\}} and be \eqn{R(\cdot)} a random operator that differs between model specifications.
 #' For more details on the random operator, see Jung and Tremayne (2011) and Joe (1996).

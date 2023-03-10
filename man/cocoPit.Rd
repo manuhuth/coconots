@@ -16,7 +16,8 @@ cocoPit(coco, J = 10, alpha = 0.05, julia = FALSE)
 \item{julia}{if TRUE, the PIT is computed with Julia.}
 }
 \value{
-The probability integral transform and p-values for the coco object.
+an object of class cocoPit. It contains the The probability integral
+transform values, its p-values and information on the model specifications.
 }
 \description{
 Computes the probability integral transform (PIT) and provides

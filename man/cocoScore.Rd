@@ -15,7 +15,7 @@ of the score in case of GP models. The default value is 1e-10}
 \item{julia}{if TRUE, the scores are computed with Julia.}
 }
 \value{
-A list containing the log score, quadratic score and ranked probability score.
+a list containing the log score, quadratic score and ranked probability score.
 }
 \description{
 The function calculates the log, quadratic and ranked probability scores for assessing relative performance of a fitted model as proposed by Czado et al. (2009).

@@ -6,6 +6,9 @@
 \usage{
 installJuliaPackages()
 }
+\value{
+no return value, called to install Julia packages in Julia.
+}
 \description{
 checks for needed Julia packages and installs them if not installed.
 }

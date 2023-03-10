@@ -27,7 +27,8 @@ cocoForecast(
 \item{julia}{if TRUE, the estimate is predicted with Julia.}
 }
 \value{
-A list containing the probability mass, mode, and median of the forecast
+an object of class cocoBoot. It contains the the probability mass, mode,
+and median of the forecast.
 }
 \description{
 Computes the one-step ahead forecast distribution for the models included in the coconots package.

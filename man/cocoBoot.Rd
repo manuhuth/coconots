@@ -27,7 +27,8 @@ cocoBoot(
 \item{julia_seed}{Seed for the julia implementation. Only used if julia equals TRUE.}
 }
 \value{
-Bootstraped confidence intervals of the autocorrelations
+an object of class cocoBoot. It contains the bootstraped confidence intervals
+of the autocorrelations and information on the model specifications.
 }
 \description{
 Model checking procedure emphasizing reproducibility in fitted models to provide an overall evaluation of fit as proposed by Tsay (1992).
@@ -43,7 +44,7 @@ data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 10
 fit <- cocoReg(order = 1, type = "Poisson", data = data)
 
 #assessment using bootstrap - R implementation
-#boot_r <- cocoBoot(fit, rep.Bootstrap=400)
+boot_r <- cocoBoot(fit, rep.Bootstrap=400)
 }
 \references{
 Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
