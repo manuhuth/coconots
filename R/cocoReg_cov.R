@@ -713,13 +713,11 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             warning(paste("The initial value of alpha1 is not in the feasible region and was set to", replace.start.val, ""))
           }
 
-          index <- 1
           if (alpha1_s + alpha2_s + alpha3_s > 1) {
             while (alpha1_s + alpha2_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
               alpha2_s <- alpha2_s * iteration.start.val
               alpha3_2 <- alpha3_s * iteration.start.val
-              print(index)
               index <- index +1
             }
             warning(paste("The initial sum of 2*alpha1, alpha2 and alpha3 had not been in the feasible region and was adjusted", ""))
