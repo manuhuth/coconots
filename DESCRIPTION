@@ -2,12 +2,12 @@ Package: coconots
 Type: Package
 Title: Convolution-Closed Models for Count Time Series
 Version: 1.0
-Date: 2022-4-28
+Date: 2023-3-9
 Author: Manuel Huth [aut,cre],
 	Robert C. Jung [aut],
 	A. R. Tremanye [aut]
 Maintainer: Manuel Huth <manuel.huth@yahoo.com>
-Description: Useful tools for fitting, validating, and forecasting of practical convolution-closed time series models for low counts are provided. Equi-dispersed and over-dispersed marginal distributions of the data can be modeled via Poisson and Generalized Poisson innovations. Regression effects can be modelled via time varying innovation rates.
+Description: Useful tools for fitting, validating, and forecasting of practical convolution-closed time series models for low counts are provided. Marginal distributions of the data can be modeled via Poisson and Generalized Poisson innovations. Regression effects can be modelled via time varying innovation rates.
 Imports:
     Rcpp,
     forecast,
@@ -22,7 +22,7 @@ LazyData: true
 LinkingTo: Rcpp, StanHeaders (>= 2.21.0), RcppParallel (>= 5.0.1)
 RoxygenNote: 7.2.3
 Depends: 
-    R (>= 2.10)
+    R (>= 3.0.2)
 Suggests: 
     covr,
     testthat (>= 3.0.0)
