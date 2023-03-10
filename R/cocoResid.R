@@ -174,7 +174,7 @@ cocoResid <- function(coco, val.num = 1e-11) {
 
     time <- end.time - start.time
 
-    list <- list(
+    list_out <- list(
       "fitted" = fitted, "resdiuals" = residuals, "pe.resid" = peResid,
       "cond.var" = varX, "type" = coco$type, "order" = coco$order, "ts" = coco$ts,
       "par" = par, "prediction" = pred, "duration" = time
