@@ -165,7 +165,11 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
 
     data <- c()
     for (t in 1:seasonality[2]) {
-      lambda_start1 <- exp( as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
+      if (nrow(xreg) > 1){
+        lambda_start1 <- exp( as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
+      } else{
+        lambda_start1 <- c(0,0)
+      }
       data[t] <- stats::rpois(n = 1, lambda_start1)
     }
 
@@ -182,7 +186,11 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       lambda <- lambdas[index]
       innovations[index] <- stats::rpois(n = 1, lambda)
     }
-    uniform <- stats::runif(n = T, 0, 1)
+    if (nrow(xreg) < 2){
+      uniform <- stats::runif(n = T+2, 0, 1)
+    } else{
+      uniform <- stats::runif(n = T, 0, 1)
+    }
 
     data <- simGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, N, seasonality[1], seasonality[2], data, xreg, uniform, innovations)
 
@@ -214,8 +222,12 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
 
     data <- c()
     for (t in 1:seasonality[2]) {
-      lambda_start1 <- exp( as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
-      data[t] <- rgenpois(n = 1, lambda_start1, eta)
+      if (nrow(xreg) > 1){
+        lambda_start1 <- exp( as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
+      } else{
+        lambda_start1 <- c(0,0)
+      }
+      data[t] <- stats::rpois(n = 1, lambda_start1)
     }
 
     if (!is.null(init) ) {
@@ -231,9 +243,16 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       lambda <- lambdas[index]
       innovations[index] <- rgenpois(n = 1, lambda, eta)
     }
-    uniform <- stats::runif(n = T, 0, 1)
-
-    data <- simGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, N, seasonality[1], seasonality[2], data, xreg, uniform, innovations)
+    
+    if (nrow(xreg) < 3){
+      uniform <- stats::runif(n = T+2, 0, 1)
+    } else{
+      uniform <- stats::runif(n = T, 0, 1)
+    }
+    
+    data <- simGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, N,
+                      seasonality[1], seasonality[2],
+                      data, xreg, uniform, innovations)
 
     end_time <- Sys.time()
     time <- end_time - start_time

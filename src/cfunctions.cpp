@@ -373,7 +373,8 @@ double Pyz(int y, int z, double lambda, double alpha1, double alpha2, double alp
 
 // [[Rcpp::export]]
 std::vector<int> simGP2cov(double sumlimit,  double alpha1, double alpha2, double alpha3,
-                           double eta, NumericVector lambdas, int T,int N, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg,
+                           double eta, NumericVector lambdas, int T,int N, int seas1, int seas2,
+                           std::vector<int> data, NumericMatrix xreg,
                            std::vector<double> uniform, std::vector<int> innovations)
 {
   double U = 1/( 1 - alpha1-alpha2-alpha3);
