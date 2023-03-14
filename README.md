@@ -3,9 +3,10 @@
 
 # coconots
 
-<!-- badges: start --> [![CRAN
-status](https://www.r-pkg.org/badges/version/coconots)](https://CRAN.R-project.org/package=coconots)
+<!-- badges: start -->
 [![R-CMD-check](https://github.com/manuhuth/coconots/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/manuhuth/coconots/actions/workflows/R-CMD-check.yaml)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/coconots)](https://CRAN.R-project.org/package=coconots)
 [![Codecov test
 coverage](https://codecov.io/gh/manuhuth/coconots/branch/main/graph/badge.svg)](https://app.codecov.io/gh/manuhuth/coconots?branch=main)
 <!-- badges: end -->
@@ -54,11 +55,11 @@ text](https://github.com/manuhuth/coconots/blob/main/man/figures/dgp.png?raw=tru
 
 ## Installation
 
-You can install the development version of coconots from
+You can install the latest stable version of coconots from
 [CRAN](https://cran.r-project.org/) with:
 
 ``` r
-# install.packages("coconots")
+install.packages("coconots")
 ```
 
 ## Example using RCPP implementation
