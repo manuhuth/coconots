@@ -37,13 +37,13 @@
 #' For more details on the random operator, see Jung and Tremayne (2011) and Joe (1996).
 #' The general first-order model is of the form
 #' \deqn{X_t = R(X_{t-1}) + I_t,}
-#' and the general secon-order model of the form
+#' and the general second-order model of the form
 #' \deqn{X_t = R(X_{t-1}, X_{t-2}) + I_t,}
 #' where \eqn{I_t} are i.i.d Poisson (\eqn{I_t \sim Po(\lambda_t)}) or Generalized
 #' Poisson (\eqn{I_t \sim GP(\lambda_t, \eta)}) innovations. Through closure under convolution
 #' the marginal distributions of \eqn{\{X_t\}} are therefore Poisson or Generalized Poisson distributions, respectively.
 #' 
-#' If no covariates are used \eqn{\lambda_t = \lambda \in \mathbb{R}} and if covariates are used
+#' If no covariates are used \eqn{\lambda_t = \lambda} and if covariates are used
 #' \deqn{\lambda_t = \exp{\left(\beta_0 + \sum_{j = 1}^k \beta_j \cdot z_{t,j} \right)},}
 #' whereby \eqn{z_{t,j}} is the \eqn{j}-th covariate at time \eqn{t}.
 #' 
