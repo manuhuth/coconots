@@ -1,7 +1,7 @@
 #-----------------cgeck install julia packages----
 test_that("insatll_Julia_packages", {
   skip_on_cran()
-  installJuliaPackages()
+  expect_no_error(installJuliaPackages())
 })
 #-----------------No covariates, constrained--------------------------------
 test_that("GP2Works", {
@@ -22,7 +22,7 @@ test_that("GP2Works", {
     cocoForecast(fit, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
-  
+  expect_no_error(fit)
 })
 
 test_that("Poisson2Works", {
@@ -44,6 +44,7 @@ test_that("Poisson2Works", {
     cocoForecast(fit, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
+  expect_no_error(fit)
 })
 
 test_that("GP1Works", {
@@ -65,6 +66,7 @@ test_that("GP1Works", {
     cocoForecast(fit, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
+  expect_no_error(fit)
 })
 
 test_that("Poisson1Works", {
@@ -86,6 +88,7 @@ test_that("Poisson1Works", {
     cocoForecast(fit, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
+  expect_no_error(fit)
 })
 
 #-----------------Covariates, constrained--------------------------------
@@ -115,6 +118,7 @@ test_that("Poisson1Works_cov", {
    cocoForecast(fit, xcast = cov[1,], julia=i)
    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
  }
+ expect_no_error(fit)
 
 })
 
@@ -143,6 +147,7 @@ test_that("GP1Works_cov", {
     cocoForecast(fit, xcast = cov[1,], julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
+  expect_no_error(fit)
 })
 
 test_that("Poisson2Works_cov", {
@@ -170,6 +175,7 @@ test_that("Poisson2Works_cov", {
     cocoForecast(fit, xcast = cov[1,], julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
+  expect_no_error(fit)
 })
 
 test_that("GP2Works_cov", {
@@ -197,6 +203,7 @@ test_that("GP2Works_cov", {
     cocoForecast(fit, xcast = cov[1,], julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
+  expect_no_error(fit)
 })
 
 #-----------------No covariates, unconstrained--------------------------------
@@ -207,7 +214,7 @@ test_that("GP2Works_constr", {
   data <- cocoSim(order = 2, type = "GP", par = par, length = length)
   
   fit <- cocoReg(order = 2, type = "GP", data = data, constrained.optim = FALSE)
-  
+  expect_no_error(fit)
 })
 
 test_that("Poisson2Works_constr", {
@@ -217,6 +224,7 @@ test_that("Poisson2Works_constr", {
   data <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
   
   fit <- cocoReg(order = 2, type = "Poisson", data = data, constrained.optim = FALSE)
+  expect_no_error(fit)
 })
 
 test_that("GP1Works_constr", {
@@ -226,6 +234,7 @@ test_that("GP1Works_constr", {
   data <- cocoSim(order = 1, type = "GP", par = par, length = length)
   
   fit <- cocoReg(order = 1, type = "GP", data = data, constrained.optim = FALSE)
+  expect_no_error(fit)
 })
 
 test_that("Poisson1Works_constr", {
@@ -235,6 +244,7 @@ test_that("Poisson1Works_constr", {
   data <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
   
   fit <- cocoReg(order = 1, type = "Poisson", data = data, constrained.optim = FALSE)
+  expect_no_error(fit)
 })
 
 #-----------------Covariates, unconstrained--------------------------------
@@ -251,6 +261,7 @@ test_that("Poisson1Works_cov_constr", {
                       xreg = cov, length = length)
   
   fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov, constrained.optim = FALSE)
+  expect_no_error(fit)
 })
 
 test_that("GP1Works_cov_constr", {
@@ -266,6 +277,7 @@ test_that("GP1Works_cov_constr", {
                       xreg = cov, length = length)
   
   fit <- cocoReg(order = 1, type = "GP", data = data, xreg = cov, constrained.optim = FALSE)
+  expect_no_error(fit)
 })
 
 test_that("GP2Works_cov_uncosntrained", {
@@ -282,6 +294,7 @@ test_that("GP2Works_cov_uncosntrained", {
   
   fit <- cocoReg(order = 2, type = "GP", data = data, xreg = cov,
                  constrained.optim = FALSE)
+  expect_no_error(fit)
 })
 
 test_that("Poisson2Works_cov_constr", {
@@ -297,6 +310,7 @@ test_that("Poisson2Works_cov_constr", {
                       xreg = cov, length = length)
   
   fit <- cocoReg(order = 2, type = "Poisson", data = data, xreg = cov, constrained.optim = FALSE)
+  expect_no_error(fit)
 })
 
 
@@ -310,6 +324,7 @@ test_that("initialize_time_series", {
   
   data2 <- cocoSim(order = 2, type = "GP", par = par, length = length,
                       init = data)
+  expect_no_error(data)
 })
 #----------------Custom starting values covariates------------------------------
 test_that("custom_start_values_GP2", {
@@ -319,6 +334,7 @@ test_that("custom_start_values_GP2", {
   data <- cocoSim(order = 2, type = "GP", par = par, length = length)
   
   fit <- cocoReg(order = 2, type = "GP", data = data, start = par)
+  expect_no_error(fit)
 })
 
 test_that("custom_start_values_Poisson2", {
@@ -328,6 +344,7 @@ test_that("custom_start_values_Poisson2", {
   data <- cocoSim(order = 2, type = "Poisson", par = par, length = length)
   
   fit <- cocoReg(order = 2, type = "Poisson", data = data, start = par)
+  expect_no_error(fit)
 })
 
 test_that("custom_start_values_GP1", {
@@ -337,6 +354,7 @@ test_that("custom_start_values_GP1", {
   data <- cocoSim(order = 1, type = "GP", par = par, length = length)
   
   fit <- cocoReg(order = 1, type = "GP", data = data, start = par)
+  expect_no_error(fit)
 })
 
 test_that("custom_start_values_Poisson1", {
@@ -346,6 +364,7 @@ test_that("custom_start_values_Poisson1", {
   data <- cocoSim(order = 1, type = "Poisson", par = par, length = length)
   
   fit <- cocoReg(order = 1, type = "Poisson", data = data, start = par)
+  expect_no_error(fit)
 })
 #----------------Custom starting values covariates------------------------------
 test_that("Poisson1Works_cov_2", {
@@ -361,6 +380,7 @@ test_that("Poisson1Works_cov_2", {
                       xreg = cov, length = length)
   
   fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
+  expect_no_error(fit)
 })
 
 test_that("GP1Works_cov_2", {
@@ -382,6 +402,7 @@ test_that("GP1Works_cov_2", {
   cocoScore(fit)
   cocoForecast(fit, xcast = cov[1,])
   cocoBoot(fit, rep.Bootstrap = 6)
+  expect_no_error(fit)
 })
 
 test_that("Poisson2Works_cov_2", {
@@ -403,6 +424,7 @@ test_that("Poisson2Works_cov_2", {
   cocoScore(fit)
   cocoForecast(fit, xcast = cov[1,])
   cocoBoot(fit, rep.Bootstrap = 6)
+  expect_no_error(fit)
 })
 
 test_that("GP2Works_cov_2", {
@@ -424,6 +446,7 @@ test_that("GP2Works_cov_2", {
   cocoScore(fit)
   cocoForecast(fit, xcast = cov[1,])
   cocoBoot(fit, rep.Bootstrap = 6)
+  expect_no_error(fit)
 })
 #----------------Wrong models no covariates-----------------------------------
 test_that("wrong_modelsGP2", {
@@ -438,6 +461,7 @@ test_that("wrong_modelsGP2", {
     fit <- cocoReg(order = 2, type = "Poisson", data = data, julia = julia)
     fit <- cocoReg(order = 1, type = "GP", data = data, julia = julia)
   }
+  expect_no_error(fit)
 })
 
 test_that("wrong_modelsPoisson2", {
@@ -452,6 +476,7 @@ test_that("wrong_modelsPoisson2", {
     fit <- cocoReg(order = 1, type = "GP", data = data,  julia = julia)
     fit <- cocoReg(order = 2, type = "GP", data = data,  julia = julia)
   }
+  expect_no_error(fit)
   
 })
 
@@ -467,6 +492,7 @@ test_that("wrong_modelsGP1", {
     fit <- cocoReg(order = 2, type = "Poisson", data = data,  julia = julia)
     fit <- cocoReg(order = 2, type = "GP", data = data,  julia = julia)
   }
+  expect_no_error(fit)
 })
 
 test_that("wrong_modelsPoisson1", {
@@ -481,5 +507,6 @@ test_that("wrong_modelsPoisson1", {
     fit <- cocoReg(order = 1, type = "GP", data = data,  julia = julia)
     fit <- cocoReg(order = 2, type = "GP", data = data,  julia = julia)
   }
+  expect_no_error(fit)
 
 })
