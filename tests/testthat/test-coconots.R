@@ -11,7 +11,7 @@ test_that("GP2Works", {
   set.seed(123499)
   data <- cocoSim(order = 2, type = "GP", par = par, length = length)
   cocoSim(order = 2, type = "GP", par = par, length = length, julia = TRUE,
-          julia_seed = 123499)
+          julia_seed = 1234992)
   
   fit <- cocoReg(order = 2, type = "GP", data = data, julia_installed = TRUE)
   for (i in c(TRUE, FALSE)){
