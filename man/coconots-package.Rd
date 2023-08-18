@@ -1,6 +1,6 @@
 \name{coconots-package}
 \alias{Concolution-closed Models for Count Time Series}
-\alias{coconots}
+\alias{coconots-package}
 \docType{package}
 \title{
   Concolution-closed Models for Time Series
