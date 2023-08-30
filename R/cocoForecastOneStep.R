@@ -72,6 +72,8 @@ cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-5, xcast=NULL,
     }
   }
   
+  
+  distribution_function <- cumsum(densities)
   densities_plot <- round(densities, decimals)
   
   x <- 0:(length(densities)-1)
