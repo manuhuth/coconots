@@ -3,7 +3,7 @@
 #' @param coco An object of class coco
 #' @param numb.lags Number of lags for which to compute autocorrelations
 #' @param rep.Bootstrap Number of bootstrap replicates to use
-#' @param confidence Confidence level for the intervals
+#' @param conf.alpha Confidence level for the quantile intervals
 #' @param julia  if TRUE, the bootstrap is run with Julia.
 #' @param julia_seed Seed for the julia implementation. Only used if julia equals TRUE.
 #' @return an object of class cocoBoot. It contains the bootstraped confidence intervals
@@ -22,11 +22,11 @@
 #' boot_r <- cocoBoot(fit, rep.Bootstrap=400)
 #' @export
 
-cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 400,
-                 confidence = 0.95, julia = FALSE, julia_seed = NULL
+cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
+                 conf.alpha = 0.05, julia = FALSE, julia_seed = NULL
                  ) {
   start.time <- Sys.time()
-
+  confidence <- 1 - conf.alpha
   if ((confidence <= 0) | (confidence >= 1)) {
     stop("Option confidence must be a real number between 0 and 1")
   }

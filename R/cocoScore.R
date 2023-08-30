@@ -49,7 +49,9 @@ cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
     addJuliaFunctions()
     coco_score <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("compute_scores", coco$julia_reg))
     return(list("log.score" = coco_score$values[[1]], "quad.score" = coco_score$values[[2]],
-                 "rps.score" = coco_score$values[[3]]))
+                 "rps.score" = coco_score$values[[3]],
+                "aic" = 2*length(coco$par) - 2 * coco$likelihood,
+                "bic" = length(coco$par) * log(length(coco$ts)) - 2 * coco$likelihood))
   } else {
   T <- length(coco$ts)
   par <- coco$par
@@ -439,8 +441,9 @@ cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
     list_out <- list("log.score" = log.score, "quad.score" = quad.score, "rps.score" = rps.score)
   }
   }#end julia if
-
-
+  
+  list_out["bic"] <- length(coco$par) * log(length(coco$ts)) - 2 * coco$likelihood
+  list_out["aic"] <- 2*length(coco$par) - 2 * coco$likelihood
   return(list_out)
 
 }# end function

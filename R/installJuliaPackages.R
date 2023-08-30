@@ -5,9 +5,11 @@
 installJuliaPackages <- function(){
   
   strings1 <- c('"Random"', '"Distributions"', 
-    '"ForwardDiff"', '"Optim"', '"StatsBase"', '"LineSearches"', '"LinearAlgebra"')
+    '"ForwardDiff"', '"Optim"', '"StatsBase"', '"LineSearches"', '"LinearAlgebra"', 
+    '"FreqTables"', '"DataFrames"')
   strings2 <- c("Random", "Distributions", 
-                "ForwardDiff", "Optim", "StatsBase", "LineSearches", "LinearAlgebra")
+                "ForwardDiff", "Optim", "StatsBase", "LineSearches", "LinearAlgebra",
+                "FreqTables", "DataFrames")
   for (i in 1:length(strings1)){
     if (!JuliaConnectoR::juliaEval(paste0(strings1[i], ' in keys(Pkg.project().dependencies)'))){
       #JuliaConnectoR.utils::install_julia_packages(strings2[i])

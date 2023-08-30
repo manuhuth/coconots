@@ -4,14 +4,14 @@
 \alias{cocoPit}
 \title{Probability Integral Transform Based Model Assessment Procedure}
 \usage{
-cocoPit(coco, J = 10, alpha = 0.05, julia = FALSE)
+cocoPit(coco, J = 10, conf.alpha = 0.05, julia = FALSE)
 }
 \arguments{
 \item{coco}{An object of class coco}
 
 \item{J}{Number of bins for the histogram (default: 10)}
 
-\item{alpha}{Confidence level for the confidence bands.}
+\item{conf.alpha}{Confidence level for the confidence bands.}
 
 \item{julia}{if TRUE, the PIT is computed with Julia.}
 }

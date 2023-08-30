@@ -7,8 +7,8 @@
 cocoBoot(
   coco,
   numb.lags = 21,
-  rep.Bootstrap = 400,
-  confidence = 0.95,
+  rep.Bootstrap = 1000,
+  conf.alpha = 0.05,
   julia = FALSE,
   julia_seed = NULL
 )
@@ -20,7 +20,7 @@ cocoBoot(
 
 \item{rep.Bootstrap}{Number of bootstrap replicates to use}
 
-\item{confidence}{Confidence level for the intervals}
+\item{conf.alpha}{Confidence level for the quantile intervals}
 
 \item{julia}{if TRUE, the bootstrap is run with Julia.}
 

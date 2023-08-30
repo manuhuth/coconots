@@ -4,7 +4,7 @@
 #' fitted model as proposed by Czado et al. (2009).
 #' @param coco An object of class coco
 #' @param J Number of bins for the histogram (default: 10)
-#' @param alpha Confidence level for the confidence bands.
+#' @param conf.alpha Confidence level for the confidence bands.
 #' @param julia  if TRUE, the PIT is computed with Julia.
 #' @return an object of class cocoPit. It contains the The probability integral
 #' transform values, its p-values and information on the model specifications.
@@ -39,8 +39,9 @@
 #' pit_r <- cocoPit(fit)
 #' @export
 
-cocoPit <- function(coco, J = 10, alpha = 0.05, julia=FALSE) {
+cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   start.time <- Sys.time()
+  alpha <- conf.alpha
 
   if ((J != round(J)) | (J < 1)) {
     stop("The value of J must be a positive integer")

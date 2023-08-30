@@ -12,7 +12,10 @@ addJuliaFunctions <- function(){
     using StatsBase
     using LineSearches
     using LinearAlgebra
-
+    using FreqTables
+    using DataFrames
+    
+    
     function exponential_function(x)
       """
       Wrapper function for the exponential function. Used as link function.
@@ -175,7 +178,7 @@ addJuliaFunctions <- function(){
     function cocoPit(cocoReg_fit, n_bins=21)
         cocoReg_fit["data"] = Int.(cocoReg_fit["data"])
         u = collect( range(0, stop = 1, length = Int(n_bins+1)) )
-        
+    
         lambda = get_lambda(cocoReg_fit, false)
         if isnothing(cocoReg_fit["covariates"])
           lambda = repeat([lambda], length(cocoReg_fit["data"]) )
@@ -226,13 +229,13 @@ addJuliaFunctions <- function(){
     end
     
     function compute_scores(cocoReg_fit)
-        
+    
         lambda = get_lambda(cocoReg_fit, false)
-        
+    
         if isnothing(cocoReg_fit["covariates"])
           lambda = repeat([lambda], length(cocoReg_fit["data"]) )
         end
-        
+    
         if Int(cocoReg_fit["order"]) == 1
             if cocoReg_fit["type"] == "Poisson"
                 eta = 0
@@ -362,31 +365,31 @@ addJuliaFunctions <- function(){
     function compute_convolution_x_r_y(x, y, lambda, alpha, eta)
         sum = 0.0
         for r in 0:min(x, y)
-          if (y >= r) 
+          if (y >= r)
             sum = sum + compute_g_r_y(y, r, alpha, eta, lambda) * generalized_poisson_distribution(x-r, lambda, eta)
           end
         end
         return sum
     end
     
-    function compute_negative_log_likelihood_GP1(lambdas, alpha, eta, data)
+    function compute_negative_log_likelihood_GP1(lambdas, alpha, eta, data,
+                                                array_fill=Array{Union{Float64, ForwardDiff.Dual}}(undef, length(data) - 1))
     
-        sum = 0.0
-        for t in 2:length(data)
-            sum = sum - log(compute_convolution_x_r_y(data[t], data[t-1], lambdas[t], alpha, eta))
+        Threads.@threads for t in 2:length(data)
+            array_fill[t-1] = - log(compute_convolution_x_r_y(data[t], data[t-1], lambdas[t], alpha, eta))
         end
     
-        return sum
+        return sum(array_fill)
     end
     
-    function compute_negative_log_likelihood_GP2(lambdas, alpha1, alpha2, alpha3, eta, data, max=nothing)
+    function compute_negative_log_likelihood_GP2(lambdas, alpha1, alpha2, alpha3, eta, data, max=nothing,
+                                                array_fill=Array{Union{Float64, ForwardDiff.Dual}}(undef, length(data) - 2))
     
-        sum = 0.0
-        for t in 3:length(data)
-            sum = sum - log(compute_convolution_x_r_y_z(data[t], data[t-1], data[t-2], lambdas[t], alpha1, alpha2, alpha3, eta, max))
+        Threads.@threads for t in 3:length(data)
+            array_fill[t-2] = - log(compute_convolution_x_r_y_z(data[t], data[t-1], data[t-2], lambdas[t], alpha1, alpha2, alpha3, eta, max))
         end
     
-        return sum
+        return sum(array_fill)
     end
     
     function compute_convolution_x_r_y_z(x, y, z, lambda, alpha1, alpha2, alpha3, eta, max=nothing)
@@ -399,12 +402,12 @@ addJuliaFunctions <- function(){
     
     function get_lambda(cocoReg_fit, last_val=false)
         cocoReg_fit["link"] = exponential_function
-        
+    
         if isnothing(cocoReg_fit["covariates"])
             return last(cocoReg_fit["parameter"])
         else
             if last_val
-                
+    
                 return cocoReg_fit["link"]( sum(cocoReg_fit["covariates"][end, :] .* cocoReg_fit["parameter"][(end-size(cocoReg_fit["covariates"])[2]+1):end]))
             else
                 return cocoReg_fit["link"](cocoReg_fit["covariates"] * cocoReg_fit["parameter"][(end-size(cocoReg_fit["covariates"])[2]+1):end])
@@ -412,11 +415,11 @@ addJuliaFunctions <- function(){
         end
     end
     
-    function cocoPredict(cocoReg_fit, x=0:10, covariates=nothing,
+    function cocoPredictOneStep(cocoReg_fit, x=0:10, covariates=nothing,
                           safe_array = Array{Float64}(undef, length(x)))
-
+    
         lambda = get_lambda(cocoReg_fit, true)
-        
+    
         if (!isnothing(covariates))
           lambda = exp(sum(covariates[end,:] .* cocoReg_fit["parameter"][(end-size(cocoReg_fit["covariates"])[2]+1):end]))
         end
@@ -453,6 +456,84 @@ addJuliaFunctions <- function(){
         return output
     end
     
+    function cocoForwardSim(n, x_prev, type, order, parameter, covariates=nothing,
+                                link_function=exponential_function, add_help=order*-1 + 2,
+                                x=zeros(Int(n + length(x_prev) + add_help)))
+        n_burn_in = length(x_prev)
+        x[(end-length(x_prev)):(end)-1] .= x_prev
+    
+    
+        if order == 2
+            alpha1 = parameter[1]
+            alpha2 = parameter[2]
+            alpha3 = parameter[3]
+            alpha = nothing
+    
+            if type == "GP"
+                eta = parameter[4]
+            else
+                eta = 0
+            end
+        
+        else
+            alpha1 = nothing
+            alpha2 = nothing
+            alpha3 = nothing
+            alpha = parameter[1]
+            if type == "GP"
+                eta = parameter[2]
+            else
+                eta = 0
+            end
+        end
+    
+        if !isnothing(covariates)
+            lambda = link_function.(repeat(covariates * parameter[Int((end-(size(covariates)[2]-1))):Int(end)], Int(ceil(1 + n_burn_in / n)))[Int((end-n_burn_in-n+1)):Int(end)])
+        else
+            lambda = repeat([last(parameter)], Int(n + n_burn_in + add_help))
+        end
+    
+        
+        for t in 3:(Int(n + n_burn_in + add_help))
+            x[t] = draw_random_g(order, rand(Uniform(0,1),1)[1], Int(x[t-1]), Int(x[t-2]), lambda[t], alpha1, alpha2, alpha3, alpha, eta, nothing) +
+                    draw_random_generalized_poisson_variable(rand(Uniform(0,1),1)[1], lambda[t], eta)
+    
+        end
+    
+        return x[Int((end-n+1)):Int(end)]
+    end
+    
+    function cocoPredictKsteps(cocoReg_fit, k, number_simulations=500,
+                                covariates=nothing,
+                                link_function=exponential_function,
+                                matrix_fill = zeros(Int64(number_simulations), Int64(k)))
+    
+        type = cocoReg_fit["type"]
+        order = cocoReg_fit["order"]
+        parameter = cocoReg_fit["parameter"]
+    
+        x_prev = cocoReg_fit["data"][end]
+        if order == 2
+            x_prev = cocoReg_fit["data"][(end-1):end]
+        end
+    
+        for i in 1:Int64(number_simulations)
+            matrix_fill[i,:] = cocoForwardSim(k, x_prev, type, order, parameter, covariates,
+                                        link_function)
+        end
+    
+        return get_relative_frequencies(matrix_fill)
+    end
+    
+    function get_relative_frequencies(matrix)
+        out = Dict()
+        for i in 1:size(matrix)[2]
+            freq_table = freqtable(matrix[:, i])
+            out["prediction_$i"] = DataFrame(hcat(names(freq_table)[1], freq_table ./ size(matrix)[1]), ["value", "frequency"])
+        end
+        out["length"] = length(out)
+        return out
+    end
     
     #------------------------Helper-------------------------------------------------
     function compute_inverse_matrix(M)
@@ -485,9 +566,9 @@ addJuliaFunctions <- function(){
     end
     
     function reparameterize_alpha(parameter)
-        alpha3 = parameter[1] * logistic_function(parameter[2])
+        alpha3 = parameter[1] * parameter[2] #logistic_function(parameter[2])
         alpha1 = (parameter[1] - alpha3) / 2
-        alpha2 = (1-alpha1-alpha3) * logistic_function(parameter[3])
+        alpha2 = (1-alpha1-alpha3) * parameter[3] #logistic_function(parameter[3])
     
         return alpha1, alpha2, alpha3
     end
@@ -614,7 +695,7 @@ addJuliaFunctions <- function(){
             while alpha3 + alpha2 + alpha1 >= 1
                 alpha3 = alpha3 * 0.8
                 alpha2 = alpha2 * 0.8
-                alpha1 = alpha2 * 0.8
+                alpha1 = alpha1 * 0.8
             end
         end
     
@@ -628,15 +709,17 @@ addJuliaFunctions <- function(){
         lambda = mean(data) * (1-alpha1-alpha2-alpha3) * (1-eta)
     
         if type == "GP"
-            return [2*alpha1 + alpha3, log(alpha3 / (2*alpha1) ), log(alpha2 / (1-alpha1-alpha2-alpha3)), eta, lambda]
+            return [2*alpha1 + alpha3, alpha3 / (2*alpha1+alpha3), alpha2 / (1-alpha1-alpha3), eta, lambda]
+            #return [2*alpha1 + alpha3, log(alpha3 / (2*alpha1) ), log(alpha2 / (1-alpha1-alpha2-alpha3)), eta, lambda]
         elseif type == "Poisson"
-            return [2*alpha1 + alpha3, log(alpha3 / (2*alpha1) ), log(alpha2 / (1-alpha1-alpha2-alpha3)), lambda]
+            return [2*alpha1 + alpha3, alpha3 / (2*alpha1+alpha3), alpha2 / (1-alpha1-alpha3), lambda]
+            #return [2*alpha1 + alpha3, log(alpha3 / (2*alpha1) ), log(alpha2 / (1-alpha1-alpha2-alpha3)), lambda]
         end
     end
     
     function compute_starting_values_GP1(type, data)
     
-        alpha = compute_autocorrelation(data, 1)
+        alpha = abs(compute_autocorrelation(data, 1))
         lambda = mean(data) * (1-alpha)
     
         if type == "GP"
@@ -667,11 +750,11 @@ addJuliaFunctions <- function(){
         end
     
         if type == "GP"
-            lower = vcat( [0,-10,-10], [0],  lambda_lower)
-            upper = vcat( [1, 10,10], [1],  lambda_upper)
+            lower = vcat( [0, 0, 0], [0],  lambda_lower)
+            upper = vcat( [1, 1, 1], [1],  lambda_upper)
         elseif type == "Poisson"
-            lower = vcat( [0,-10,-10], lambda_lower)
-            upper = vcat( [1, 10,10],  lambda_upper)
+            lower = vcat( [0, 0, 0], lambda_lower)
+            upper = vcat( [1, 1, 1],  lambda_upper)
         end
         return lower, upper
     end
@@ -773,9 +856,17 @@ addJuliaFunctions <- function(){
             parameter[1:3] = [alpha1, alpha2, alpha3]
         end
     
+        inv_hessian = compute_inverse_matrix(compute_hessian(f_alphas, parameter))
+        if any(diag(inv_hessian) .< 0)
+            for i in 1:size(inv_hessian)[1]
+                if inv_hessian[i,i] < 0
+                    inv_hessian[i,i] = 10^-12
+                end
+            end
+        end
         #construct output
         out = Dict("parameter" => parameter,
-                   "covariance_matrix" => compute_inverse_matrix(compute_hessian(f_alphas, parameter)),
+                   "covariance_matrix" => inv_hessian,
                    "log_likelihood" => -f_alphas(parameter),
                    "type" => type,
                    "order" => order,
@@ -839,6 +930,7 @@ addJuliaFunctions <- function(){
       end
       return D
     end
+
     ')
     #-------------------------------------
   }
