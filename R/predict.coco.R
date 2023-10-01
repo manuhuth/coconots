@@ -27,7 +27,7 @@ predict.coco <- function(object, k=1, number_simulations=1000,
                          simulate_one_step_ahead = FALSE,
                          max=NULL, epsilon=1e-8, xcast=NULL,
                          decimals = 4,
-                         julia=FALSE) {
+                         julia=FALSE,...) {
   
   if ((k==1) & (!simulate_one_step_ahead)){
     return(cocoForecastOneStep(object, max=max, epsilon=epsilon, xcast=xcast,
