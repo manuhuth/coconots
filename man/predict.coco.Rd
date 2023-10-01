@@ -5,7 +5,7 @@
 \title{K-Step Ahead Forecast Bootstrapping}
 \usage{
 \method{predict}{coco}(
-  coco,
+  object,
   k = 1,
   number_simulations = 1000,
   alpha = 0.05,
@@ -18,7 +18,7 @@
 )
 }
 \arguments{
-\item{coco}{An object that has been fitted previously, of class coco.}
+\item{object}{An object that has been fitted previously, of class coco.}
 
 \item{k}{The number of steps ahead for which the forecast should be computed. Defaults to 3.}
 
