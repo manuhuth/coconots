@@ -1,9 +1,10 @@
 #' @title K-Step Ahead Forecast Bootstrapping
 #' @description Computes the k-step ahead forecast using the models in the coconots package. 
 #' 
-#' @param fit An object that has been fitted previously, likely of class `coco` or similar.
+#' @param coco An object that has been fitted previously, of class coco.
 #' @param k The number of steps ahead for which the forecast should be computed. Defaults to 3.
 #' @param number_simulations The number of simulation runs to compute. Defaults to 500.
+#' @param alpha Level of confidence that is used to construct the prediction intervals.
 #' @param simulate_one_step_ahead If FALSE, the one-step ahead prediciton is obtained using the analytical distribution. If TRUE, bootstrapping is used.
 #' @param max The maximum number of the forecast support for the plot. If NULL all values for which the cumulative distribution function is below 1- epsilon are used for the plot.
 #' @param epsilon If max is NULL, epsilon determines the range of the support that is used by subsequent automatic plotting using R's plot() function.

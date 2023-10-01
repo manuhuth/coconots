@@ -2,7 +2,7 @@
 #' @export
 ggplot2::autoplot
 #' @export
-plot.cocoForecast <- function(object, ...){
+autoplot.cocoForecast <- function(object, ...){
   
   pl <- ggplot2::ggplot(mapping = ggplot2::aes(x = object$x, y = object$densities_plot)) +
       ggplot2::geom_bar(stat="identity", position="dodge", width=0.04) + 
@@ -12,3 +12,20 @@ plot.cocoForecast <- function(object, ...){
   pl
 }
 
+#' @export
+plot.cocoForecast <- function(x, ...) {
+  p <- autoplot(
+    x,
+    ...
+  )
+  suppressWarnings({print(p)})
+}
+
+#' @export
+plot.cocoForecast <- function(x, ...) {
+  p <- autoplot(
+    x,
+    ...
+  )
+  suppressWarnings({print(p)})
+}

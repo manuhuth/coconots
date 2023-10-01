@@ -46,9 +46,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     stop("The value of 'size' must be a positive integer value")
   }
 
-  if (!(is.atomic(init)) | (!(is.numeric(init)) & !(is.null(init)))) {
-    stop("The option 'init' must either be NULL or a numeric vector")
-  }
+ 
 
 
 

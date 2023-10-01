@@ -44,9 +44,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     stop("The value of 'size' must be a positive integer value")
   }
 
-  if (!(is.atomic(init)) | (!(is.numeric(init)) & !(is.null(init)))) {
-    stop("The option 'init' must either be NULL or a numeric vector")
-  }
+
 
 
   start_time <- Sys.time()

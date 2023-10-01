@@ -17,7 +17,7 @@
 \details{
 The package allows simulation of convolution-closed count time series models with the \code{\link{cocoSim}}
 function. Model fitting is performed with the \code{\link{cocoReg}} routine. By passing a cocoReg-type object,
-\code{\link{cocoForecast}} computes the one-step ahead forecasting distribution. \code{\link{cocoBoot}}, \code{\link{cocoPit}},
+the S3 method \code{predict} computes the one-step ahead forecasting distribution. \code{\link{cocoBoot}}, \code{\link{cocoPit}},
 \code{\link{cocoScore}}, and \code{\link{cocoResid}} provide routines for model assessment.
 The main usage of the package is illustrated within the cocoReg function chapter. For more details
 and examples of the functions see the respective sections within this vignette. 

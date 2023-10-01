@@ -18,9 +18,13 @@
 )
 }
 \arguments{
+\item{coco}{An object that has been fitted previously, of class coco.}
+
 \item{k}{The number of steps ahead for which the forecast should be computed. Defaults to 3.}
 
 \item{number_simulations}{The number of simulation runs to compute. Defaults to 500.}
+
+\item{alpha}{Level of confidence that is used to construct the prediction intervals.}
 
 \item{simulate_one_step_ahead}{If FALSE, the one-step ahead prediciton is obtained using the analytical distribution. If TRUE, bootstrapping is used.}
 
@@ -33,8 +37,6 @@
 \item{decimals}{Number of decimal places for the forecast probabilities}
 
 \item{julia}{if TRUE, the estimate is predicted with Julia.}
-
-\item{fit}{An object that has been fitted previously, likely of class `coco` or similar.}
 }
 \value{
 A list of frequency tables. Each table represents a k-step ahead forecast frequency distribution based on the simulation runs.
