@@ -11,6 +11,7 @@
 #' @param xcast An optional matrix of covariate values for the forecasting. If `NULL`, the function assumes no covariates.
 #' @param decimals Number of decimal places for the forecast probabilities
 #' @param julia  if TRUE, the estimate is predicted with Julia.
+#' @param ... Optional arguments.
 #'
 #' @return A list of frequency tables. Each table represents a k-step ahead forecast frequency distribution based on the simulation runs.
 #' 

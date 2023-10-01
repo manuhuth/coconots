@@ -38,6 +38,8 @@
 \item{decimals}{Number of decimal places for the forecast probabilities}
 
 \item{julia}{if TRUE, the estimate is predicted with Julia.}
+
+\item{...}{Optional arguments.}
 }
 \value{
 A list of frequency tables. Each table represents a k-step ahead forecast frequency distribution based on the simulation runs.
