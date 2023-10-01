@@ -1,7 +1,7 @@
 #' @title K-Step Ahead Forecast Bootstrapping
 #' @description Computes the k-step ahead forecast using the models in the coconots package. 
 #' 
-#' @param coco An object that has been fitted previously, of class coco.
+#' @param object An object that has been fitted previously, of class coco.
 #' @param k The number of steps ahead for which the forecast should be computed. Defaults to 3.
 #' @param number_simulations The number of simulation runs to compute. Defaults to 500.
 #' @param alpha Level of confidence that is used to construct the prediction intervals.
@@ -21,7 +21,7 @@
 #' likelihood estimates replace the true model parameters. Out-of-sample values
 #' for covariates can be provided, if necessary.
 #' @export
-predict.coco <- function(coco, k=1, number_simulations=1000,
+predict.coco <- function(object, k=1, number_simulations=1000,
                          alpha=0.05,
                          simulate_one_step_ahead = FALSE,
                          max=NULL, epsilon=1e-8, xcast=NULL,
@@ -29,21 +29,21 @@ predict.coco <- function(coco, k=1, number_simulations=1000,
                          julia=FALSE) {
   
   if ((k==1) & (!simulate_one_step_ahead)){
-    return(cocoForecastOneStep(coco, max=max, epsilon=epsilon, xcast=xcast,
+    return(cocoForecastOneStep(object, max=max, epsilon=epsilon, xcast=xcast,
                                alpha=alpha,
                     decimals=decimals, julia=julia))
   } else if ((k > 1) & (!simulate_one_step_ahead))  {
     
-    k_steps <- cocoForecastKSteps(coco, k=k, number_simulations=number_simulations,
+    k_steps <- cocoForecastKSteps(object, k=k, number_simulations=number_simulations,
                        covariates=xcast, alpha=alpha,
                        decimals=decimals, 
                        julia=julia)
-    k_steps[[1]] <- cocoForecastOneStep(coco, max=max, epsilon=epsilon, xcast=xcast,
+    k_steps[[1]] <- cocoForecastOneStep(object, max=max, epsilon=epsilon, xcast=xcast,
                                         alpha=alpha,
                                         decimals=decimals, julia=julia)[[1]]
     return(k_steps)
   } else {
-    return(cocoForecastKSteps(coco, k=k, number_simulations=number_simulations,
+    return(cocoForecastKSteps(object, k=k, number_simulations=number_simulations,
                               covariates=xcast, alpha=alpha,
                               decimals=decimals, 
                               julia=julia))
