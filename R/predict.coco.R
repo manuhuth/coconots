@@ -20,6 +20,7 @@
 #' the models included here are provided in Jung and Tremayne (2011), maximum
 #' likelihood estimates replace the true model parameters. Out-of-sample values
 #' for covariates can be provided, if necessary.
+#' @rdname predict.coco
 #' @export
 predict.coco <- function(object, k=1, number_simulations=1000,
                          alpha=0.05,
