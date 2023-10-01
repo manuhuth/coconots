@@ -16,10 +16,6 @@ Sets the seed for Julia's random number generator to ensure reproducibility.
 This function initializes the necessary Julia functions and sets the random seed for Julia. 
 If the provided seed is NULL, the function does nothing.
 }
-\examples{
-# Set Julia's random seed to 12345
-setJuliaSeed(12345)
-}
 \author{
 Your Name (or the appropriate author's name)
 }
