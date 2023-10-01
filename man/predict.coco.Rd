@@ -14,7 +14,8 @@
   epsilon = 1e-08,
   xcast = NULL,
   decimals = 4,
-  julia = FALSE
+  julia = FALSE,
+  ...
 )
 }
 \arguments{
