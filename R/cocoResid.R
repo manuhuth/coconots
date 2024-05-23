@@ -367,6 +367,8 @@ cocoResid <- function(coco, val.num = 1e-40) {
       "par" = par, "duration" = time
     )
   } # end covariates
+  
+  class(list_out) <- "cocoResiduals"
 
 
   return(list_out)
