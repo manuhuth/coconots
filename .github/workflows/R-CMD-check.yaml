@@ -1,5 +1,7 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
     branches: [main, master]
@@ -31,6 +33,12 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      R_LIBS_USER: C:\Temp\Library
+      RSPM: https://packagemanager.posit.co/cran/latest
+      RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/latest
+      TZ: UTC
+      _R_CHECK_SYSTEM_CLOCK_: FALSE
+      NOT_CRAN: true
 
     steps:
       - uses: actions/checkout@v3
@@ -43,10 +51,10 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
           
-      - name: Cache R packages and Julia packages#from JuliaConnectoR
+      - name: Cache R packages and Julia packages
         uses: actions/cache@v3
         with:
-          path: | # siehe https://github.com/r-lib/actions/blob/v2/setup-r-dependencies/action.yaml
+          path: | 
             ${{ env.R_LIBS_USER }}/*
             !${{ env.R_LIBS_USER }}/pak
             ~/.julia/artifacts/
@@ -82,3 +90,4 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+
