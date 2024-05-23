@@ -20,8 +20,12 @@ procedures for likelihood based inference and probabilistic forecasting
 are provided as well as useful tools for model validation and
 diagnostics.
 
-![alt
-text](https://github.com/manuhuth/coconots/blob/main/man/figures/functionality.png?raw=true)
+<figure>
+<img
+src="https://github.com/manuhuth/coconots/blob/main/man/figures/functionality.png?raw=true"
+alt="alt text" />
+<figcaption aria-hidden="true">alt text</figcaption>
+</figure>
 
 ## Details
 
@@ -50,8 +54,12 @@ default option to make our package accessible to non-Julia users.
 
 ## Model
 
-![alt
-text](https://github.com/manuhuth/coconots/blob/main/man/figures/dgp.png?raw=true)
+<figure>
+<img
+src="https://github.com/manuhuth/coconots/blob/main/man/figures/dgp.png?raw=true"
+alt="alt text" />
+<figcaption aria-hidden="true">alt text</figcaption>
+</figure>
 
 ## Installation
 
@@ -60,6 +68,12 @@ You can install the latest stable version of coconots from
 
 ``` r
 install.packages("coconots")
+```
+
+or the latest version from GitHub with:
+
+``` r
+devtools::install_github("manuhuth/coconots")
 ```
 
 ## Example using RCPP implementation
@@ -72,24 +86,25 @@ function.
 library(coconots)
 length <- 500
 
-pars <- c(1, 0.4)
+pars <- c(1, 0.4, 0.2)
 set.seed(12345)
-data <- cocoSim(order = 1, type = "Poisson", par = pars,
+data <- cocoSim(order = 1, type = "GP", par = pars,
                 length = length)
-coco <- cocoReg(order = 1, type = "Poisson", data = data)
+coco <- cocoReg(order = 1, type = "GP", data = data)
 #> Registered S3 method overwritten by 'quantmod':
 #>   method            from
 #>   as.zoo.data.frame zoo
 summary(coco)
 #> Coefficients:
 #>          Estimate   Std. Error         t
-#> lambda     0.9427       0.0678   13.9055
-#> alpha      0.4530       0.0346   13.0806
+#> lambda     1.0548       0.0930   11.3367
+#> alpha      0.4201       0.0373   11.2508
+#> eta        0.1609       0.0329    4.8958
 #> 
-#> Type: Poisson 
+#> Type: GP 
 #> Order: 1 
 #> 
-#> Log-likelihood: -749.4656
+#> Log-likelihood: -885.012
 ```
 
 ## Example using Julia implementation
@@ -110,10 +125,10 @@ simulation function in order to pass it to Julia.
 library(coconots)
 length <- 500
 
-pars <- c(1, 0.4)
-data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length,
+pars <- c(1, 0.3, 0.01, 0.2)
+data <- cocoSim(order = 2, type = "Poisson", par = pars, length = length,
                 julia = TRUE, julia_seed = 123)
-coco <- cocoReg(order = 1, type = "Poisson", data = data, julia = TRUE)
+coco <- cocoReg(order = 2, type = "Poisson", data = data, julia = TRUE)
 ```
 
 ## Model assessment
@@ -156,8 +171,46 @@ plot(boot)
 <img src="man/figures/README-example_assessment-2.png" width="100%" />
 
 ``` r
-forecast <- cocoForecast(coco, julia = TRUE)
-plot(forecast)
+forecast <- predict(coco, k=3, julia = TRUE)
+plot(forecast) #plot all k forecasts
 ```
 
 <img src="man/figures/README-example_assessment-3.png" width="100%" />
+
+``` r
+plot(forecast[[1]]) #plot density of one-step ahead forecast
+```
+
+<img src="man/figures/README-example_assessment-4.png" width="100%" />
+
+``` r
+resid <- cocoResid(coco)
+plot(resid)
+```
+
+<img src="man/figures/README-example_assessment-5.png" width="100%" />
+
+## Compare Models
+
+Model selection is facilitated by providing quick and easy access to the
+scoring metrics.
+
+``` r
+library(coconots)
+length <- 500
+
+pars <- c(1.3, 0.25, 0.03, 0.2, 0.3)
+set.seed(12345)
+data <- cocoSim(order = 2, type = "GP", par = pars, length = length)
+varsoc <- cocoVarsoc(data, julia=T)
+#> [1] "Computing PAR1 model."
+#> [1] "Computing PAR2 model."
+#> [1] "Computing GP1 model."
+#> [1] "Computing GP2 model."
+summary(varsoc)
+#>            Logarithmic Score   Quadratic Score   Ranked Probability Score
+#> 1   PAR1            2.265970        -0.1221436                   1.302572
+#> 2   PAR2            2.264753        -0.1223451                   1.301770
+#> 3    GP1            2.164318        -0.1363304                   1.263041
+#> 4    GP2            2.161843        -0.1364925                   1.261362
+```

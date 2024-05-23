@@ -65,6 +65,11 @@ You can install the latest stable version of coconots from [CRAN](https://cran.r
 install.packages("coconots")
 ```
 
+or the latest version from GitHub with:
+``` r
+devtools::install_github("manuhuth/coconots")
+```
+
 ## Example using RCPP implementation
 
 Coconots runs on an RCPP and a Julia implementation. RCPP is the default. The regression results can be summarized using the summary function.
@@ -73,11 +78,11 @@ Coconots runs on an RCPP and a Julia implementation. RCPP is the default. The re
 library(coconots)
 length <- 500
 
-pars <- c(1, 0.4)
+pars <- c(1, 0.4, 0.2)
 set.seed(12345)
-data <- cocoSim(order = 1, type = "Poisson", par = pars,
+data <- cocoSim(order = 1, type = "GP", par = pars,
                 length = length)
-coco <- cocoReg(order = 1, type = "Poisson", data = data)
+coco <- cocoReg(order = 1, type = "GP", data = data)
 summary(coco)
 ```
 
@@ -95,10 +100,10 @@ If installed, the Julia implementation can be addressed by setting the julia arg
 library(coconots)
 length <- 500
 
-pars <- c(1, 0.4)
-data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length,
+pars <- c(1, 0.3, 0.01, 0.2)
+data <- cocoSim(order = 2, type = "Poisson", par = pars, length = length,
                 julia = TRUE, julia_seed = 123)
-coco <- cocoReg(order = 1, type = "Poisson", data = data, julia = TRUE)
+coco <- cocoReg(order = 2, type = "Poisson", data = data, julia = TRUE)
 ```
 
 ## Model assessment
@@ -117,8 +122,23 @@ pit <- cocoPit(coco, julia = TRUE)
 plot(pit)
 boot <- cocoBoot(coco, julia = TRUE)
 plot(boot)
-forecast <- cocoForecast(coco, julia = TRUE)
-plot(forecast)
+forecast <- predict(coco, k=3, julia = TRUE)
+plot(forecast) #plot all k forecasts
+plot(forecast[[1]]) #plot density of one-step ahead forecast
+resid <- cocoResid(coco)
+plot(resid)
 ```
 
+## Compare Models
+Model selection is facilitated by providing quick and easy access to the scoring metrics. 
+```{r compare_models, echo=TRUE}
+library(coconots)
+length <- 500
+
+pars <- c(1.3, 0.25, 0.03, 0.2, 0.3)
+set.seed(12345)
+data <- cocoSim(order = 2, type = "GP", par = pars, length = length)
+varsoc <- cocoVarsoc(data, julia=T)
+summary(varsoc)
+```
 

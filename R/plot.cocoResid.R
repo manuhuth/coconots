@@ -1,9 +1,9 @@
-#' @importFrom ggplot2 autoplot
+#' @importFrom ggplot2 autoplot theme_bw ggtitle
 #' @export
 ggplot2::autoplot
 #' @export
 autoplot.cocoResid <- function(object, ...){
-  forecast::ggAcf(resids$pe.resid) + theme_bw() + ggtitle("Pearson Residuals")
+  forecast::ggAcf(object$pe.resid) + theme_bw() + ggtitle("Pearson Residuals")
 }
 
 #' @export
