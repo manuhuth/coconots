@@ -393,7 +393,7 @@ std::vector<int> simGP2cov(double sumlimit,  double alpha1, double alpha2, doubl
     int y = data[t-seas1-1];
     int z = data[t-seas2-1];
 
-    NumericVector covar = xreg(t-1,_);
+    NumericVector covar = xreg(t-N-1,_);
     double mathelp = innerProduct(covar,lambdas);
     lambda = exp(mathelp);
 
@@ -402,7 +402,7 @@ std::vector<int> simGP2cov(double sumlimit,  double alpha1, double alpha2, doubl
     double beta3 = lambda * U *alpha3;
     double zeta = lambda*U*(1-2*alpha1-alpha3);
 
-    double unif = uniform[t-1];
+    double unif = uniform[t-N-1];
 
     int r = 0.0;
     double nain = 0.0;
@@ -438,7 +438,7 @@ std::vector<int> simGP2cov(double sumlimit,  double alpha1, double alpha2, doubl
       r = r+1;
     } //end r
 
-    data[t-1] = r-1 + innovations[t-1];
+    data[t-1] = r-1 + innovations[t-N-1];
   } //end t
 
   return (data);

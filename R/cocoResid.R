@@ -1,7 +1,7 @@
 #' @title Residual Based Model Assessment Procedure
 #' @description Calculates the (Pearson) residuals of a fitted model for model evaluation purposes.
 #' @param coco An object of class "coco
-#' @param val.num A non-negative real number which is used to stop the calculation of
+#' @param val.num A non-negative real number which is used to stop the calculation 
 #' @author Manuel Huth
 #' @return a list that includes the (Pearson) residuals, conditional expectations, conditional variances,
 #' and information on the model specifications.
@@ -10,7 +10,7 @@
 #'past history, including covariates, if applicable. If a fitted model is correctly specified,
 #'the Pearson residuals should exhibit mean zero, variance one, and no significant serial correlation. 
 #'@export
-cocoResid <- function(coco, val.num = 1e-11) {
+cocoResid <- function(coco, val.num = 1e-40) {
   start.time <- Sys.time()
 
   if (val.num <= 0) {

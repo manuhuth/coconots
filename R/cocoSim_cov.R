@@ -237,7 +237,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
     innovations <- c()
-    for (index in 1:T) {
+    for (index in 1:(T-N)) {
       lambda <- lambdas[index]
       innovations[index] <- rgenpois(n = 1, lambda, eta)
     }

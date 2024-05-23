@@ -421,7 +421,7 @@ addJuliaFunctions <- function(){
         lambda = get_lambda(cocoReg_fit, true)
     
         if (!isnothing(covariates))
-          lambda = exp(sum(covariates[end,:] .* cocoReg_fit["parameter"][(end-size(cocoReg_fit["covariates"])[2]+1):end]))
+          lambda = exp(sum(covariates .* cocoReg_fit["parameter"][(end-size(cocoReg_fit["covariates"])[2]+1):end]))
         end
     
         if cocoReg_fit["order"] == 2

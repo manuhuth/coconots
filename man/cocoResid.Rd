@@ -4,12 +4,12 @@
 \alias{cocoResid}
 \title{Residual Based Model Assessment Procedure}
 \usage{
-cocoResid(coco, val.num = 1e-11)
+cocoResid(coco, val.num = 1e-40)
 }
 \arguments{
 \item{coco}{An object of class "coco}
 
-\item{val.num}{A non-negative real number which is used to stop the calculation of}
+\item{val.num}{A non-negative real number which is used to stop the calculation}
 }
 \value{
 a list that includes the (Pearson) residuals, conditional expectations, conditional variances,
