@@ -1,6 +1,6 @@
 #' @title Compute Scores for Various Models
 #'
-#' @description This function computes and returns scores for Poisson and Generalized Poisson models. It resembles Stata's `varsoc` function.
+#' @description This function computes and returns scores for Poisson and Generalized Poisson models.
 #'
 #' @param data A numeric vector containing the data to be used for modeling.
 #' @param models A character string specifying which models to use. Default is `"all"`, which uses both Poisson and GP models.
@@ -17,7 +17,7 @@
 #'
 #'
 #' @export
-cocoVarsoc <- function(data, models = "all", print.progress=TRUE,
+cocoSoc <- function(data, models = "all", print.progress=TRUE,
                        val.num.score=1e-10, ...
           ) {
   fits <- list()
@@ -65,7 +65,7 @@ cocoVarsoc <- function(data, models = "all", print.progress=TRUE,
   df[c("Logarithmic Score", "Quadratic Score", "Ranked Probability Score")] <- cbind(log_score, quad_score, rps_score)
 
   list_out <- list("fits" = fits, "scores_list" = scores, "scores_df" = df)
-  class(list_out) <- "cocoVarsoc"
+  class(list_out) <- "cocoSoc"
   
   return(list_out)
 

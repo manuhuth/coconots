@@ -202,12 +202,12 @@ length <- 500
 pars <- c(1.3, 0.25, 0.03, 0.2, 0.3)
 set.seed(12345)
 data <- cocoSim(order = 2, type = "GP", par = pars, length = length)
-varsoc <- cocoVarsoc(data, julia=T)
+soc <- cocoSoc(data, julia=T)
 #> [1] "Computing PAR1 model."
 #> [1] "Computing PAR2 model."
 #> [1] "Computing GP1 model."
 #> [1] "Computing GP2 model."
-summary(varsoc)
+summary(soc)
 #>            Logarithmic Score   Quadratic Score   Ranked Probability Score
 #> 1   PAR1            2.265970        -0.1221436                   1.302572
 #> 2   PAR2            2.264753        -0.1223451                   1.301770
