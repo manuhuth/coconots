@@ -5,7 +5,8 @@
 #' @param data A numeric vector containing the data to be used for modeling.
 #' @param models A character string specifying which models to use. Default is `"all"`, which uses both Poisson and GP models.
 #' @param print.progress A logical value indicating whether to print progress messages. Default is `TRUE`.
-#' @param val.num.score A numeric value specifying the validation number score. Default is `1e-10`.
+#' @param max_x_score An integer which is used as the maximum count for the computation
+#'  of the score. The default value is `50`
 #' @param ... Additional arguments to be passed to the `cocoReg` function.
 #'
 #' @return A list of class `"cocoVarsoc"` containing:
@@ -18,7 +19,7 @@
 #'
 #' @export
 cocoSoc <- function(data, models = "all", print.progress=TRUE,
-                       val.num.score=1e-10, ...
+                       max_x_score=50, ...
           ) {
   fits <- list()
   scores <- list()
@@ -46,7 +47,7 @@ cocoSoc <- function(data, models = "all", print.progress=TRUE,
       
       fits[[name_mod]] <- cocoReg(type, order, data_use, ...)
 
-      scores[[name_mod]] <- cocoScore(fits[[name_mod]], val.num = val.num.score, julia=T)
+      scores[[name_mod]] <- cocoScore(fits[[name_mod]], max_x = max_x_score, julia=T)
       index <- index + 1
     }
   }

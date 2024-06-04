@@ -4,13 +4,13 @@
 \alias{cocoScore}
 \title{Scoring Rule Based Model Assessment Procedure}
 \usage{
-cocoScore(coco, val.num = 1e-10, julia = FALSE)
+cocoScore(coco, max_x = 50, julia = FALSE)
 }
 \arguments{
 \item{coco}{An object of class coco}
 
-\item{val.num}{A non-negative real number which is used to stop the calculation
-of the score in case of GP models. The default value is 1e-10}
+\item{max_x}{An integer which is used as the maximum count for the computation
+of the score. The default value is `50`}
 
 \item{julia}{if TRUE, the scores are computed with Julia.}
 }

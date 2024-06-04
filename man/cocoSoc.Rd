@@ -4,13 +4,7 @@
 \alias{cocoSoc}
 \title{Compute Scores for Various Models}
 \usage{
-cocoSoc(
-  data,
-  models = "all",
-  print.progress = TRUE,
-  val.num.score = 1e-10,
-  ...
-)
+cocoSoc(data, models = "all", print.progress = TRUE, max_x_score = 50, ...)
 }
 \arguments{
 \item{data}{A numeric vector containing the data to be used for modeling.}
@@ -19,7 +13,8 @@ cocoSoc(
 
 \item{print.progress}{A logical value indicating whether to print progress messages. Default is `TRUE`.}
 
-\item{val.num.score}{A numeric value specifying the validation number score. Default is `1e-10`.}
+\item{max_x_score}{An integer which is used as the maximum count for the computation
+of the score. The default value is `50`}
 
 \item{...}{Additional arguments to be passed to the `cocoReg` function.}
 }

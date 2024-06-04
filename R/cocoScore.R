@@ -1,8 +1,8 @@
 #' @title Scoring Rule Based Model Assessment Procedure
 #' @description The function calculates the log, quadratic and ranked probability scores for assessing relative performance of a fitted model as proposed by Czado et al. (2009).
 #' @param coco An object of class coco
-#' @param val.num A non-negative real number which is used to stop the calculation
-#'  of the score in case of GP models. The default value is 1e-10
+#' @param max_x An integer which is used as the maximum count for the computation
+#'  of the score. The default value is `50`
 #' @param julia if TRUE, the scores are computed with Julia.
 #' @return a list containing the log score, quadratic score and ranked probability score.
 #' @details Scoring rules assign a numerical score based on the predictive
@@ -42,12 +42,12 @@
 #' score_r <- cocoScore(fit)
 #' @export
 
-cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
+cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   
   
   if (!is.null(coco$julia_reg) & julia){
     addJuliaFunctions()
-    coco_score <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("compute_scores", coco$julia_reg))
+    coco_score <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("compute_scores", coco$julia_reg, max_x))
     return(list("log.score" = coco_score$values[[1]], "quad.score" = coco_score$values[[2]],
                  "rps.score" = coco_score$values[[3]]
                 #"aic" = 2*length(coco$par) - 2 * coco$likelihood,
@@ -59,388 +59,82 @@ cocoScore <- function(coco, val.num = 1e-10, julia=FALSE) {
   seas <- c(1, 2) #will be used as argument in future versions
   data <- coco$ts
 
-  if ( is.null(coco$cov) ){
-
-
-  #Poisson 1
-  if ( (coco$type == "Poisson") & (coco$order == 1) ){
+  if (coco$type == "Poisson"){
     par <- c(par, 0)
-    log.score <- 0
-    quad.score <- 0
-    rps.score <- 0
-
-    for (t in (seas[1]+1):T) {
-      #log score
-      log.score <- log.score - log(dGP1(data[t], data[t-seas[1]], par))
-
-      #quadratic score
-      norm.p <- 0
-      help.stop <- 0
-
-      j <- 0
-      while (help.stop < (1-val.num) )  {
-        help <- dGP1(j,data[t-seas[1]], par)
-        help.stop <- pGP1(j,data[t-seas[1]], par)
-        norm.p <- norm.p + help^2
-        j <- j+1
+  }
+  
+  if (!is.null(coco$cov)){
+    xreg <- coco$cov
+    betas <- par[(length(par)-ncol(xreg)+1):length(par)]
+    lambdas <- exp(as.matrix(xreg) %*% betas)
+    par_original <- par
+    
+  }
+  
+  #Poisson/GP 1
+  if  (coco$order == 1){
+    calculate_scores <- function(t) {
+      if (!is.null(coco$cov)){
+        par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))]) 
       }
-      quad.score <- quad.score - 2 * dGP1(data[t], data[t-seas[1]], par) + norm.p
+      
+      # log score
+      log_score <- -log(dGP1(data[t], data[t - seas[1]], par))
+      
+      # quadratic score
+      norm_p <- sum(sapply(0:max_x, function(j) dGP1(j, data[t - seas[1]], par)^2))
+      quad_score <- -2 * dGP1(data[t], data[t - seas[1]], par) + norm_p
+      
+      # ranked probability score
+      sum_sq_diff <- sum(sapply(0:max_x, function(j) (pGP1(j, data[t - seas[1]], par) - (j >= data[t]))^2))
+      rps_score <- sum_sq_diff
+      
+      return(c(log_score, quad_score, rps_score))
+    }
+    
+    # Use sapply for the outer loop
+    scores <- sapply((seas[1] + 1):T, calculate_scores)
+    
+    # Summarize scores
+    log.score <- mean(scores[1, ])
+    quad.score <- mean(scores[2, ])
+    rps.score <- mean(scores[3, ])
 
-      #ranked probability score
-      sum <- 0
-      help <- 0
-      j <- 0
-      while (help < (1-val.num) ){
-        ind <- 0
-        if (j >= data[t]) {
-          ind <- 1
-        }
-        help <- pGP1(j, data[t-seas[1]], par)
-        sum <- sum + (help - ind)^2
-        j <- j + 1
+  }# Poisson/GP 1
+
+
+  #Poisson/GP 2
+  if (coco$order == 2){
+    calculate_scores <- function(t) {
+      if (!is.null(coco$cov)){
+        par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))]) 
       }
-      rps.score <- rps.score + sum
-    }# end t
-
-    log.score <- log.score / (T-seas[1])
-    quad.score <- quad.score / (T-seas[1])
-    rps.score <- rps.score / (T-seas[1])
-
-  }# Poisson 1
-
-
-  #GP1
-  if ( (coco$type == "GP") & (coco$order == 1) ){
-
-    log.score <- 0
-    quad.score <- 0
-    rps.score <- 0
-
-    for (t in (seas[1]+1):T) {
-      #log score
-      log.score <- log.score -log(dGP1(data[t], data[t-seas[1]], par))
-
-      #quadratic score
-      norm.p <- 0
-      help.stop <- 0
-
-      j <- 0
-      while (help.stop < (1-val.num) )  {
-        help <- dGP1(j,data[t-seas[1]], par)
-        help.stop <- pGP1(j,data[t-seas[1]], par)
-        norm.p <- norm.p + help^2
-        j <- j+1
-      }
-      quad.score <- quad.score - 2* dGP1(data[t], data[t-seas[1]], par) + norm.p
-
-      #ranked probability score
-      sum <- 0
-      help <- 0
-      j <- 0
-      while (help < (1-val.num) ){
-        ind <- 0
-        if (j >= data[t]) {
-          ind <- 1
-        }
-        help <- pGP1(j, data[t-seas[1]], par)
-        sum <- sum + (help - ind)^2
-        j <- j + 1
-      }
-      rps.score <- rps.score + sum
-  }# end t
-    log.score <- log.score / (T-seas[1])
-    quad.score <- quad.score / (T-seas[1])
-    rps.score <- rps.score / (T-seas[1])
-  }# GP1
-
-  #Poisson 2
-  if ( (coco$type == "Poisson") & (coco$order == 2) ){
-    par <- c(par, 0)
-    log.score <- 0
-    quad.score <- 0
-    rps.score <- 0
-
-    for (t in (seas[2]+1):T) {
-      #log score
-      log.score <- log.score -log(dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par))
-
-      #quadratic score
-      norm.p <- 0
-      help.stop <- 0
-
-      j <- 0
-      while (help.stop < (1-val.num) )  {
-        help <- dGP2(j,data[t-seas[1]], data[t-seas[2]], par)
-        help.stop <- pGP2(j,data[t-seas[1]], data[t-seas[2]], par)
-        norm.p <- norm.p + help^2
-        j <- j+1
-      }
-      quad.score <- quad.score - 2* dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par) + norm.p
-
-      #ranked probability score
-      sum <- 0
-      help <- 0
-      j <- 0
-      while (help < (1-val.num) ){
-        ind <- 0
-        if (j >= data[t]) {
-          ind <- 1
-        }
-        help <- pGP2(j, data[t-seas[1]],data[t-seas[2]], par)
-        sum <- sum + (help - ind)^2
-        j <- j + 1
-      }
-      rps.score <- rps.score + sum
-    }# end t
-    log.score <- log.score / (T-seas[2])
-    quad.score <- quad.score / (T-seas[2])
-    rps.score <- rps.score / (T-seas[2])
-  }# Poisson 2
-
-  #GP2
-  if ( (coco$type == "GP") & (coco$order == 2) ){
-
-    log.score <- 0
-    quad.score <- 0
-    rps.score <- 0
-
-    for (t in (seas[2]+1):T) {
-      #log score
-      log.score <- log.score -log(dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par))
-
-      #quadratic score
-      norm.p <- 0
-      help.stop <- 0
-
-      j <- 0
-      while (help.stop < (1-val.num) )  {
-        help <- dGP2(j,data[t-seas[1]], data[t-seas[2]], par)
-        help.stop <- pGP2(j,data[t-seas[1]], data[t-seas[2]], par)
-        norm.p <- norm.p + help^2
-        j <- j+1
-      }
-      quad.score <- quad.score - 2* dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par) + norm.p
-
-      #ranked probability score
-      sum <- 0
-      help <- 0
-      j <- 0
-      while (help < (1-val.num) ){
-        ind <- 0
-        if (j >= data[t]) {
-          ind <- 1
-        }
-        help <- pGP2(j, data[t-seas[1]],data[t-seas[2]], par)
-        sum <- sum + (help - ind)^2
-        j <- j + 1
-      }
-      rps.score <- rps.score + sum
-    }# end t
-    log.score <- log.score / (T-seas[2])
-    quad.score <- quad.score / (T-seas[2])
-    rps.score <- rps.score / (T-seas[2])
-  }# GP2
+      
+      # log score
+      log_score <- -log(dGP2(data[t], data[t - seas[1]], data[t - seas[2]], par))
+      
+      # quadratic score
+      norm_p <- sum(sapply(0:max_x, function(j) dGP2(j, data[t - seas[1]], data[t - seas[2]], par)^2))
+      quad_score <- -2 * dGP2(data[t], data[t - seas[1]], data[t - seas[2]], par) + norm_p
+      
+      # ranked probability score
+      sum_sq_diff <- sum(sapply(0:max_x, function(j) (pGP2(j, data[t - seas[1]], data[t - seas[2]], par) - (j >= data[t]))^2))
+      rps_score <- sum_sq_diff
+      
+      return(c(log_score, quad_score, rps_score))
+    }
+    
+    # Use sapply for the outer loop
+    scores <- sapply((seas[2] + 1):T, calculate_scores)
+    
+    # Summarize scores
+    log.score <- mean(scores[1, ])
+    quad.score <- mean(scores[2, ])
+    rps.score <- mean(scores[3, ])
+  }# Poisson/GP 2
 
   list_out <- list("log.score" = log.score, "quad.score" = quad.score, "rps.score" = rps.score)
-}
 
-
-##covariates
-  if ( !is.null(coco$cov) ){
-    xreg <- coco$cov
-
-
-    #Poisson 1
-    if ( (coco$type == "Poisson") & (coco$order == 1) ){
-      betas <- par[-c(1)]
-      lambdas <- exp(as.matrix(xreg) %*% betas)
-
-      log.score <- 0
-      quad.score <- 0
-      rps.score <- 0
-
-      for (t in (seas[1]+1):T) {
-        #log score
-        par <- c(lambdas[t], coco$par[1], 0)
-        log.score <- log.score -log(dGP1(data[t], data[t-seas[1]], par))
-
-        #quadratic score
-        norm.p <- 0
-        help.stop <- 0
-
-        j <- 0
-        while (help.stop < (1-val.num) )  {
-          help <- dGP1(j,data[t-seas[1]], par)
-          help.stop <- pGP1(j,data[t-seas[1]], par)
-          norm.p <- norm.p + help^2
-          j <- j+1
-        }
-        quad.score <- quad.score - 2* dGP1(data[t], data[t-seas[1]], par) + norm.p
-
-        #ranked probability score
-        sum <- 0
-        help <- 0
-        j <- 0
-        while (help < (1-val.num) ){
-          ind <- 0
-          if (j >= data[t]) {
-            ind <- 1
-          }
-          help <- pGP1(j, data[t-seas[1]], par)
-          sum <- sum + (help - ind)^2
-          j <- j + 1
-        }
-        rps.score <- rps.score + sum
-      }# end t
-      log.score <- log.score / (T-seas[1])
-      quad.score <- quad.score / (T-seas[1])
-      rps.score <- rps.score / (T-seas[1])
-    }# Poisson 1
-
-
-    #GP1
-
-    if ( (coco$type == "GP") & (coco$order == 1) ){
-      betas <- par[-c(1,2)]
-      lambdas <- exp(as.matrix(xreg) %*% betas)
-      log.score <- 0
-      quad.score <- 0
-      rps.score <- 0
-
-      for (t in (seas[1]+1):T) {
-        #log score
-        par <- c(lambdas[t], coco$par[1], coco$par[2])
-        log.score <- log.score -log(dGP1(data[t], data[t-seas[1]], par))
-
-        #quadratic score
-        norm.p <- 0
-        help.stop <- 0
-
-        j <- 0
-        while (help.stop < (1-val.num) )  {
-
-          help <- dGP1(j,data[t-seas[1]], par)
-          help.stop <- pGP1(j,data[t-seas[1]], par)
-          norm.p <- norm.p + help^2
-          j <- j+1
-        }
-        quad.score <- quad.score - 2 * dGP1(data[t], data[t-seas[1]], par) + norm.p
-
-
-        #ranked probability score
-        sum <- 0
-        help <- 0
-        j <- 0
-        while (help < (1-val.num) ){
-          ind <- 0
-          if (j >= data[t]) {
-            ind <- 1
-          }
-          help <- pGP1(j, data[t-seas[1]], par)
-          sum <- sum + (help - ind)^2
-          j <- j + 1
-        }
-        rps.score <- rps.score + sum
-      }# end t
-      log.score <- log.score / (T-seas[1])
-      quad.score <- quad.score / (T-seas[1])
-      rps.score <- rps.score / (T-seas[1])
-    }# GP1
-
-    #Poisson 2
-    if ( (coco$type == "Poisson") & (coco$order == 2) ){
-      betas <- par[-c(1,2,3)]
-      lambdas <- exp(as.matrix(xreg) %*% betas)
-      log.score <- 0
-      quad.score <- 0
-      rps.score <- 0
-
-      for (t in (seas[2]+1):T) {
-        #log score
-        par <- c(lambdas[t], coco$par[1], coco$par[2], coco$par[3], 0)
-        log.score <- log.score -log(dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par))
-
-        #quadratic score
-        norm.p <- 0
-        help.stop <- 0
-
-        j <- 0
-        while (help.stop < (1-val.num) )  {
-          help <- dGP2(j,data[t-seas[1]], data[t-seas[2]], par)
-          help.stop <- pGP2(j,data[t-seas[1]], data[t-seas[2]], par)
-          norm.p <- norm.p + help^2
-          j <- j+1
-        }
-        quad.score <- quad.score - 2* dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par) + norm.p
-
-        #ranked probability score
-        sum <- 0
-        help <- 0
-        j <- 0
-        while (help < (1-val.num) ){
-          ind <- 0
-          if (j >= data[t]) {
-            ind <- 1
-          }
-          help <- pGP2(j, data[t-seas[1]],data[t-seas[2]], par)
-          sum <- sum + (help - ind)^2
-          j <- j + 1
-        }
-        rps.score <- rps.score + sum
-      }# end t
-      log.score <- log.score / (T-seas[2])
-      quad.score <- quad.score / (T-seas[2])
-      rps.score <- rps.score / (T-seas[2])
-    }# Poisson 2
-
-    #GP2
-    if ( (coco$type == "GP") & (coco$order == 2) ){
-      betas <- par[-c(1,2,3,4)]
-      lambdas <- exp(as.matrix(xreg) %*% betas)
-      log.score <- 0
-      quad.score <- 0
-      rps.score <- 0
-
-      for (t in (seas[2]+1):T) {
-        #log score
-        par <- c(lambdas[t], coco$par[1], coco$par[2], coco$par[3], coco$par[4])
-        log.score <- log.score - log(dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par))
-
-        #quadratic score
-        norm.p <- 0
-        help.stop <- 0
-
-        j <- 0
-        while (help.stop < (1-val.num) )  {
-          help <- dGP2(j,data[t-seas[1]], data[t-seas[2]], par)
-          help.stop <- pGP2(j,data[t-seas[1]], data[t-seas[2]], par)
-          norm.p <- norm.p + help^2
-          j <- j+1
-        }
-        quad.score <- quad.score - 2* dGP2(data[t], data[t-seas[1]], data[t-seas[2]], par) + norm.p
-
-        #ranked probability score
-        sum <- 0
-        help <- 0
-        j <- 0
-        while (help < (1-val.num) ){
-          ind <- 0
-          if (j >= data[t]) {
-            ind <- 1
-          }
-          help <- pGP2(j, data[t-seas[1]],data[t-seas[2]], par)
-          sum <- sum + (help - ind)^2
-          j <- j + 1
-        }
-        rps.score <- rps.score + sum
-      }# end t
-      log.score <- log.score / (T-seas[2])
-      quad.score <- quad.score / (T-seas[2])
-      rps.score <- rps.score / (T-seas[2])
-    }# GP2
-
-    list_out <- list("log.score" = log.score, "quad.score" = quad.score, "rps.score" = rps.score)
-  }
   }#end julia if
   
   #list_out["bic"] <- length(coco$par) * log(length(coco$ts)) - 2 * coco$likelihood

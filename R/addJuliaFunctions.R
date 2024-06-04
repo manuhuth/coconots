@@ -228,7 +228,7 @@ addJuliaFunctions <- function(){
         return mean(value)
     end
     
-    function compute_scores(cocoReg_fit)
+    function compute_scores(cocoReg_fit, max_x = 50)
     
         lambda = get_lambda(cocoReg_fit, false)
     
@@ -246,13 +246,14 @@ addJuliaFunctions <- function(){
             probabilities = [compute_convolution_x_r_y(cocoReg_fit["data"][t],
                              cocoReg_fit["data"][t-1], lambda[t], cocoReg_fit["parameter"][1],
                              eta) for t in 2:length(cocoReg_fit["data"])]
+                             
             h_index = [compute_h_index_1(cocoReg_fit["data"][t-1], lambda[t],
                             cocoReg_fit["parameter"][1],
-                             eta) for t in 2:length(cocoReg_fit["data"])]
+                             eta, max_x) for t in 2:length(cocoReg_fit["data"])]
     
             rbs = [compute_ranked_probability_helper_1(cocoReg_fit["data"][t],
                              cocoReg_fit["data"][t-1], lambda[t], cocoReg_fit["parameter"][1],
-                             eta) for t in 2:length(cocoReg_fit["data"])]
+                             eta, max_x) for t in 2:length(cocoReg_fit["data"])]
     
         elseif Int(cocoReg_fit["order"]) == 2
             if cocoReg_fit["type"] == "Poisson"
@@ -271,14 +272,14 @@ addJuliaFunctions <- function(){
                                         cocoReg_fit["parameter"][1],
                             cocoReg_fit["parameter"][2], cocoReg_fit["parameter"][3],
                             lambda[t],
-                             eta, cocoReg_fit["max_loop"]) for t in 3:length(cocoReg_fit["data"])]
+                             eta, cocoReg_fit["max_loop"], max_x) for t in 3:length(cocoReg_fit["data"])]
     
             rbs = [compute_ranked_probability_helper_2(cocoReg_fit["data"][t],
                             cocoReg_fit["data"][t-1], cocoReg_fit["data"][t-2],
                             cocoReg_fit["parameter"][1],
                             cocoReg_fit["parameter"][2], cocoReg_fit["parameter"][3],
                             lambda[t],
-                            eta, cocoReg_fit["max_loop"]) for t in 3:length(cocoReg_fit["data"])]
+                            eta, cocoReg_fit["max_loop"], max_x) for t in 3:length(cocoReg_fit["data"])]
         end
     
         return Dict("logarithmic_score" => Float64(- sum(log.(probabilities)) / length(probabilities)),
@@ -287,24 +288,24 @@ addJuliaFunctions <- function(){
                     )
     end
     
-    function compute_h_index_1(y, lambda, alpha, eta)
-        return sum(([compute_convolution_x_r_y(s, y, lambda, alpha, eta) for s in 0:30]).^2)
+    function compute_h_index_1(y, lambda, alpha, eta, max_x = 50)
+        return sum(([compute_convolution_x_r_y(s, y, lambda, alpha, eta) for s in 0:Int(max_x)]).^2)
     end
     
-    function compute_ranked_probability_helper_1(x, y, lambda, alpha, eta)
-        dist_val = [compute_distribution_convolution_x_r_y(s, y, lambda, alpha, eta) for s in 0:30]
+    function compute_ranked_probability_helper_1(x, y, lambda, alpha, eta, max_x = 50)
+        dist_val = [compute_distribution_convolution_x_r_y(s, y, lambda, alpha, eta) for s in 0:Int(max_x)]
         return sum(((x .<= 0:(length(dist_val)-1)) .* (1 .- dist_val) .+ (x .> 0:(length(dist_val)-1)) .* dist_val).^2)
     end
     
-    function compute_h_index_2(y, z, alpha1, alpha2, alpha3, lambda, eta, max_loop=nothing)
+    function compute_h_index_2(y, z, alpha1, alpha2, alpha3, lambda, eta, max_loop=nothing, max_x = 50)
         return sum(([compute_convolution_x_r_y_z(s, y, z, lambda, alpha1, alpha2, alpha3,
-                                                     eta, max_loop) for s in 0:30]).^2)
+                                                     eta, max_loop) for s in 0:Int(max_x)]).^2)
     end
     
     function compute_ranked_probability_helper_2(x, y, z, alpha1, alpha2, alpha3,
-                                                lambda, eta, max_loop=nothing)
+                                                lambda, eta, max_loop=nothing, max_x = 50)
         dist_val = [compute_distribution_convolution_x_r_y_z(s, y, z, alpha1, alpha2, alpha3,
-                                                    lambda, eta, max_loop) for s in 0:30]
+                                                    lambda, eta, max_loop) for s in 0:Int(max_x)]
         return sum(((x .<= 0:(length(dist_val)-1)) .* (dist_val .- 1) .+ (x .> 0:(length(dist_val)-1)) .* dist_val).^2)
     end
     #-------------------------------helper functions--------------------------------
