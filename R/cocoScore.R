@@ -60,7 +60,11 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   data <- coco$ts
 
   if (coco$type == "Poisson"){
-    par <- c(par, 0)
+    if (!is.null(coco$cov)){
+      par <- c(par, 0)
+    } else {
+      par <- c( par[length(par)-ncol(coco$cov)], 0, par[(length(par)-ncol(coco$cov)+1):length(par)])
+    }
   }
   
   if (!is.null(coco$cov)){
