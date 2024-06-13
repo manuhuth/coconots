@@ -4,7 +4,7 @@
 \alias{cocoResid}
 \title{Residual Based Model Assessment Procedure}
 \usage{
-cocoResid(coco, val.num = 1e-16)
+cocoResid(coco, val.num = 1e-10)
 }
 \arguments{
 \item{coco}{An object of class "coco}

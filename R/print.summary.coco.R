@@ -15,6 +15,9 @@ print.summary.coco <- function(x, ...) {
   }
   
   if (!is.null(coco$cov)){
+    if (is.null(colnames(coco$cov))){
+      colnames(coco$cov) <- paste0("X", 1:ncol(coco$cov))
+    }
     rows <- c(rows[rows != "lambda"], colnames(coco$cov) )
   }
   

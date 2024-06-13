@@ -1,4 +1,4 @@
-cocoForecastKStepsRCPP <- function(fit, k=3, number_simulations=500, covariates=NULL){
+cocoForecastKStepsRCPP <- function(fit, k=1, number_simulations=500, covariates=NULL){
   
   init <- fit$ts[length(fit$ts)]
   if (fit$order == 2){
@@ -16,7 +16,7 @@ cocoForecastKStepsRCPP <- function(fit, k=3, number_simulations=500, covariates=
       output <- cocoSim_cov(
         type = fit$type, order = fit$order, par = fit$par, size =  k+length(init),
         xreg = covariates,
-        seasonality = c(1,2), init = init)$data
+        seasonality = c(1,2), init = init, link_function=fit$link_function)$data
     }
   }
   if (k > 1) {

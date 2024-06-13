@@ -27,6 +27,7 @@
 #' @param cores numeric indicating the number of cores to use, currently only available in the R version
 #' @param julia if TRUE, the model is estimated with Julia. This can improve the speed significantly since Julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.
 #' @param julia_installed if TRUE, the model R output will contain a Julia compatible output element.
+#' @param link_function Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity` and `relu`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values by setting `b.beta` to a small positive value.
 #' @author Manuel Huth
 #' @return an object of class coco. It contains the parameter estimates, standard errors, the log-likelihood, 
 #' and information on the model specifications. If Julia is used for parameter estimation or the Julia installation
@@ -94,7 +95,7 @@ cocoReg <- function(type, order, data, xreg = NULL,
                     start = NULL, start.val.adjust = TRUE, method_optim = "Nelder-Mead",
                     replace.start.val = 1e-5, iteration.start.val = 0.6,
                     method.hessian = "Richardson", cores=2, julia=FALSE, 
-                    julia_installed=FALSE) {
+                    julia_installed=FALSE, link_function="log") {
   seasonality <- c(1, 2) #will be used as argument in future versions
   
   if ((type != "GP") & (type != "Poisson")) {
@@ -103,7 +104,7 @@ cocoReg <- function(type, order, data, xreg = NULL,
   
   if (julia){
     start_time <- Sys.time()
-    fit_julia <- cocoRegJulia(type, order, data, xreg, start)
+    fit_julia <- cocoRegJulia(type, order, data, xreg, start, link_function, b.beta)
     end_time <- Sys.time()
     fit_R <- JuliaConnectoR::juliaGet(fit_julia)
     julia_out <- transformJuliaRegOutputToR(xreg=xreg, pars=fit_R[["values"]][[8]],
@@ -118,6 +119,7 @@ cocoReg <- function(type, order, data, xreg = NULL,
                                             start_time=start_time, 
                                             julia_reg=fit_julia)
     class(julia_out) <- "coco"
+    julia_out$link_function <- link_function
     return(julia_out)
   }
   
@@ -127,18 +129,18 @@ cocoReg <- function(type, order, data, xreg = NULL,
       type = type, order = order, data = data, seasonality = seasonality, 
       constrained.optim = constrained.optim, start = start,
       start.val.adjust = start.val.adjust, replace.start.val = replace.start.val, method_optim=method_optim,
-      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed
+      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed, link_function=link_function
     )
   } else {
     output <- cocoReg_cov(
       type = type, order = order, data = data, xreg = xreg, seasonality = seasonality,
-      constrained.optim = constrained.optim, b.beta = -10, start = start, method_optim=method_optim,
+      constrained.optim = constrained.optim, b.beta = b.beta, start = start, method_optim=method_optim,
       start.val.adjust = start.val.adjust, replace.start.val = replace.start.val,
-      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed
+      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed, link_function=link_function
     )
   }
   
   class(output) <- "coco"
-
+  
   return(output)
 }

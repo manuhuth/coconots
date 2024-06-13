@@ -29,7 +29,7 @@ cocoResid <- function(coco, val.num = 1e-10) {
     vec_lambda <- par[(length(par)-ncol(xreg)+1):length(par)]
     lambdas <- c()
     for (j in 1:length(data)) {
-      lambdas[j] <- exp(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda)
+      lambdas[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
     }
   } else {
     lambda <- par[1]
@@ -39,7 +39,7 @@ cocoResid <- function(coco, val.num = 1e-10) {
   ### GP/PAR1
   if (coco$order == 1) {
 
-    alpha <- par[2]
+    alpha <- par[2-bool_covariates]
       
     if (coco$type == "Poisson"){
       eta <- 0

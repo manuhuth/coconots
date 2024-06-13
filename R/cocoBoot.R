@@ -108,7 +108,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
         # set up values for lambda
         lambda <- c()
         for (j in 1:length(data)) {
-          lambda[j] <- exp(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda)
+          lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
         }
       }
   
@@ -122,7 +122,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
   
         lambda <- c()
         for (j in 1:length(data)) {
-          lambda[j] <- exp(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda)
+          lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
         }
       }
   
@@ -138,7 +138,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
   
         lambda <- c()
         for (j in 1:length(data)) {
-          lambda[j] <- exp(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda)
+          lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
         }
       }
   
@@ -156,7 +156,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
   
         lambda <- c()
         for (j in 1:length(data)) {
-          lambda[j] <- exp(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda)
+          lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
         }
       }
     }
@@ -182,7 +182,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
     if (!is.null(coco$cov)) {
       xreg <- as.matrix(xreg)
       for (b in 1:nB) {
-        help <- cocoSim(type = coco$type, order = coco$order, par = par, length = T, xreg = xreg)
+        help <- cocoSim(type = coco$type, order = coco$order, par = par, length = T, xreg = xreg, link_function=coco$link_function)
         B[, b] <- help
         ac[, b] <- forecast::Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
       }

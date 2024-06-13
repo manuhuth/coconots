@@ -19,7 +19,7 @@ test_that("GP2Works", {
     cocoResid(fit)
     summary(fit, julia=i)
     cocoScore(fit, julia=i)
-    cocoForecastOneStep(fit, julia=i)
+    predict(fit, k=2, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
   expect_no_error(fit)
@@ -41,7 +41,7 @@ test_that("Poisson2Works", {
     cocoResid(fit)
     summary(fit, julia=i)
     cocoScore(fit, julia=i)
-    cocoForecastOneStep(fit, julia=i)
+    predict(fit, k=3, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
   expect_no_error(fit)
@@ -63,7 +63,7 @@ test_that("GP1Works", {
     cocoResid(fit)
     summary(fit, julia=i)
     cocoScore(fit, julia=i)
-    cocoForecastOneStep(fit, julia=i)
+    predict(fit, k=4, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
   expect_no_error(fit)
@@ -85,7 +85,7 @@ test_that("Poisson1Works", {
     cocoResid(fit)
     summary(fit, julia=i)
     cocoScore(fit, julia=i)
-    cocoForecastOneStep(fit, julia=i)
+    predict(fit, k=4, julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
   expect_no_error(fit)
@@ -115,7 +115,7 @@ test_that("Poisson1Works_cov", {
    cocoResid(fit)
    summary(fit, julia=i)
    cocoScore(fit, julia=i)
-   cocoForecastOneStep(fit, xcast = cov[1,], julia=i)
+   predict(fit, k=2, xcast = cov[1:2,], julia=i)
    cocoBoot(fit, rep.Bootstrap = 6, julia=i)
  }
  expect_no_error(fit)
@@ -130,7 +130,7 @@ test_that("GP1Works_cov", {
   sin <- sin(2*pi/period*(1:length))
   cos <- cos(2*pi/period*(1:length))
   cov <- cbind(sin, cos)
-  par <- c(0.8, 0.2, 0.2, -0.2)
+  par <- c(0.3, 0.2, 0.2, -0.2)
   set.seed(1234567)
   data <- cocoSim(order = 1, type = "GP", par = par,
                       xreg = cov, length = length)
@@ -144,7 +144,7 @@ test_that("GP1Works_cov", {
     cocoResid(fit)
     summary(fit, julia=i)
     cocoScore(fit, julia=i)
-    cocoForecastOneStep(fit, xcast = cov[1,], julia=i)
+    predict(fit, k=2, xcast = cov[1:2,], julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
   expect_no_error(fit)
@@ -172,7 +172,7 @@ test_that("Poisson2Works_cov", {
     cocoResid(fit)
     summary(fit, julia=i)
     cocoScore(fit, julia=i)
-    cocoForecastOneStep(fit, xcast = cov[1,], julia=i)
+    predict(fit, k=2, xcast = cov[1:2,], julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
   expect_no_error(fit)
@@ -200,7 +200,7 @@ test_that("GP2Works_cov", {
     cocoResid(fit)
     summary(fit, julia=i)
     cocoScore(fit, julia=i)
-    cocoForecastOneStep(fit, xcast = cov[1,], julia=i)
+    predict(fit, k=2, xcast = cov[1:2,], julia=i)
     cocoBoot(fit, rep.Bootstrap = 6, julia=i)
   }
   expect_no_error(fit)
@@ -367,21 +367,7 @@ test_that("custom_start_values_Poisson1", {
   expect_no_error(fit)
 })
 #----------------Custom starting values covariates------------------------------
-test_that("Poisson1Works_cov_2", {
-  ##Poisson1 model with covariates
-  length <- 300
-  period <- 50
-  sin <- sin(2*pi/period*(1:length))
-  cos <- cos(2*pi/period*(1:length))
-  cov <- cbind(sin, cos)
-  par <- c(0.8, 0.2, -0.2)
-  set.seed(1234)
-  data <- cocoSim(order = 1, type = "Poisson", par = par,
-                      xreg = cov, length = length)
-  
-  fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
-  expect_no_error(fit)
-})
+
 
 test_that("GP1Works_cov_2", {
   ##Poisson1 model with covariates
@@ -400,7 +386,7 @@ test_that("GP1Works_cov_2", {
   cocoResid(fit)
   summary(fit)
   cocoScore(fit)
-  cocoForecastOneStep(fit, xcast = cov[1,])
+  predict(fit, k=2, xcast = cov[1:2,])
   cocoBoot(fit, rep.Bootstrap = 6)
   expect_no_error(fit)
 })
@@ -422,7 +408,7 @@ test_that("Poisson2Works_cov_2", {
   cocoResid(fit)
   summary(fit)
   cocoScore(fit)
-  cocoForecastOneStep(fit, xcast = cov[1,])
+  predict(fit, k=2, xcast = cov[1:2,])
   cocoBoot(fit, rep.Bootstrap = 6)
   expect_no_error(fit)
 })
@@ -444,7 +430,7 @@ test_that("GP2Works_cov_2", {
   cocoResid(fit)
   summary(fit)
   cocoScore(fit)
-  cocoForecastOneStep(fit, xcast = cov[1,])
+  predict(fit, k=2, xcast = cov[1:2,])
   cocoBoot(fit, rep.Bootstrap = 6)
   expect_no_error(fit)
 })

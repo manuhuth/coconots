@@ -21,6 +21,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// applyLinkFunction
+double applyLinkFunction(double mathelp, std::string link_function);
+RcppExport SEXP _coconots_applyLinkFunction(SEXP mathelpSEXP, SEXP link_functionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type mathelp(mathelpSEXP);
+    Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
+    rcpp_result_gen = Rcpp::wrap(applyLinkFunction(mathelp, link_function));
+    return rcpp_result_gen;
+END_RCPP
+}
 // innerProduct
 double innerProduct(NumericVector x, NumericVector y);
 RcppExport SEXP _coconots_innerProduct(SEXP xSEXP, SEXP ySEXP) {
@@ -182,8 +194,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // simGP2cov
-std::vector<int> simGP2cov(double sumlimit, double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int N, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg, std::vector<double> uniform, std::vector<int> innovations);
-RcppExport SEXP _coconots_simGP2cov(SEXP sumlimitSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP uniformSEXP, SEXP innovationsSEXP) {
+std::vector<int> simGP2cov(double sumlimit, double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int N, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg, std::vector<double> uniform, std::vector<int> innovations, std::string link_function);
+RcppExport SEXP _coconots_simGP2cov(SEXP sumlimitSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP uniformSEXP, SEXP innovationsSEXP, SEXP link_functionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -201,13 +213,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type uniform(uniformSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type innovations(innovationsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simGP2cov(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations));
+    Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
+    rcpp_result_gen = Rcpp::wrap(simGP2cov(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations, link_function));
     return rcpp_result_gen;
 END_RCPP
 }
 // simGP1cov
-std::vector<int> simGP1cov(double sumlimit, double alpha, double eta, NumericVector lambdas, int T, int N, int seas, std::vector<int> data, NumericMatrix xreg, std::vector<double> uniform, std::vector<int> innovations);
-RcppExport SEXP _coconots_simGP1cov(SEXP sumlimitSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP uniformSEXP, SEXP innovationsSEXP) {
+std::vector<int> simGP1cov(double sumlimit, double alpha, double eta, NumericVector lambdas, int T, int N, int seas, std::vector<int> data, NumericMatrix xreg, std::vector<double> uniform, std::vector<int> innovations, std::string link_function);
+RcppExport SEXP _coconots_simGP1cov(SEXP sumlimitSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP uniformSEXP, SEXP innovationsSEXP, SEXP link_functionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -222,13 +235,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type uniform(uniformSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type innovations(innovationsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simGP1cov(sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations));
+    Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
+    rcpp_result_gen = Rcpp::wrap(simGP1cov(sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations, link_function));
     return rcpp_result_gen;
 END_RCPP
 }
 // likelihoodGP2cov
-double likelihoodGP2cov(double sumlimit, double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg);
-RcppExport SEXP _coconots_likelihoodGP2cov(SEXP sumlimitSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP) {
+double likelihoodGP2cov(double sumlimit, double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg, std::string link_function);
+RcppExport SEXP _coconots_likelihoodGP2cov(SEXP sumlimitSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -243,13 +257,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seas2(seas2SEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
-    rcpp_result_gen = Rcpp::wrap(likelihoodGP2cov(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg));
+    Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
+    rcpp_result_gen = Rcpp::wrap(likelihoodGP2cov(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function));
     return rcpp_result_gen;
 END_RCPP
 }
 // likelihoodGP1cov
-double likelihoodGP1cov(double sumlimit, double alpha, double eta, NumericVector lambdas, int T, int seas, std::vector<int> data, NumericMatrix xreg);
-RcppExport SEXP _coconots_likelihoodGP1cov(SEXP sumlimitSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP xregSEXP) {
+double likelihoodGP1cov(double sumlimit, double alpha, double eta, NumericVector lambdas, int T, int seas, std::vector<int> data, NumericMatrix xreg, std::string link_function);
+RcppExport SEXP _coconots_likelihoodGP1cov(SEXP sumlimitSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -261,13 +276,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seas(seasSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
-    rcpp_result_gen = Rcpp::wrap(likelihoodGP1cov(sumlimit, alpha, eta, lambdas, T, seas, data, xreg));
+    Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
+    rcpp_result_gen = Rcpp::wrap(likelihoodGP1cov(sumlimit, alpha, eta, lambdas, T, seas, data, xreg, link_function));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_coconots_fact", (DL_FUNC) &_coconots_fact, 1},
+    {"_coconots_applyLinkFunction", (DL_FUNC) &_coconots_applyLinkFunction, 2},
     {"_coconots_innerProduct", (DL_FUNC) &_coconots_innerProduct, 2},
     {"_coconots_likelihoodGP2", (DL_FUNC) &_coconots_likelihoodGP2, 10},
     {"_coconots_likelihoodGP1", (DL_FUNC) &_coconots_likelihoodGP1, 7},
@@ -277,10 +294,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coconots_dGP1h", (DL_FUNC) &_coconots_dGP1h, 5},
     {"_coconots_dR2", (DL_FUNC) &_coconots_dR2, 8},
     {"_coconots_Pyz", (DL_FUNC) &_coconots_Pyz, 7},
-    {"_coconots_simGP2cov", (DL_FUNC) &_coconots_simGP2cov, 14},
-    {"_coconots_simGP1cov", (DL_FUNC) &_coconots_simGP1cov, 11},
-    {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 11},
-    {"_coconots_likelihoodGP1cov", (DL_FUNC) &_coconots_likelihoodGP1cov, 8},
+    {"_coconots_simGP2cov", (DL_FUNC) &_coconots_simGP2cov, 15},
+    {"_coconots_simGP1cov", (DL_FUNC) &_coconots_simGP1cov, 12},
+    {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 12},
+    {"_coconots_likelihoodGP1cov", (DL_FUNC) &_coconots_likelihoodGP1cov, 9},
     {NULL, NULL, 0}
 };
 

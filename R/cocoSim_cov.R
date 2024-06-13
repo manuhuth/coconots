@@ -1,4 +1,4 @@
-cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), init = NULL) {
+cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), init = NULL, link_function="log") {
   
   if (length(seasonality == 1)) {
     seasonality <- c(seasonality, seasonality + 1)
@@ -44,9 +44,6 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     stop("The value of 'size' must be a positive integer value")
   }
 
-
-
-
   start_time <- Sys.time()
 
   T <- size
@@ -69,27 +66,27 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
 
     data <- c()
     for (t in 1:seasonality[1]) {
-      lambda_start1 <- exp(as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
-      data[t] <- stats::rpois(n = 1, lambda_start1)
+      lambda_start_1 <- as.numeric(as.vector(xreg[t, ])) %*% vec_lambda
+      data[t] <- stats::rpois(n = 1, applyLinkFunction(lambda_start_1, link_function))
     }
-
+    
     if (!is.null(init) ) {
       data <- init[(length(init) - length(data)+1):(length(init))]
     } 
-
-    lambdas <- exp(xreg %*% vec_lambda)
-
+    
+    lambda_raw <- xreg %*% vec_lambda
+    lambdas <- apply(lambda_raw, 1, function(x) applyLinkFunction(x, link_function))
+    
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
     innovations <- c()
-    for (index in 1:T) {
+    for (index in 1:(length(lambdas))) {
       lambda <- lambdas[index]
       innovations[index] <- stats::rpois(n = 1, lambda)
     }
     uniform <- stats::runif(n = T, 0, 1)
 
-    data <- simGP1cov(20, alpha, eta, vec_lambda, T, N, seasonality[1], data, xreg, uniform, innovations)
-
+    data <- simGP1cov(20, alpha, eta, vec_lambda, T, N, seasonality[1], data, xreg, uniform, innovations, link_function)
 
     end_time <- Sys.time()
     time <- end_time - start_time
@@ -115,26 +112,27 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
 
     data <- c()
     for (t in 1:seasonality[1]) {
-      lambda_start1 <- exp(as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
-      data[t] <- rgenpois(n = 1, lambda_start1, eta)
+      lambda_start1 <- as.numeric(as.vector(xreg[t, ])) %*% vec_lambda
+      data[t] <- rgenpois(n = 1, applyLinkFunction(lambda_start1, link_function), eta)
     }
 
     if (!is.null(init) ) {
       data <- init[(length(init) - length(data)+1):(length(init))]
     } 
 
-    lambdas <- exp(xreg %*% vec_lambda)
+    lambda_raw <- xreg %*% vec_lambda
+    lambdas <- apply(lambda_raw, 1, function(x) applyLinkFunction(x, link_function))
 
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
     innovations <- c()
-    for (index in 1:T) {
+    for (index in 1:(length(lambdas))) {
       lambda <- lambdas[index]
       innovations[index] <- rgenpois(n = 1, lambda, eta)
     }
     uniform <- stats::runif(n = T, 0, 1)
 
-    data <- simGP1cov(20, alpha, eta, vec_lambda, T, N, seasonality[1], data, xreg, uniform, innovations)
+    data <- simGP1cov(20, alpha, eta, vec_lambda, T, N, seasonality[1], data, xreg, uniform, innovations, link_function)
 
 
     end_time <- Sys.time()
@@ -164,23 +162,24 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     data <- c()
     for (t in 1:seasonality[2]) {
       if (nrow(xreg) > 1){
-        lambda_start1 <- exp( as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
+        lambda_start1 <- as.numeric(as.vector(xreg[t, ])) %*% vec_lambda
       } else{
         lambda_start1 <- c(0,0)
       }
-      data[t] <- stats::rpois(n = 1, lambda_start1)
+      data[t] <- stats::rpois(n = 1, applyLinkFunction(lambda_start1, link_function))
     }
 
     if (!is.null(init) ) {
       data <- init[(length(init) - length(data)+1):(length(init))]
     } 
 
-    lambdas <- exp(xreg %*% vec_lambda)
+    lambda_raw <- xreg %*% vec_lambda
+    lambdas <- apply(lambda_raw, 1, function(x) applyLinkFunction(x, link_function))
 
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
     innovations <- c()
-    for (index in 1:T) {
+    for (index in 1:(length(lambdas))) {
       lambda <- lambdas[index]
       innovations[index] <- stats::rpois(n = 1, lambda)
     }
@@ -190,7 +189,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
       uniform <- stats::runif(n = T, 0, 1)
     }
 
-    data <- simGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, N, seasonality[1], seasonality[2], data, xreg, uniform, innovations)
+    data <- simGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, N, seasonality[1], seasonality[2], data, xreg, uniform, innovations, link_function)
 
 
     end_time <- Sys.time()
@@ -221,23 +220,24 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     data <- c()
     for (t in 1:seasonality[2]) {
       if (nrow(xreg) > 1){
-        lambda_start1 <- exp( as.numeric(as.vector(xreg[t, ])) %*% vec_lambda)
+        lambda_start1 <- as.numeric(as.vector(xreg[t, ])) %*% vec_lambda
       } else{
         lambda_start1 <- c(0,0)
       }
-      data[t] <- stats::rpois(n = 1, lambda_start1)
+      data[t] <- stats::rpois(n = 1, applyLinkFunction(lambda_start1, link_function))
     }
 
     if (!is.null(init) ) {
       data <- init[(length(init) - length(data)+1):(length(init))]
     } 
 
-    lambdas <- exp( xreg %*% vec_lambda)
+    lambda_raw <- xreg %*% vec_lambda
+    lambdas <- apply(lambda_raw, 1, function(x) applyLinkFunction(x, link_function))
 
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
     innovations <- c()
-    for (index in 1:(T-N)) {
+    for (index in 1:(length(lambdas))) {
       lambda <- lambdas[index]
       innovations[index] <- rgenpois(n = 1, lambda, eta)
     }
@@ -250,7 +250,7 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     
     data <- simGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, N,
                       seasonality[1], seasonality[2],
-                      data, xreg, uniform, innovations)
+                      data, xreg, uniform, innovations, link_function)
 
     end_time <- Sys.time()
     time <- end_time - start_time
@@ -265,6 +265,8 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
   } else {
     output$data <- output$data[(order + 1):length(output$data)]
   }
+  
+  output$link_function <- link_function
   
   return(output)
 }

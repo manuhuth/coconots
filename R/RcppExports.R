@@ -5,6 +5,10 @@ fact <- function(i) {
     .Call(`_coconots_fact`, i)
 }
 
+applyLinkFunction <- function(mathelp, link_function) {
+    .Call(`_coconots_applyLinkFunction`, mathelp, link_function)
+}
+
 innerProduct <- function(x, y) {
     .Call(`_coconots_innerProduct`, x, y)
 }
@@ -41,19 +45,19 @@ Pyz <- function(y, z, lambda, alpha1, alpha2, alpha3, eta) {
     .Call(`_coconots_Pyz`, y, z, lambda, alpha1, alpha2, alpha3, eta)
 }
 
-simGP2cov <- function(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations) {
-    .Call(`_coconots_simGP2cov`, sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations)
+simGP2cov <- function(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations, link_function) {
+    .Call(`_coconots_simGP2cov`, sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations, link_function)
 }
 
-simGP1cov <- function(sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations) {
-    .Call(`_coconots_simGP1cov`, sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations)
+simGP1cov <- function(sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations, link_function) {
+    .Call(`_coconots_simGP1cov`, sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations, link_function)
 }
 
-likelihoodGP2cov <- function(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg) {
-    .Call(`_coconots_likelihoodGP2cov`, sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg)
+likelihoodGP2cov <- function(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function) {
+    .Call(`_coconots_likelihoodGP2cov`, sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function)
 }
 
-likelihoodGP1cov <- function(sumlimit, alpha, eta, lambdas, T, seas, data, xreg) {
-    .Call(`_coconots_likelihoodGP1cov`, sumlimit, alpha, eta, lambdas, T, seas, data, xreg)
+likelihoodGP1cov <- function(sumlimit, alpha, eta, lambdas, T, seas, data, xreg, link_function) {
+    .Call(`_coconots_likelihoodGP1cov`, sumlimit, alpha, eta, lambdas, T, seas, data, xreg, link_function)
 }
 

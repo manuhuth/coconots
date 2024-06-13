@@ -50,7 +50,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   if (!is.null(coco$julia_reg) & julia){
     data <- coco$ts
     addJuliaFunctions()
-    coco_pit <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPit", coco$julia_reg,J))
+    coco_pit <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPit", coco$julia_reg, J))
     J_test <- J
     u <- coco_pit$values[[2]]
     d <- coco_pit$values[[1]]
@@ -111,7 +111,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
       # set up values for lambda
       lambda <- c()
       for (j in 1:length(data)) {
-        lambda[j] <- exp(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda)
+        lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
       }
     }
 
@@ -126,7 +126,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
 
       lambda <- c()
       for (j in 1:length(data)) {
-        lambda[j] <- exp(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda)
+        lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
       }
     }
 
@@ -142,7 +142,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
 
       lambda <- c()
       for (j in 1:length(data)) {
-        lambda[j] <- exp(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda)
+        lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
       }
     }
 
@@ -160,7 +160,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
 
       lambda <- c()
       for (j in 1:length(data)) {
-        lambda[j] <- exp(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda)
+        lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
       }
     }
   }

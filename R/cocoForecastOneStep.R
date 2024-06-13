@@ -44,7 +44,7 @@ cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-12, xcast=NULL,
       betas <- parameter[(length(parameter)-number_covariates+1):length(parameter)]
       parameter <- utils::head(parameter, -number_covariates)
       dot_product <- betas %*% c(xcast)
-      lambda <- exp(dot_product)
+      lambda <- applyLinkFunction(dot_product, coco$link_function)
       parameter <- c(lambda, parameter)
     }
     

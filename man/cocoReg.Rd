@@ -19,7 +19,8 @@ cocoReg(
   method.hessian = "Richardson",
   cores = 2,
   julia = FALSE,
-  julia_installed = FALSE
+  julia_installed = FALSE,
+  link_function = "log"
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ cocoReg(
 \item{julia}{if TRUE, the model is estimated with Julia. This can improve the speed significantly since Julia makes use of derivatives using autodiff. In this case, only type, order, data, xreg, and start are used as other inputs.}
 
 \item{julia_installed}{if TRUE, the model R output will contain a Julia compatible output element.}
+
+\item{link_function}{Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity` and `relu`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values by setting `b.beta` to a small positive value.}
 }
 \value{
 an object of class coco. It contains the parameter estimates, standard errors, the log-likelihood, 

@@ -12,7 +12,8 @@ cocoSim(
   xreg = NULL,
   init = NULL,
   julia = FALSE,
-  julia_seed = NULL
+  julia_seed = NULL,
+  link_function = "log"
 )
 }
 \arguments{
@@ -33,6 +34,8 @@ for more information on the usage.}
 \item{julia}{If TRUE, the Julia implementation is used. In this case, init is ignored but it might be faster.}
 
 \item{julia_seed}{Seed for the Julia implementation. Only used if Julia equals TRUE.}
+
+\item{link_function}{Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity` and `relu`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values.}
 }
 \value{
 a vector of the simulated time series.

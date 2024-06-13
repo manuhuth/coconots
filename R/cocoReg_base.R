@@ -2,7 +2,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
                          method_optim=method_optim,
                          optim_control = FALSE, constrained.optim = TRUE, start = NULL,
                          start.val.adjust = TRUE, replace.start.val = 1e-5,
-                         iteration.start.val = 0.99, method.hessian = "Richardson", julia_installed=FALSE, ...) {
+                         iteration.start.val = 0.99, method.hessian = "Richardson", julia_installed=FALSE, link_function="log", ...) {
   start_time <- Sys.time()
 
   if (replace.start.val <= 0) {
@@ -169,7 +169,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
                                                     "max_loop"),
                                                list(pars_julia, inv_hes, likelihood,
                                                     type, order, data, NULL,
-                                                    NULL, NULL, NULL, NULL, NULL,
+                                                    link_function, NULL, NULL, NULL, NULL,
                                                     NULL, NULL))
       } else {julia_reg = NULL}
 
@@ -321,7 +321,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
                                                     "max_loop"),
                                                list(pars_julia, inv_hes, likelihood,
                                                     type, order, data, NULL,
-                                                    NULL, NULL, NULL, NULL, NULL,
+                                                    link_function, NULL, NULL, NULL, NULL,
                                                     NULL, NULL))
       } else {julia_reg = NULL}
       
@@ -511,7 +511,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
                                                     "max_loop"),
                                                list(pars_julia, inv_hes, likelihood,
                                                     type, order, data, NULL,
-                                                    NULL, NULL, NULL, NULL, NULL,
+                                                    link_function, NULL, NULL, NULL, NULL,
                                                     NULL, NULL))
       } else {julia_reg = NULL}
       
@@ -722,7 +722,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
                                                     "max_loop"),
                                                list(pars_julia, inv_hes, likelihood,
                                                     type, order, data, NULL,
-                                                    NULL, NULL, NULL, NULL, NULL,
+                                                    link_function, NULL, NULL, NULL, NULL,
                                                     NULL, NULL))
       } else {julia_reg = NULL}
     

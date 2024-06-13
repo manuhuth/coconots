@@ -6,6 +6,8 @@
 
 using namespace Rcpp ;
 
+
+
 // [[Rcpp::export]]
 double fact(int i)
 {
@@ -13,6 +15,18 @@ double fact(int i)
 }
 
 
+// [[Rcpp::export]]
+double applyLinkFunction(double mathelp, std::string link_function) {
+  if (link_function == "log") {
+    return exp(mathelp);
+  } else if (link_function == "identity") {
+    return mathelp;
+  } else if (link_function == "relu") {
+    return (mathelp > 0) ? mathelp : 1e-10;
+  } else {
+    stop("Unknown link function");
+  }
+}
 
 
 // [[Rcpp::export]]
@@ -201,7 +215,6 @@ std::vector<int> simGP1(double sumlimit, double lambda, double alpha, double eta
   double mlef = 0.0;
   for (t = N + 1; t <= T; t++) {
 
-
     int y = data[t-seas-1];
 
     double unif = uniform[t-1];
@@ -375,7 +388,8 @@ double Pyz(int y, int z, double lambda, double alpha1, double alpha2, double alp
 std::vector<int> simGP2cov(double sumlimit,  double alpha1, double alpha2, double alpha3,
                            double eta, NumericVector lambdas, int T,int N, int seas1, int seas2,
                            std::vector<int> data, NumericMatrix xreg,
-                           std::vector<double> uniform, std::vector<int> innovations)
+                           std::vector<double> uniform, std::vector<int> innovations,
+                           std::string link_function)
 {
   double U = 1/( 1 - alpha1-alpha2-alpha3);
   double pyz;
@@ -395,7 +409,8 @@ std::vector<int> simGP2cov(double sumlimit,  double alpha1, double alpha2, doubl
 
     NumericVector covar = xreg(t-N-1,_);
     double mathelp = innerProduct(covar,lambdas);
-    lambda = exp(mathelp);
+    // Apply the link function
+    lambda = applyLinkFunction(mathelp, link_function);
 
     double beta1 = lambda * U *alpha1;
     double beta2 = lambda * U *alpha2;
@@ -448,7 +463,7 @@ std::vector<int> simGP2cov(double sumlimit,  double alpha1, double alpha2, doubl
 // [[Rcpp::export]]
 std::vector<int> simGP1cov(double sumlimit, double alpha, double eta,
                            NumericVector lambdas, int T,int N, int seas, std::vector<int> data, NumericMatrix xreg,
-                           std::vector<double> uniform, std::vector<int> innovations)
+                           std::vector<double> uniform, std::vector<int> innovations, std::string link_function)
 {
 
   double lambda;
@@ -460,9 +475,10 @@ std::vector<int> simGP1cov(double sumlimit, double alpha, double eta,
 
     int y = data[t-seas-1];
 
-    NumericVector covar = xreg(t-1,_);
+    NumericVector covar = xreg(t-1-N,_);
     double mathelp = innerProduct(covar,lambdas);
-    lambda = exp(mathelp);
+    // Apply the link function
+    lambda = applyLinkFunction(mathelp, link_function);
     double psi = eta*(1-alpha)/lambda;
 
     double unif = uniform[t-1];
@@ -485,7 +501,7 @@ std::vector<int> simGP1cov(double sumlimit, double alpha, double eta,
 
 // [[Rcpp::export]]
 double likelihoodGP2cov(double sumlimit, double alpha1, double alpha2, double alpha3,
-                        double eta, NumericVector lambdas, int T, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg)
+                        double eta, NumericVector lambdas, int T, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg, std::string link_function)
 {
   double U = 1/( 1 - alpha1-alpha2-alpha3);
   double pyz;
@@ -505,7 +521,8 @@ double likelihoodGP2cov(double sumlimit, double alpha1, double alpha2, double al
 
     NumericVector covar = xreg(t-1,_);
     double mathelp = innerProduct(covar,lambdas);
-    lambda = exp(mathelp);
+    // Apply the link function
+    lambda = applyLinkFunction(mathelp, link_function);
 
     double beta1 = lambda * U *alpha1;
     double beta2 = lambda * U *alpha2;
@@ -561,7 +578,7 @@ double likelihoodGP2cov(double sumlimit, double alpha1, double alpha2, double al
 
 
 // [[Rcpp::export]]
-double likelihoodGP1cov(double sumlimit, double alpha, double eta, NumericVector lambdas, int T, int seas, std::vector<int> data, NumericMatrix xreg)
+double likelihoodGP1cov(double sumlimit, double alpha, double eta, NumericVector lambdas, int T, int seas, std::vector<int> data, NumericMatrix xreg, std::string link_function)
 {
 
   double lambda;
@@ -576,7 +593,10 @@ double likelihoodGP1cov(double sumlimit, double alpha, double eta, NumericVector
 
     NumericVector covar = xreg(t-1,_);
     double mathelp = innerProduct(covar,lambdas);
-    lambda = exp( mathelp);
+    
+    // Apply the link function
+    lambda = applyLinkFunction(mathelp, link_function);
+    
     double psi = eta*(1-alpha)/lambda;
 
     int minxy = std::min(x,y);

@@ -60,17 +60,19 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   data <- coco$ts
 
   if (coco$type == "Poisson"){
-    if (!is.null(coco$cov)){
+    if (is.null(coco$cov)){
       par <- c(par, 0)
     } else {
-      par <- c( par[length(par)-ncol(coco$cov)], 0, par[(length(par)-ncol(coco$cov)+1):length(par)])
+      par <- c( par[1:(length(par)-ncol(coco$cov))], 0, par[(length(par)-ncol(coco$cov)+1):length(par)])
     }
   }
   
   if (!is.null(coco$cov)){
     xreg <- coco$cov
     betas <- par[(length(par)-ncol(xreg)+1):length(par)]
-    lambdas <- exp(as.matrix(xreg) %*% betas)
+    lambda_raw <- xreg %*% betas
+    lambdas <- apply(lambda_raw, 1, function(x) applyLinkFunction(x, coco$link_function))
+    
     par_original <- par
     
   }
