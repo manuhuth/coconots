@@ -45,8 +45,13 @@
 #' the marginal distributions of \eqn{\{X_t\}} are therefore Poisson or Generalized Poisson distributions, respectively.
 #' 
 #' If no covariates are used \eqn{\lambda_t = \lambda} and if covariates are used
-#' \deqn{\lambda_t = \exp{\left(\beta_0 + \sum_{j = 1}^k \beta_j \cdot z_{t,j} \right)},}
-#' whereby \eqn{z_{t,j}} is the \eqn{j}-th covariate at time \eqn{t}.
+#' \deqn{g(\lambda_t) = \left(\beta_0 + \sum_{j = 1}^k \beta_j \cdot z_{t,j} \right),}
+#' whereby \eqn{z_{t,j}} is the \eqn{j}-th covariate at time \eqn{t} and \eqn{g} is a link function. 
+#' Current supported link functions are the identity \eqn{g(x) = x} and a logarithmic link function 
+#' \eqn{g(x) = \ln x}. To ensure positivity of \eqn{\lambda} if the identity function is used, \eqn{\beta_j, z_{t,j} > 0} must be enforced.
+#' Alternatively, computational values of \eqn{\lambda \leq 0} can be set to a small positive value. 
+#' This option is named 'relu', due to its similarity to a ReLu function commonly used in machine learning.
+#' 
 #' 
 #' Standard errors are computed by the square root of the diagonal elements of the inverse Hessian.
 #' 
