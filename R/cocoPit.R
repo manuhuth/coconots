@@ -6,9 +6,9 @@
 #' @param J Number of bins for the histogram (default: 10)
 #' @param conf.alpha Confidence level for the confidence bands.
 #' @param julia  if TRUE, the PIT is computed with Julia.
-#' @return an object of class cocoPit. It contains the The probability integral
+#' @return an object of class cocoPit. It contains the probability integral
 #' transform values, its p-values and information on the model specifications.
-#' @details The adequacy of a distributional assumption for a model is checked by
+#' @details The adequacy of a distributional assumption for a model is assessed by
 #' checking the cumulative non-randomized PIT distribution for uniformity.
 #' A useful graphical device is the PIT histogram, which displays this
 #' distribution to J equally spaced bins. We supplement the graph by

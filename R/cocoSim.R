@@ -28,7 +28,7 @@
 #'the burn-in period. 
 #'If init is not specified for the covariate case, a warning will be returned
 #'to prompt the user to specify a custom burn-in period. This helps ensure that
-#'the simulation accurately captures the dynamics of the system being modeled.
+#'the simulation accurately captures the dynamics of the system being modelled.
 #' @author Manuel Huth
 #' @examples
 #' lambda <- 1

@@ -1,7 +1,7 @@
 #' @title cocoReg
 #' @description The function fits first and second order (Generalized) Poisson Autoregressive (G)PAR
-#' models presented in (Jung and Tremayne, 2010). Autoregressive dependence on past counts is modelled by a special random operator that not only preserve integer status, but also, via the property of closure under
-#' convolution, ensure that the marginal distribution of the observed counts is from the same family as the innovations. 
+#' models presented in (Jung and Tremayne, 2011). Autoregressive dependence on past counts is modelled by a special random operator that not only preserve integer status, but also, via the property of closure under
+#' convolution, ensures that the marginal distribution of the observed counts is from the same family as the innovations. 
 #' The models can be thought of as stationary Markov chains of finite order, where the distribution of the innovations can either be Poisson or Generalized Poisson, where the latter can account for overdispersed data.
 #' Maximum likelihood is used for estimation and the user can choose to include linear constraints or
 #' not. If linear constraints are not included, it cannot be guaranteed that the parameters will lie in the
@@ -10,8 +10,8 @@
 #' but the user can also specify their own starting values if desired. 
 #' 
 #' If Julia is installed, the user can choose whether the optimization is run in Julia
-#' which might faster yield results and increased numeric stability due to the use of automatic differentiation.
-#' See details for more information on the Julia implementation.
+#' which might yield results faster and with increased numeric stability due to the use of automatic differentiation.
+#' Details below for more information on the Julia implementation.
 #' @param type character string indicating the type of model to be fitted
 #' @param order integer vector indicating the order of the model
 #' @param data time series data to be used in the analysis
@@ -55,7 +55,7 @@
 #' 
 #' Standard errors are computed by the square root of the diagonal elements of the inverse Hessian.
 #' 
-#' This function is implemented in 2 versions. The default runs on RCPP. 
+#' This function is implemented in two versions. The default runs on RCPP. 
 #' An alternative version uses a Julia implementation which can be chosen by 
 #' setting the argument julia to TRUE. In order to
 #' use this feature, a running Julia installation is required on the system.

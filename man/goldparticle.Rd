@@ -11,7 +11,7 @@ in Westgren (1916) and used in Jung and Tremanye (2006).
 }
 
 \source{
-R.C. Jung, A.R. Tremayne (2006) Coherent forecasting in integer time series models. 
+Jung, R.C.;  Tremayne, A.R. (2006) Coherent forecasting in integer time series models. 
   \emph{International Journal of Forecasting} \bold{22}, 223--238
   
 Westgren, A. (1916) Die Veraenderungsgeschwindigkeit der lokalen

@@ -3,7 +3,7 @@
 #' @param julia_seed An integer seed value to be passed to Julia's random number generator.
 #' @details This function initializes the necessary Julia functions and sets the random seed for Julia. 
 #' If the provided seed is NULL, the function does nothing.
-#' @author Your Name (or the appropriate author's name)
+#' @author Manuel Huth
 #' @export
 setJuliaSeed <- function(julia_seed){
   addJuliaFunctions()

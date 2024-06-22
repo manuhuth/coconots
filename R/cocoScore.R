@@ -14,8 +14,8 @@
 #' there is no automatic choice of a (proper) scoring rule to be used in any given situation.
 #' Therefore, the use of a variety of scoring rules may be appropriate to take advantage of
 #' specific emphases and strengths. Three proper scoring rules
-#' (for a definition of the concept of propriety see Gneiting and Raftery, 2007)
-#' which Jung, McCabe and Tremayne (2016) found to be particularly useful are implemented.
+#' (for a definition of the concept of propriety see Gneiting and Raftery, 2007),
+#' which Jung, McCabe and Tremayne (2016) found to be particularly useful, are implemented.
 #' For more information see the references listed below.
 #' @references 
 #' Czado, C. and Gneitling, T. and Held, L. (2009) Predictive Model Assessment for Count Data. \emph{Biometrics}, \bold{65}, 4, 1254--1261.

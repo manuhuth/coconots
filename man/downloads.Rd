@@ -9,4 +9,9 @@
 }
 
 
+\source{
+Weiss, C.H. (2008) Thinning operations for modelling time series of counts -- a survey. \emph{Advances in Statistical Analysis}, \bold{92}, 319--341.
+
+}
+
 \keyword{Data}
