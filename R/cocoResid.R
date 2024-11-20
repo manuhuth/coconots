@@ -55,8 +55,8 @@ cocoResid <- function(coco, val.num = 1e-10) {
       if (bool_covariates){
         lambda <- lambdas[j]
       }
-      fitted_value <- alpha * data[j - seasonality[1]] + lambda
-      varX_value <- alpha * (1 - alpha) * data[j - seasonality[1]] + lambda
+      fitted_value <- alpha * data[j - seasonality[1]] + lambda / (1-eta)
+      varX_value <- alpha * (1 - alpha) * data[j - seasonality[1]] + lambda / (1-eta)^3
       return(list(fitted = fitted_value, varX = varX_value))
     })
       
@@ -97,14 +97,22 @@ cocoResid <- function(coco, val.num = 1e-10) {
       meanR <- 0
       varR <- 0
       prob_accumulated <- 0
+      probabilities <- c()
       r <- 0
       while (prob_accumulated < (1 - val.num)) {
         prob <- dR2(r, y, z, lambda, alpha1, alpha2, alpha3, eta)
+        probabilities <- c(probabilities, prob)
         prob_accumulated <- prob_accumulated + prob
-        meanR <- meanR + r * prob
-        varR <- varR + (r - meanR)^2 * prob
         r <- r + 1
       }
+      
+      #define objects for cond. mean and cond. variance computation
+      n_relevant_probabilities <- r-1 #r-1 as +1 is added in the end within the while loop
+      relevant_counts <- 0:(r-1)
+      
+      #compute conditional mean and conditional variance
+      meanR <- sum(probabilities * relevant_counts)
+      varR <-  sum(probabilities * ((relevant_counts - meanR)^2))
         
       fitted_value <- meanR + lambda / (1 - eta)
       varX_value <- varR + lambda / (1 - eta)^3
@@ -129,7 +137,7 @@ cocoResid <- function(coco, val.num = 1e-10) {
   time <- end.time - start.time
 
   list_out <- list(
-    "fitted" = fitted, "resdiuals" = residuals, "pe.resid" = peResid,
+    "fitted" = fitted, "residuals" = residuals, "pe.resid" = peResid,
     "cond.var" = varX, "type" = coco$type, "order" = coco$order, "ts" = coco$ts,
     "par" = par,"duration" = time, xreg = coco$cov
   )
