@@ -16,7 +16,7 @@ cocoPit(coco, J = 10, conf.alpha = 0.05, julia = FALSE)
 \item{julia}{if TRUE, the PIT is computed with Julia.}
 }
 \value{
-an object of class cocoPit. It contains the The probability integral
+an object of class cocoPit. It contains the probability integral
 transform values, its p-values and information on the model specifications.
 }
 \description{
@@ -25,7 +25,7 @@ the non-randomized PIT histogram for assessing absolute performance of a
 fitted model as proposed by Czado et al. (2009).
 }
 \details{
-The adequacy of a distributional assumption for a model is checked by
+The adequacy of a distributional assumption for a model is assessed by
 checking the cumulative non-randomized PIT distribution for uniformity.
 A useful graphical device is the PIT histogram, which displays this
 distribution to J equally spaced bins. We supplement the graph by

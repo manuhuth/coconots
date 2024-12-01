@@ -5,30 +5,24 @@ cocoForecastKStepsRCPP <- function(fit, k=1, number_simulations=500, covariates=
     init <- fit$ts[(length(fit$ts)-1):length(fit$ts)]
   }
   
-  if (is.null(covariates)){
-    run_sim <- function(i){
-      cocoSim_base(
-        type = fit$type, order = fit$order, par = fit$par, size = k+length(init),
-        seasonality = c(1,2), init = init)$data
-    }
-  } else {
-    run_sim <- function(i){  
-      output <- cocoSim_cov(
-        type = fit$type, order = fit$order, par = fit$par, size =  k+length(init),
-        xreg = covariates,
-        seasonality = c(1,2), init = init, link_function=fit$link_function)$data
-    }
+  run_sim <- function(i){ 
+    output <- cocoSim(type = fit$type, order = fit$order, par = fit$par, length =  k+length(init),
+            xreg = covariates,
+            julia=FALSE, link_function=fit$link_function)
   }
+  
   if (k > 1) {
     out_matrix <- t(sapply(1:number_simulations, run_sim))
   } else if (k==1){
-    out_matrix <- as.matrix(sapply(1:number_simulations, run_sim))
+    out_matrix <- as.matrix(sapply(1:number_simulations, run_sim)[1, ])
   }
   
   freq_table <- function(i){
     df <- as.data.frame(table(out_matrix[,i]) / number_simulations)
-    colnames(df) <- c("value", "frequency")
+    colnames <- c("value", "frequency")
+    colnames(df) <- colnames
     df["value"] <- as.numeric(levels(df[, "value"]))
+
     return(df)
   }
   

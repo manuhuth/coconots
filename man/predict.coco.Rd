@@ -54,4 +54,7 @@ one-step ahead predicitons for
 the models included here are provided in Jung and Tremayne (2011), maximum
 likelihood estimates replace the true model parameters. Out-of-sample values
 for covariates can be provided, if necessary.
+
+ @references 
+Jung, R. C. and Tremayne, A. R. (2011) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
 }

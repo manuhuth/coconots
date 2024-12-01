@@ -2,8 +2,10 @@ cocoForecastKSteps <- function(fit, k=3, number_simulations=1000, alpha=0.05, co
                                decimals=4, 
                                julia=FALSE){
   if (julia){
+
     forecasts <- cocoForecastKStepsJulia(fit, k=k, number_simulations = number_simulations,
                                    covariates=covariates)
+    
   } else {
     forecasts <- cocoForecastKStepsRCPP(fit, k=k, number_simulations = number_simulations,
                                   covariates=covariates)
@@ -12,6 +14,13 @@ cocoForecastKSteps <- function(fit, k=3, number_simulations=1000, alpha=0.05, co
   make_class <- function(i){
     densities <- forecasts[[i]][,"frequency"]
     x <- as.numeric(forecasts[[i]][,"value"])
+    
+    if (min(x) > 0){
+      x_fill <- 0:(min(x)-1)
+      dens <- rep(0, (min(x)))
+      x <- c(x_fill, x)
+      densities <- c(dens, densities)
+    }
     
     mode <- match(max(densities), densities) - 1
     distribution_function <- cumsum(densities)

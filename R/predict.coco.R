@@ -34,6 +34,10 @@ predict.coco <- function(object, k=1, number_simulations=1000,
                          decimals = 4,
                          julia=FALSE,...) {
   
+  if ((k == 1) & (!is.matrix(xcast))){
+    xcast <- matrix(xcast, nrow=1)
+  }
+  
   if ((k==1) & (!simulate_one_step_ahead)){
     return(cocoForecastOneStep(object, max=max, epsilon=epsilon, xcast=xcast,
                                alpha=alpha,

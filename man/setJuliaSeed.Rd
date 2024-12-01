@@ -17,5 +17,5 @@ This function initializes the necessary Julia functions and sets the random seed
 If the provided seed is NULL, the function does nothing.
 }
 \author{
-Your Name (or the appropriate author's name)
+Manuel Huth
 }

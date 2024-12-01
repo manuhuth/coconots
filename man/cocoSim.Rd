@@ -60,7 +60,7 @@ init argument of a new \code{\link{cocoSim}} run so that the first time series i
 the burn-in period. 
 If init is not specified for the covariate case, a warning will be returned
 to prompt the user to specify a custom burn-in period. This helps ensure that
-the simulation accurately captures the dynamics of the system being modeled.
+the simulation accurately captures the dynamics of the system being modelled.
 }
 \examples{
 lambda <- 1

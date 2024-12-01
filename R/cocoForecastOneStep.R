@@ -19,7 +19,11 @@ cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-12, xcast=NULL,
   
   if (!is.null(coco$julia_reg) & julia){
     addJuliaFunctions()
-    coco_forecast <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPredictOneStep", coco$julia_reg, 0:max_use, xcast))
+    if ((k == 1) & (is.matrix(xcast))) {
+      xcast <- c(xcast)
+    }
+    coco_forecast <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPredictOneStep",
+                                                                         coco$julia_reg, 0:max_use, xcast))
     densities <- coco_forecast$values[[4]]
     if (is.null(max)){
       cumulative <- cumsum(densities)
