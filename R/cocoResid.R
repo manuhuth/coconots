@@ -116,7 +116,7 @@ cocoResid <- function(coco, val.num = 1e-10) {
         
       fitted_value <- meanR + lambda / (1 - eta)
       varX_value <- varR + lambda / (1 - eta)^3
-        
+
       return(list(fitted = fitted_value, varX = varX_value))
     })
       

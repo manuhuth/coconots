@@ -113,7 +113,8 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     data <- c()
     for (t in 1:seasonality[1]) {
       lambda_start1 <- as.numeric(as.vector(xreg[t, ])) %*% vec_lambda
-      data[t] <- rgenpois(n = 1, applyLinkFunction(lambda_start1, link_function), eta)
+      data[t] <- rgenpois(n = 1, applyLinkFunction(lambda_start1, link_function),
+                          eta)
     }
 
     if (!is.null(init) ) {
@@ -132,7 +133,8 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
     }
     uniform <- stats::runif(n = T, 0, 1)
 
-    data <- simGP1cov(20, alpha, eta, vec_lambda, T, N, seasonality[1], data, xreg, uniform, innovations, link_function)
+    data <- simGP1cov(20, alpha, eta, vec_lambda, T, N, seasonality[1], data,
+                      xreg, uniform, innovations, link_function)
 
 
     end_time <- Sys.time()

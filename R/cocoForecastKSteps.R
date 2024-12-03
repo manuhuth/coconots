@@ -12,15 +12,21 @@ cocoForecastKSteps <- function(fit, k=3, number_simulations=1000, alpha=0.05, co
   }
   
   make_class <- function(i){
-    densities <- forecasts[[i]][,"frequency"]
-    x <- as.numeric(forecasts[[i]][,"value"])
+    df_temp <- forecasts[[i]]
+    df_temp$value <- as.numeric(df_temp$value)
     
-    if (min(x) > 0){
-      x_fill <- 0:(min(x)-1)
-      dens <- rep(0, (min(x)))
-      x <- c(x_fill, x)
-      densities <- c(dens, densities)
-    }
+    # Generate the full sequence of values
+    all_values <- data.frame(value = 0:max(df_temp$value))
+    
+    # Merge with the original data, filling missing frequencies with 0
+    df_complete <- merge(all_values, df_temp, by = "value", all.x = TRUE)
+    df_complete$frequency[is.na(df_complete$frequency)] <- 0
+    
+    
+    
+    densities <- df_complete[,"frequency"]
+    x <- df_complete[,"value"]
+    
     
     mode <- match(max(densities), densities) - 1
     distribution_function <- cumsum(densities)

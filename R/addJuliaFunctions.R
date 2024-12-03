@@ -489,7 +489,13 @@ addJuliaFunctions <- function(){
                             x=zeros(Int(n + length(x_prev) + add_help)))
           n_burn_in = length(x_prev)
           
-          x[(end-length(x_prev)-Int(add_help)):(end-1-Int(add_help))] .= x_prev
+          #x[(end-length(x_prev)-Int(add_help)):(end-1-Int(add_help))] .= x_prev
+          if order == 2
+              x[end-1] = x_prev[end]
+              x[end-2] = x_prev[end-1]
+          else
+              x[end-1] = x_prev[end]
+          end
       
           link_function = get_link_function(link)
           if order == 2

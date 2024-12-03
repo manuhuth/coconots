@@ -34,7 +34,7 @@ predict.coco <- function(object, k=1, number_simulations=1000,
                          decimals = 4,
                          julia=FALSE,...) {
   
-  if ((k == 1) & (!is.matrix(xcast))){
+  if ((k == 1) & (!is.matrix(xcast)) & (!is.null(xcast))){
     xcast <- matrix(xcast, nrow=1)
   }
   
