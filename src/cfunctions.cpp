@@ -479,7 +479,7 @@ std::vector<int> simGP1cov(double sumlimit, double alpha, double eta,
     int y = data[t-seas-1];
 
     NumericVector covar = xreg(t-1-N,_);
-    double mathelp = innerProduct(covar,lambdas);
+    double mathelp = innerProduct(covar, lambdas);
     // Apply the link function
     lambda = applyLinkFunction(mathelp, link_function);
     double psi = eta*(1-alpha)/lambda;
@@ -494,7 +494,7 @@ std::vector<int> simGP1cov(double sumlimit, double alpha, double eta,
       r = r+1;
 
     } //end r
-    data[t-1] = r-1 + innovations[t-1];
+    data[t-1] = r-1 + innovations[t-N-1];
 
   } // end tasdsa
 

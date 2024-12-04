@@ -19,7 +19,7 @@ cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-12, xcast=NULL,
   
   if (!is.null(coco$julia_reg) & julia){
     addJuliaFunctions()
-    if ((k == 1) & (is.matrix(xcast))) {
+    if ((is.matrix(xcast))) {
       xcast <- c(xcast)
     }
     coco_forecast <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPredictOneStep",
