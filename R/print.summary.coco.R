@@ -37,15 +37,15 @@ print.summary.coco <- function(x, ...) {
         "\n\nLog-likelihood:", round(coco$likelihood,4),
         "\nLogarithmic score:", round(sc$log.score,4),
         "\nQuadratic score:", round(sc$quad.score,4),
-        "\nRanked probability score", round(sc$rps.score,4)
-        #"\nAIC:", round(sc$aic,4),
-        #"\nBIC:", round(sc$bic,4)
+        "\nRanked probability score", round(sc$rps.score,4),
+        "\nAIC:", round(sc$aic,4),
+        "\nBIC:", round(sc$bic,4)
     )
   } else{
     cat("\nType:", coco$type,    "\nOrder:", coco$order,
-        "\n\nLog-likelihood:", round(coco$likelihood,4)
-        #"\nAIC:", round(2*length(coco$par) - 2 * coco$likelihood,4),
-        #"\nBIC:", round(length(coco$par) * log(length(coco$ts)) - 2 * coco$likelihood,4)
+        "\n\nLog-likelihood:", round(coco$likelihood,4),
+        "\nAIC:", round(2*length(coco$par) - 2 * coco$likelihood,4),
+        "\nBIC:", round(length(coco$par) * log(length(coco$ts)) - 2 * coco$likelihood,4)
     )
   }
 }

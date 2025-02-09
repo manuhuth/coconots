@@ -7,8 +7,8 @@
 installJuliaPackages()
 }
 \value{
-no return value, called to install Julia packages in Julia.
+no return value, called to install \proglang{julia} packages in \proglang{julia}.
 }
 \description{
-checks for needed Julia packages and installs them if not installed.
+checks for needed \proglang{julia} packages and installs them if not installed.
 }

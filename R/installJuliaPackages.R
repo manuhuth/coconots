@@ -1,6 +1,6 @@
 #' @title installJuliaPackages
-#' @description checks for needed Julia packages and installs them if not installed.
-#' @return no return value, called to install Julia packages in Julia.
+#' @description checks for needed \proglang{julia} packages and installs them if not installed.
+#' @return no return value, called to install \proglang{julia} packages in \proglang{julia}.
 #' @export
 installJuliaPackages <- function(){
   

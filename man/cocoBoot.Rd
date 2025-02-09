@@ -16,25 +16,25 @@ cocoBoot(
 \arguments{
 \item{coco}{An object of class coco}
 
-\item{numb.lags}{Number of lags for which to compute autocorrelations}
+\item{numb.lags}{Number of lags for which to compute sample autocorrelations (default: 21).}
 
-\item{rep.Bootstrap}{Number of bootstrap replicates to use}
+\item{rep.Bootstrap}{Number of bootstrap replicates to use (default: 1000)}
 
-\item{conf.alpha}{Confidence level for the quantile intervals}
+\item{conf.alpha}{\eqn{100(1-\code{conf.alpha})\%} probability interval for the acceptance envelopes (default: 0.05)}
 
-\item{julia}{if TRUE, the bootstrap is run with Julia.}
+\item{julia}{if TRUE, the bootstrap is run with \proglang{julia} (default: FALSE)}
 
-\item{julia_seed}{Seed for the julia implementation. Only used if julia equals TRUE.}
+\item{julia_seed}{Seed for the \proglang{julia} implementation. Only used if \proglang{julia} equals TRUE}
 }
 \value{
-an object of class cocoBoot. It contains the bootstraped confidence intervals
+an object of class cocoBoot. It contains the bootstrapped confidence intervals
 of the autocorrelations and information on the model specifications.
 }
 \description{
-Model checking procedure emphasizing reproducibility in fitted models to provide an overall evaluation of fit as proposed by Tsay (1992).
+Model checking procedure emphasising reproducibility in fitted models, as proposed by Tsay (1992).
 }
 \details{
-Computes bootstrap confidence intervals for the autocorrelations of a fitted model.
+Bootstrap-generated acceptance envelopes for the autocorrelation function provides an overall evaluation by comparing it with the sample autocorrelation function in a joint plot.
 }
 \examples{
 lambda <- 1
@@ -43,8 +43,9 @@ set.seed(12345)
 data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
 fit <- cocoReg(order = 1, type = "Poisson", data = data)
 
-#assessment using bootstrap - R implementation
+# bootstrap model assessment - R implementation
 boot_r <- cocoBoot(fit, rep.Bootstrap=400)
+plot(boot_r)
 }
 \references{
 Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.

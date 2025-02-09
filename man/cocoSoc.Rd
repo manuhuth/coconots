@@ -2,24 +2,33 @@
 % Please edit documentation in R/cocoSoc.R
 \name{cocoSoc}
 \alias{cocoSoc}
-\title{Compute Scores for Various Models}
+\title{Computes Scores for Various Models Maintaining a Common Sample}
 \usage{
-cocoSoc(data, models = "all", print.progress = TRUE, max_x_score = 50, ...)
+cocoSoc(
+  data,
+  models = "all",
+  print.progress = TRUE,
+  max_x_score = 50,
+  julia = FALSE,
+  ...
+)
 }
 \arguments{
-\item{data}{A numeric vector containing the data to be used for modeling.}
+\item{data}{A numeric vector containing the data to be used for modeling}
 
 \item{models}{A character string specifying which models to use. Default is `"all"`, which uses both Poisson and GP models.}
 
-\item{print.progress}{A logical value indicating whether to print progress messages. Default is `TRUE`.}
+\item{print.progress}{A logical value indicating whether to print progress messages (Default: `TRUE`).}
 
 \item{max_x_score}{An integer which is used as the maximum count for the computation
-of the score. The default value is `50`}
+of the score (defaul: `50`)}
+
+\item{julia}{if TRUE, \code{cocoSoc} is run with \proglang{julia} (default: FALSE)}
 
 \item{...}{Additional arguments to be passed to the `cocoReg` function.}
 }
 \value{
-A list of class `"cocoVarsoc"` containing:
+A list of class `"cocoSoc"` containing:
 \describe{
   \item{fits}{A list of fitted model objects.}
   \item{scores_list}{A list of score objects for each model.}
@@ -27,5 +36,21 @@ A list of class `"cocoVarsoc"` containing:
 }
 }
 \description{
-This function computes and returns scores for Poisson and Generalized Poisson models.
+This function computes log, quadrtic and ranked probability scores for Poisson and Generalized Poisson models.
+}
+\details{
+Supports model selection by computing score over a range of models while maintaining a common sample and 
+a common specification.
+}
+\examples{
+length <- 500
+pars <- c(1.3, 0.25, 0.03, 0.2, 0.3)
+set.seed(12345)
+data <- cocoSim(order = 2, type = "GP", par = pars, length = length)
+soc <- cocoSoc(data, julia=T)
+summary(soc)
+
+}
+\author{
+Manuel Huth
 }

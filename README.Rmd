@@ -31,27 +31,25 @@ knitr::opts_chunk$set(
 
 ![alt text](https://github.com/manuhuth/coconots/blob/main/man/figures/functionality.png?raw=true)
 
+
 ## Details
-The package allows simulation of convolution-closed count time series models with the cocoSim
-function. Model fitting is performed with the cocoReg routine. By passing a cocoReg-type object,
-cocoForecast computes the one-step ahead forecasting distribution. cocoBoot, cocoPit,
-cocoScore, and cocoResid provide routines for model assessment.
-The main usage of the package is illustrated within the cocoReg function chapter. For more details
+The package allows simulation of convolution-closed count time series models with the \code{\link{cocoSim}}
+function. Model fitting is performed with the \code{\link{cocoReg}} routine. By passing a cocoReg-type object, the S3 method \code{predict} computes  k-step ahead forecasting distributions.  \code{\link{cocoBoot}}, \code{\link{cocoPit}}, \code{\link{cocoScore}}, \code{\link{cocoSoc}} and \code{\link{cocoResid}} provide routines for model assessment. The main usage of the package is illustrated within the \code{\link{cocoReg}} function section. For more details
 and examples of the functions see the respective sections within this vignette. 
 
 By default, our functions make use of an RCPP implementation. However, users
 with a running Julia installation can choose to call Julia in the background
 to run their functions by specifying it in the R function input. This option
-is particularly useful for the regression (\code{cocoReg}), where a complex likelihood function
+is particularly useful for the regression (\code{\link{cocoReg}}), where a complex likelihood function
 must be numerically evaluated to obtain parameter estimates. By leveraging
 Julia's automatic differentiation capabilities,
 our functions can take advantage of numerical gradients,
 leading to increased numerical stability and faster convergence.
 
-Despite these advantages, we found that both the Julia and RCPP
+Despite these advantages, we found that both the \proglang{julia} and RCPP
 implementations produced qualitatively similar results in all our tests.
 As a result, we have decided to use the RCPP implementation as
-the default option to make our package accessible to non-Julia users.
+the default option to make our package accessible to non-julia users.
 
 ## Model
 
@@ -72,7 +70,7 @@ devtools::install_github("manuhuth/coconots")
 
 ## Example using RCPP implementation
 
-Coconots runs on an RCPP and a Julia implementation. RCPP is the default. The regression results can be summarized using the summary function.
+Coconots runs on an RCPP and a \proglang{julia} implementation. RCPP is the default. The regression results can be summarized using the \code{summary} function.
 
 ```{r example, echo=TRUE}
 library(coconots)
@@ -86,15 +84,15 @@ coco <- cocoReg(order = 1, type = "GP", data = data)
 summary(coco)
 ```
 
-## Example using Julia implementation
+## Example using \proglang{julia} implementation
 
-In order to use the Julia functions, you need a running version of Julia installed. You need to install the relevant Julia packages once.    
+In order to use the \proglang{julia} functions, you need a running version of \proglang{julia} installed. You need to install the relevant \proglang{julia} packages only once.    
 
 ```{r example_julia_installation, echo=TRUE}
 coconots::installJuliaPackages()
 ```
 
-If installed, the Julia implementation can be addressed by setting the julia argument to true. In this case we need to set the seed within the simulation function in order to pass it to Julia.
+If installed, the \proglang{julia} implementation can be addressed by setting the \proglang{julia} argument to true. In this case we need to set the seed within the simulation function in order to pass it to \proglang{julia}.
 
 ```{r example_julia_, echo=TRUE}
 library(coconots)
@@ -107,7 +105,7 @@ coco <- cocoReg(order = 2, type = "Poisson", data = data, julia = TRUE)
 ```
 
 ## Model assessment
-We provide different tools for model assessment. One can even use the RCPP implementation for the regression and do model assessment with the Julia implementation. If this is desired, one needs to specify in the output of the regression that it should be Julia compatible. Note that this is not necessary if the Julia option in the regression is true.
+We provide different tools for model assessment. One can even use the RCPP implementation for the regression and do model assessment using the \proglang{julia} implementation. If this is desired, one needs to specify in the output of the regression that it should be \proglang{julia} compatible. Note that this is not necessary if the \proglang{julia} option in the regression is true.
 ```{r example_assessment, echo=TRUE}
 library(coconots)
 length <- 500

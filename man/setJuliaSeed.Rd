@@ -2,18 +2,18 @@
 % Please edit documentation in R/setJuliaSeed.R
 \name{setJuliaSeed}
 \alias{setJuliaSeed}
-\title{Set Seed for Julia's Random Number Generator}
+\title{Set Seed for \proglang{julia}'s Random Number Generator}
 \usage{
 setJuliaSeed(julia_seed)
 }
 \arguments{
-\item{julia_seed}{An integer seed value to be passed to Julia's random number generator.}
+\item{julia_seed}{An integer seed value to be passed to \proglang{julia}'s random number generator.}
 }
 \description{
-Sets the seed for Julia's random number generator to ensure reproducibility.
+Sets the seed for \proglang{julia}'s random number generator to ensure reproducibility.
 }
 \details{
-This function initializes the necessary Julia functions and sets the random seed for Julia. 
+This function initializes the necessary \proglang{julia} functions and sets the random seed for \proglang{julia}. 
 If the provided seed is NULL, the function does nothing.
 }
 \author{

@@ -9,7 +9,7 @@ cocoResid(coco, val.num = 1e-10)
 \arguments{
 \item{coco}{An object of class "coco}
 
-\item{val.num}{A non-negative real number which is used to stop the calculation if the cumulative probability reaches 1-`val.num`}
+\item{val.num}{A non-negative real number that halts the calculation once the cumulative probability reaches 1-\code{val.num}}
 }
 \value{
 a list that includes the (Pearson) residuals, conditional expectations, conditional variances,

@@ -26,19 +26,19 @@ in the vector depends on the type and order specified.}
 
 \item{length}{integer, the number of observations in the generated time series}
 
-\item{xreg}{data.frame, data frame of control variables}
+\item{xreg}{data frame of control variables (defaul: NULL)}
 
-\item{init}{numeric vector, initial data to use, default is NULL. See details
+\item{init}{numeric vector, initial data to use (default: NULL). See details
 for more information on the usage.}
 
-\item{julia}{If TRUE, the Julia implementation is used. In this case, init is ignored but it might be faster.}
+\item{julia}{If TRUE, the \proglang{julia} implementation is used. In this case, init is ignored but it might be faster (default: FALSE).}
 
-\item{julia_seed}{Seed for the Julia implementation. Only used if Julia equals TRUE.}
+\item{julia_seed}{Seed for the \proglang{julia} implementation. Only used if \proglang{julia} equals TRUE.}
 
 \item{link_function}{Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity` and `relu`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values.}
 }
 \value{
-a vector of the simulated time series.
+a vector of the simulated time series
 }
 \description{
 The function generates a time series of low counts from the (G)PAR model class for a specified
@@ -60,7 +60,7 @@ init argument of a new \code{\link{cocoSim}} run so that the first time series i
 the burn-in period. 
 If init is not specified for the covariate case, a warning will be returned
 to prompt the user to specify a custom burn-in period. This helps ensure that
-the simulation accurately captures the dynamics of the system being modelled.
+the simulation accurately captures the dynamics of the system being modeled.
 }
 \examples{
 lambda <- 1
@@ -70,7 +70,7 @@ set.seed(12345)
 # Simulate using the RCPP implementation
 data_rcpp <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
 # Simulate using the Julia implementation
-data_julia <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
+data_julia <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100, julia = TRUE)
 }
 \author{
 Manuel Huth

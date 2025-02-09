@@ -11,13 +11,13 @@ cocoPit(coco, J = 10, conf.alpha = 0.05, julia = FALSE)
 
 \item{J}{Number of bins for the histogram (default: 10)}
 
-\item{conf.alpha}{Confidence level for the confidence bands.}
+\item{conf.alpha}{Significance level for the confidence intervals (default: 0.05)}
 
-\item{julia}{if TRUE, the PIT is computed with Julia.}
+\item{julia}{if TRUE, the PIT is computed with \proglang{julia} (default: FALSE)}
 }
 \value{
 an object of class cocoPit. It contains the probability integral
-transform values, its p-values and information on the model specifications.
+transform values,  p-value of the chi-square goodness of fit test and information on the model specifications.
 }
 \description{
 Computes the probability integral transform (PIT) and provides
@@ -39,18 +39,17 @@ lambda <- 1
 alpha <- 0.4
 set.seed(12345)
 data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
-#julia_installed = TRUE ensures that the fit object
-#is compatible with the julia cocoPit implementation 
-fit <- cocoReg(order = 1, type = "Poisson", data = data)
+fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
 
 #PIT R implementation
 pit_r <- cocoPit(fit)
+plot(pit_r)
 }
 \references{
 Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.
 
-Jung, Robert C., Brendan P. M. McCabe, and Andrew R. Tremayne. (2016). Model validation and diagnostics. \emph{In Handbook of Discrete
-Valued Time Series}. Edited by Richard A. Davis, Scott H. Holan, Robert Lund and Nalini Ravishanker. Boca Raton: Chapman and
+Jung, R. C., McCabe, B.P.M. and Tremayne, A.R. (2016). Model validation and diagnostics. \emph{In Handbook of Discrete
+Valued Time Series}. Edited by Davis, R.A., Holan, S.H., Lund, R. and Ravishanker, N.. Boca Raton: Chapman and
 Hall, pp. 189--218.
 
 Jung, R. C. and Tremayne, A. R. (2011) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
