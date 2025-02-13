@@ -61,7 +61,7 @@
 #' significantly, especially for large models. 
 #' 
 #' The model assessment tools \code{\link{cocoBoot}}, \code{\link{cocoPit}}, and \code{\link{cocoScore}}
-#' will use a \proglang{ulia} implementation as well, if the \code{\link{cocoReg}} was run with \progland{julia}.
+#' will use a \proglang{julia} implementation as well, if the \code{\link{cocoReg}} was run with \proglang{julia}.
 #' Additionally, one can make the RCPP output of \code{\link{cocoReg}} compatible with the \proglang{julia}
 #' model assessments by setting \code{julia_installed} to true. In this case, the user can choose
 #' between the \pkg{RCPP} and the \proglang{julia} implementation for model assessment.

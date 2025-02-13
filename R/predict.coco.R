@@ -34,7 +34,7 @@
 #' data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length)
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed=TRUE)
 #' forecast <- predict(fit, k=1, julia = TRUE, simulate_one_step_ahead = F)
-#' plot(forecast[1]]) #plot one-step ahead forecast distribution
+#' plot(forecast[[1]]) #plot one-step ahead forecast distribution
 #' 
 #' @references 
 #' Jung, R.C. and Tremayne, A. R. (2011) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
