@@ -1,4 +1,3 @@
-#' @export
 dGP1 <- function(x, y, par) {
   if ((round(y) != y) | (y < 0)) {
     stop("y must be a non-negative integer")

@@ -1,4 +1,3 @@
-#' @export
 cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), init = NULL, link_function="log") {
   
   if (length(seasonality == 1)) {

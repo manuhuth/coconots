@@ -161,7 +161,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       
       if (julia_installed) {
         addJuliaFunctions()
-        julia_reg <- JuliaConnectoR::juliaCall("create_julia_dict", 
+        julia_reg <- JuliaConnectoR::juliaCall("Coconots.create_julia_dict", 
                                                list("parameter", "covariance_matrix", "log_likelihood",
                                                     "type", "order", "data", "covariates",
                                                     "link", "starting_values", "optimizer", 
@@ -313,7 +313,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       
       if (julia_installed) {
         addJuliaFunctions()
-        julia_reg <- JuliaConnectoR::juliaCall("create_julia_dict", 
+        julia_reg <- JuliaConnectoR::juliaCall("Coconots.create_julia_dict", 
                                                list("parameter", "covariance_matrix", "log_likelihood",
                                                     "type", "order", "data", "covariates",
                                                     "link", "starting_values", "optimizer", 
@@ -503,7 +503,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       
       if (julia_installed) {
         addJuliaFunctions()
-        julia_reg <- JuliaConnectoR::juliaCall("create_julia_dict", 
+        julia_reg <- JuliaConnectoR::juliaCall("Coconots.create_julia_dict", 
                                                list("parameter", "covariance_matrix", "log_likelihood",
                                                     "type", "order", "data", "covariates",
                                                     "link", "starting_values", "optimizer", 
@@ -714,7 +714,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       pars_julia <- c(pars[2:length(pars)], pars[1])
       if (julia_installed) {
         addJuliaFunctions()
-        julia_reg <- JuliaConnectoR::juliaCall("create_julia_dict", 
+        julia_reg <- JuliaConnectoR::juliaCall("Coconots.create_julia_dict", 
                                                list("parameter", "covariance_matrix", "log_likelihood",
                                                     "type", "order", "data", "covariates",
                                                     "link", "starting_values", "optimizer", 
