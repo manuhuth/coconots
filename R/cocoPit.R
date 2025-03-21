@@ -31,7 +31,7 @@
 #' alpha <- 0.4
 #' set.seed(12345)
 #' data <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
-#' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed = TRUE)
+#' fit <- cocoReg(order = 1, type = "Poisson", data = data)
 #'
 #' #PIT R implementation
 #' pit_r <- cocoPit(fit)
