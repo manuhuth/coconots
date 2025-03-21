@@ -32,7 +32,7 @@
 #' pars <- c(1, 0.4)
 #' set.seed(12345)
 #' data <- cocoSim(order = 1, type = "Poisson", par = pars, length = length)
-#' fit <- cocoReg(order = 1, type = "Poisson", data = data, julia_installed=TRUE)
+#' fit <- cocoReg(order = 1, type = "Poisson", data = data)
 #' forecast <- predict(fit, k=1, simulate_one_step_ahead = FALSE)
 #' plot(forecast[[1]]) #plot one-step ahead forecast distribution
 #' 
