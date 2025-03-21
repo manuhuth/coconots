@@ -1,3 +1,5 @@
+# Derived from https://github.com/r-lib/actions/tree/v2/examples
+# Help debugging: https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
     branches: [main, master]
@@ -21,15 +23,12 @@ jobs:
         include:
           - os: windows-latest
             r: 'devel'
-            julia: '1.9'
             http-user-agent: 'release'
           - os: ubuntu-latest
             r: 'devel'
-            julia: '1.9'
             http-user-agent: 'release'
           - os: macos-latest
             r: 'devel'
-            julia: '1.9'
             http-user-agent: 'release'
 
     env:
@@ -57,7 +56,8 @@ jobs:
           version: ${{ matrix.julia }}
         env:
           JULIA_PKG_USE_CLI_GIT: true
-        shell: pwsh
+
+
 
       - name: Cache R & Julia packages
         uses: actions/cache@v4
