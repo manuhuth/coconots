@@ -3,7 +3,7 @@
 ggplot2::autoplot
 #' @export
 autoplot.cocoResid <- function(object, ...){
-  forecast::ggAcf(object$pe.resid) + theme_bw() + ggtitle("Pearson Residuals")
+  forecast::ggAcf(object$pe.resid) + theme_bw() + ggtitle("Pearson Residuals") + ggplot2::theme(text = ggplot2::element_text(size = 20)) 
 }
 
 #' @export

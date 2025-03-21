@@ -10,7 +10,8 @@ autoplot.cocoBoot <- function(object, ...){
       ggplot2::geom_ribbon(data=object$df_plot,ggplot2::aes_string(ymin="lower",ymax="upper"),
                            fill="steelblue", alpha=0.3) +
     ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::ylab("Autocorrelation") +
-    ggplot2::ggtitle("Bootstrap")
+    ggplot2::ggtitle("Parametric Bootstrap") +
+    ggplot2::theme(text = ggplot2::element_text(size = 20))
   pl
   
 }
