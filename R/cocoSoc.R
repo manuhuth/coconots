@@ -21,12 +21,6 @@
 #'   \item{scores_df}{A data frame containing the logarithmic, quadratic, and ranked probability scores for each model.}
 #' }
 #'
-#'@examples
-#' pars <- c(1.3, 0.25, 0.03, 0.2, 0.3)
-#' set.seed(12345)
-#' data <- cocoSim(order = 2, type = "GP", par = pars, length = 500)
-#' soc <- cocoSoc(data, julia=T)
-#' summary(soc)
 #'
 #' @export
 cocoSoc <- function(data, models = "all", print.progress=TRUE,
