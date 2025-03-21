@@ -21,6 +21,7 @@
 #' @param julia if TRUE, the model is estimated with \proglang{julia}. This can improve computational speed significantly since \proglang{julia} makes use of derivatives using autodiff. In this case, only \code{type}, \code{order}, \code{data}, \code{xreg}, and \code{start} are used as other inputs (default: FALSE).
 #' @param julia_installed if TRUE, the model \proglang{R} output will contain a \proglang{julia} compatible output element.
 #' @param link_function Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity` and `relu`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values by setting `b.beta` to a small positive value.
+#' @importFrom JuliaConnectoR juliaGet
 #' @author Manuel Huth
 #' @return an object of class coco. It contains the parameter estimates, standard errors, the log-likelihood, 
 #' and information on the model specifications. If \proglang{julia} is used for parameter estimation or the \proglang{julia} installation

@@ -1,3 +1,4 @@
+#' @importFrom JuliaConnectoR juliaEval
 addJuliaFunctions <- function(){
   
   if (JuliaConnectoR::juliaEval("isdefined(Main, :cocoReg)")) {

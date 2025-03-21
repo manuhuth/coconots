@@ -3,6 +3,7 @@
 #' @param coco An object of class "coco
 #' @param val.num A non-negative real number that halts the calculation once the cumulative probability reaches 1-\code{val.num}
 #' @author Manuel Huth
+#' @importFrom stats var
 #' @return a list that includes the (Pearson) residuals, conditional expectations, conditional variances,
 #' and information on the model specifications.
 #'@details The Pearson residuals are computed as the scaled

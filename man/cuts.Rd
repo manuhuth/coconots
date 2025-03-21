@@ -22,8 +22,4 @@ of British Columbia, Canada in the period January 1985 to December 1994.
 Only injuries due to cuts and lacerations are considered. 
 The data have been provided by Brendan McCabe.
 }
-\examples{
-plot(cuts)
-
-}
 \keyword{datasets}

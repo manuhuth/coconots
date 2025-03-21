@@ -20,10 +20,4 @@ The data represent the number of daily downloads of a TeX-editor between
 June 2006 and February 2007. The dataset contains 267 observations. 
 The data have been provided by Christian Weiss.
 }
-\examples{
-plot(downloads)
-fit <- cocoReg(order = 1, type = "Poisson", data=downloads, julia = T)
-summary(fit)
-
-}
 \keyword{datasets}

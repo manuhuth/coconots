@@ -17,6 +17,9 @@
 #' the J bins of the histogram are drawn from a uniform distribution.
 #' For details, see Jung, McCabe and Tremayne (2016).
 #' 
+#' @importFrom stats pchisq
+#' @importFrom stats qchisq
+#' 
 #' @references 
 #' Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.
 #' 

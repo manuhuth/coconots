@@ -10,9 +10,5 @@
 #'
 #' @format A time series (`ts`) object containing daily data from June 2006 to February 2007.
 #' @keywords datasets
-#' @examples
-#' plot(downloads)
-#' fit <- cocoReg(order = 1, type = "Poisson", data=downloads, julia = T)
-#' summary(fit)
 #' 
 "downloads"

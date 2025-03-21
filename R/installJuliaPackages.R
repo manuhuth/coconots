@@ -1,5 +1,6 @@
 #' @title installJuliaPackages
 #' @description checks for needed \proglang{julia} packages and installs them if not installed.
+#' @importFrom JuliaConnectoR juliaEval
 #' @return no return value, called to install \proglang{julia} packages in \proglang{julia}.
 #' @export
 installJuliaPackages <- function(){

@@ -3,6 +3,7 @@
 #' @param julia_seed An integer seed value to be passed to \proglang{julia}'s random number generator.
 #' @details This function initializes the necessary \proglang{julia} functions and sets the random seed for \proglang{julia}. 
 #' If the provided seed is NULL, the function does nothing.
+#' @importFrom JuliaConnectoR juliaEval
 #' @author Manuel Huth
 #' @export
 setJuliaSeed <- function(julia_seed){

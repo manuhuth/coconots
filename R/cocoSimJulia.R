@@ -1,3 +1,4 @@
+#' @importFrom JuliaConnectoR juliaCall
 cocoSimJulia <- function(type, order, par, length, xreg, link_function){
   addJuliaFunctions()
   

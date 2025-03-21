@@ -12,7 +12,5 @@
 #'
 #' @format A time series (`ts`) object containing monthly data from January 1985 to December 1994.
 #' @keywords datasets
-#' @examples
-#' plot(cuts)
 #' 
 "cuts"

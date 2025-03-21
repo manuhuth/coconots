@@ -9,6 +9,8 @@
 #' @return an object of class cocoBoot. It contains the bootstrapped confidence intervals
 #' of the autocorrelations and information on the model specifications.
 #' @details Bootstrap-generated acceptance envelopes for the autocorrelation function provides an overall evaluation by comparing it with the sample autocorrelation function in a joint plot. 
+#' @importFrom forecast Acf
+#' @importFrom matrixStats rowQuantiles
 #' @references 
 #' Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
 #' @examples

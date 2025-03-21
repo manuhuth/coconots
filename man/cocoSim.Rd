@@ -69,8 +69,6 @@ set.seed(12345)
 
 # Simulate using the RCPP implementation
 data_rcpp <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
-# Simulate using the Julia implementation
-data_julia <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100, julia = TRUE)
 }
 \author{
 Manuel Huth

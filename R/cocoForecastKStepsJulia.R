@@ -1,3 +1,4 @@
+#' @importFrom JuliaConnectoR juliaCall
 cocoForecastKStepsJulia <- function(fit, k=3, number_simulations=500, covariates=NULL){
   dict_out <- JuliaConnectoR::juliaCall("cocoPredictKsteps", fit$julia_reg, k, number_simulations, covariates, fit$link_function)
   return_frequencies <- function(i){as.data.frame(dict_out[[paste0("prediction_", i)]])}

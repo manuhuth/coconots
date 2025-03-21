@@ -17,6 +17,8 @@
 #' (for a definition of the concept of propriety see Gneiting and Raftery, 2007),
 #' which Jung, McCabe and Tremayne (2016) found to be particularly useful, are implemented.
 #' For more information see the references listed below.
+#' 
+#' @importFrom JuliaConnectoR juliaGet
 #' @references 
 #' Czado, C. and Gneitling, T. and Held, L. (2009) Predictive Model Assessment for Count Data. \emph{Biometrics}, \bold{65},  1254--1261.
 #'

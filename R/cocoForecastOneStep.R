@@ -1,3 +1,5 @@
+#' @importFrom JuliaConnectoR juliaGet
+#' @importFrom utils head
 cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-12, xcast=NULL,
                                 alpha=0.05,
                          decimals = 4, julia=FALSE) {

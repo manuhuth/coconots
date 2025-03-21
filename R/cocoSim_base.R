@@ -1,3 +1,5 @@
+#' @importFrom stats rpois
+#' @importFrom stats runif
 cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = NULL) {
   
   if (length(seasonality == 1)) {

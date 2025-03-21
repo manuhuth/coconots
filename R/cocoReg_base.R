@@ -1,3 +1,7 @@
+#' @importFrom forecast Acf
+#' @importFrom stats glm lm constrOptim optim var na.omit
+#' @importFrom JuliaConnectoR juliaCall
+#' @importFrom numDeriv grad hessian
 cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, outer.it = 500, outer.eps = 1e-10,
                          method_optim=method_optim,
                          optim_control = FALSE, constrained.optim = TRUE, start = NULL,

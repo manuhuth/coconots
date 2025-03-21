@@ -1,3 +1,5 @@
+#' @importFrom stats runif
+#' @importFrom HMMpa dgenpois
 rgenpois <- function(n, lambda, eta){
   vec <- numeric(n)
 
