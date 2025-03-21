@@ -54,6 +54,10 @@ jobs:
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.julia }}
+        env:
+          JULIA_PKG_USE_CLI_GIT: true
+        shell: pwsh
+
 
       - name: Cache R & Julia packages
         uses: actions/cache@v4
