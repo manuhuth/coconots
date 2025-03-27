@@ -7,7 +7,7 @@ test_that("insatll_Julia_packages", {
 test_that("GP2Works", {
   skip_on_cran()
   length <- 300
-  par <- c(0.5,0.2,0.05,0.3,0.3)
+  par <- c(0.5,0.2,0.05,0.3,0.3) #lambda, alpha1, alpha2, alpha3, eta
   set.seed(123499)
   data <- cocoSim(order = 2, type = "GP", par = par, length = length)
   cocoSim(order = 2, type = "GP", par = par, length = length, julia = TRUE,
