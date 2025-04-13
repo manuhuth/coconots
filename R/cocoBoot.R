@@ -203,8 +203,87 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
   time <- end.time - start.time
   list_out <- list(
     "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "cov" = coco$cov, means = acfdata,
-    "confidence" = confidence_bands, "duration" = time, "df_plot" = df_plot
+    "confidence" = confidence_bands, "duration" = time, "df_plot" = df_plot, "rep.Bootstrap" = rep.Bootstrap
   )
   class(list_out) <- "cocoBoot"
   return(list_out)
 } # end function
+
+#' @export
+print.cocoBoot <- function(x, ...) {
+  cat("cocoBoot Object")
+  cat("\nModel Type: ", x$type, sep = "")
+  cat("\nModel Order: ", x$order, sep = "")
+  cat("\nBootstrap Draws: ", as.numeric(x$rep.Bootstrap), sep = "")
+  cat("\nBootstrapping Duration: ", as.numeric(x$duration, units = "secs"), " seconds\n", sep = "")
+  cat("\n")
+  
+  invisible(x)
+}
+
+#' @importFrom ggplot2 autoplot
+#' @export
+ggplot2::autoplot
+#' @export
+autoplot.cocoBoot <- function(object, ...){
+  
+  pl <- ggplot2::ggplot(object$df_plot, ggplot2::aes_string("x", "y")) +
+    ggplot2::geom_point()+
+    ggplot2::geom_line()+
+    ggplot2::geom_ribbon(data=object$df_plot,ggplot2::aes_string(ymin="lower",ymax="upper"),
+                         fill="steelblue", alpha=0.3) +
+    ggplot2::theme_bw() + ggplot2::xlab("Lags") + ggplot2::ylab("Autocorrelation") +
+    ggplot2::ggtitle("Parametric Bootstrap") +
+    ggplot2::theme(text = ggplot2::element_text(size = 20))
+  pl
+  
+}
+
+#' @export
+plot.cocoBoot <- function(x, ...) {
+  p <- autoplot(
+    x,
+    ...
+  )
+  print(p)
+}
+
+#' @export
+summary.cocoBoot <- function(object, ...) {
+  sum_obj <- list(
+    model_type    = object$type,
+    model_order   = object$order,
+    ts_length     = length(object$ts),
+    covariates    = if (is.null(object$cov)) {
+      "None"
+    } else {
+      if (is.data.frame(object$cov) || is.matrix(object$cov)) {
+        paste("Present (", ncol(as.matrix(object$cov)), " variable(s))", sep = "")
+      } else {
+        "Present (1 variable)"
+      }
+    },
+    out_of_region = sum(object$df_plot$y < object$df_plot$lower | object$df_plot$y > object$df_plot$upper),
+    total_rows    = nrow(object$df_plot),
+    bootstrap_draws = as.numeric(object$rep.Bootstrap),
+    boot_duration = as.numeric(object$duration, units = "secs")
+  )
+  
+  class(sum_obj) <- "summary.cocoBoot"
+  return(sum_obj)
+}
+
+#' @export
+print.summary.cocoBoot <- function(x, ...) {
+  cat("---- Bootstrap Assessment Summary ----\n")
+  cat("Model Type:         ", x$model_type, "\n")
+  cat("Model Order:        ", x$model_order, "\n")
+  cat("Time Series Length: ", x$ts_length, "\n")
+  cat("Covariates:         ", x$covariates, "\n")
+  cat("Bootstrap Draws:    ", x$bootstrap_draws, "\n")
+  cat("Bootstrapping Duration: ", x$boot_duration, " seconds\n", sep = "")
+  cat("ACF values outside bootstrapped confidence region: ", 
+      x$out_of_region, " out of ", x$total_rows, "\n")
+  cat("\n")
+  invisible(x)
+}

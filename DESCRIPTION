@@ -1,7 +1,7 @@
 Package: coconots
 Type: Package
 Title: Convolution-Closed Models for Count Time Series
-Version: 2.0.0
+Version: 2.0.1
 Date: 2025-03-21
 Authors@R: c(
     person(given = "Manuel",
@@ -20,15 +20,15 @@ LazyData: true
 LinkingTo: Rcpp
 RoxygenNote: 7.3.2
 Depends: 
-    R (>= 4.0.2),
-    Rcpp
+    R (>= 4.0.2)
 Imports:
     forecast,
     numDeriv,
     HMMpa,
     ggplot2,
     matrixStats,
-    JuliaConnectoR
+    JuliaConnectoR,
+    Rcpp
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

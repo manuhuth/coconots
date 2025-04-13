@@ -147,3 +147,110 @@ cocoResid <- function(coco, val.num = 1e-10) {
 
   return(list_out)
 } # end function
+
+
+#------------------S3 methods--------------------------------------------------
+#' @importFrom ggplot2 autoplot theme_bw ggtitle
+#' @export
+ggplot2::autoplot
+#' @export
+autoplot.cocoResid <- function(object, ...){
+  forecast::ggAcf(object$pe.resid) + theme_bw() + ggtitle("Pearson Residuals") + ggplot2::theme(text = ggplot2::element_text(size = 20)) 
+}
+
+#' @export
+plot.cocoResid <- function(x, ...) {
+  p <- autoplot(
+    x,
+    ...
+  )
+  print(p)
+}
+
+#'@export
+print.cocoResid <- function(x, ...) {
+  print(autoplot(x, ...,))
+  invisible(x)
+}
+
+#' @export
+print.cocoResid <- function(x, ...) {
+  cat("cocoResid Object\n")
+  cat("Model Type: ", x$type, "\n")
+  cat("Model Order: ", x$order, "\n")
+  cat("Number of Fitted Values: ", length(x$fitted), "\n")
+  
+  # Display covariate information
+  if (is.null(x$xreg)) {
+    cat("Covariates: None\n")
+  } else {
+    n_cov <- if (is.data.frame(x$xreg) || is.matrix(x$xreg)) ncol(as.matrix(x$xreg)) else 1
+    cat("Covariates: Present (", n_cov, " variable(s))\n", sep = "")
+  }
+  
+  cat("Calculation Duration: ", as.numeric(x$duration, units = "secs"), " seconds\n", sep = "")
+  cat("\n")
+  
+  invisible(x)
+}
+
+#' @export
+summary.cocoResid <- function(object, ...) {
+  # Build a summary list extracting key information from the cocoResid object
+  res <- list(
+    model_type = object$type,
+    model_order = object$order,
+    ts_length = length(object$ts),
+    n_fitted = length(object$fitted),
+    covariates = if (is.null(object$xreg)) {
+      "None"
+    } else if (is.data.frame(object$xreg) || is.matrix(object$xreg)) {
+      paste("Present (", ncol(as.matrix(object$xreg)), " variable(s))", sep = "")
+    } else {
+      "Present (1 variable)"
+    },
+    residuals_summary = summary(object$residuals),
+    pearson_residuals_summary = summary(object$pe.resid),
+    cond_var_summary = summary(object$cond.var),
+    duration = as.numeric(object$duration, units = "secs")
+  )
+  
+  # Assign a class to the summary object so that print.summary.cocoResid is dispatched.
+  class(res) <- "summary.cocoResid"
+  return(res)
+}
+
+#' @export
+print.summary.cocoResid <- function(x, ...) {
+  cat("---- Residual Analysis Summary ----\n")
+  cat("Model Type: ", x$model_type, "\n")
+  cat("Model Order: ", x$model_order, "\n")
+  cat("Time Series Length: ", x$ts_length, "\n")
+  cat("Number of Fitted Values: ", x$n_fitted, "\n")
+  cat("Covariates: ", x$covariates, "\n\n")
+  
+  cat("--- Residuals ---\n")
+  print(x$residuals_summary)
+  
+  cat("\n--- Pearson Residuals ---\n")
+  print(x$pearson_residuals_summary)
+  
+  cat("\n--- Conditional Variance ---\n")
+  print(x$cond_var_summary)
+  
+  cat("\nCalculation Duration: ", x$duration, " seconds\n", sep = "")
+  cat("\n")
+  invisible(x)
+}
+
+
+#' @export
+fitted.cocoResid <- function(object, ...) {
+  object$fitted
+}
+
+#' @export
+residuals.cocoResid <- function(object, ...) {
+  object$residuals
+}
+

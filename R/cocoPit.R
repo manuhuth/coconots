@@ -253,9 +253,97 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   list_out <- list(
     "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "alpha" = alpha,
     "par" = par, "PIT values" = d, "duration" = time, "p_value" = pval,
-    "confidence_bands" = confidence_band_values
+    "confidence_bands" = confidence_band_values, "J" = J
   )
   
   class(list_out) <- "cocoPit"
   return(list_out)
 }
+
+#' @importFrom ggplot2 autoplot
+#' @export
+ggplot2::autoplot
+#' @export
+autoplot.cocoPit <- function(object, ...){
+  
+  df <- data.frame(object$`PIT values`, 1:rep(length(object$`PIT values`)),
+                   rep(object$confidence_bands[1], length(object$`PIT values`)),
+                   rep(object$confidence_bands[2], length(object$`PIT values`)))
+  colnames(df) <- c("pit", "bins", "lower", "upper")
+  df_bands <- df
+  df_bands$bins[1] <- df$bins[1] - 0.25
+  df_bands$bins[length(df$bins)] <- df$bins[length(df$bins)] + 0.25
+  pl <- ggplot2::ggplot(data=df, mapping = ggplot2::aes_string(x = "bins", y = "pit")) +
+    ggplot2::geom_bar(stat="identity", position="dodge", width=0.3) + 
+    ggplot2::labs(title = "Pit histogram", x = "Bins", y = "") +
+    ggplot2::scale_x_continuous(breaks=df$bins) +
+    ggplot2::theme_bw() + ggplot2::theme(text = ggplot2::element_text(size = 20)) +
+    ggplot2::geom_ribbon(data=df_bands, ggplot2::aes_string(ymin="lower",ymax="upper"),
+                         fill="steelblue", alpha=0.3) +
+    ggplot2::ylim(c(0, min(1.05, max(df$pit)*1.5)))
+  pl
+}
+
+#' @export
+plot.cocoPit <- function(x, ...) {
+  p <- autoplot(
+    x,
+    ...
+  )
+  print(p)
+}
+
+#'@export
+print.cocoPit <- function(x, ...) {
+  print(autoplot(x, ...,))
+  invisible(x)
+}
+
+#' @export
+print.cocoPit <- function(x, ...) {
+  cat("cocoPit Object")
+  cat("\nModel Type: ", x$type, sep = "")
+  cat("\nModel Order: ", x$order, sep = "")
+  cat("\nPIT p-value: ", x$p_value, sep = "")
+  cat("\nNumber of bins: ", x$J-1, sep = "")
+  cat("\nBootstrapping Duration: ", as.numeric(x$duration, units = "secs"), " seconds", sep = "")
+  cat("\n")
+  
+  invisible(x)
+}
+
+#' @export
+summary.cocoPit <- function(object, ...) {
+  sum_obj <- list(
+    model_type          = object$type,
+    model_order         = object$order,
+    ts_length           = length(object$ts),
+    significance_level  = object$alpha,
+    pit_values_summary  = summary(object[["PIT values"]]),
+    confidence_bands    = object$confidence_bands,
+    n_bins              = object$J - 1,
+    pit_pvalue          = object$p_value
+  )
+  
+  class(sum_obj) <- "summary.cocoPit"
+  return(sum_obj)
+}
+
+#' @export
+print.summary.cocoPit <- function(x, ...) {
+  cat("---- PIT Assessment Summary ----\n")
+  cat("Model Type:          ", x$model_type, "\n")
+  cat("Model Order:         ", x$model_order, "\n")
+  cat("Time Series Length:  ", x$ts_length, "\n")
+  cat("Significance Level:  ", x$significance_level, "\n\n")
+  
+  cat("Confidence Bands:    [", x$confidence_bands[1], ", ", x$confidence_bands[2], "]\n", sep = "")
+  cat("Number of bins:      ", x$n_bins, "\n\n")
+  
+  cat("PIT Values Summary:\n")
+  print(x$pit_values_summary)
+  cat("\nPIT p-value:         ", x$pit_pvalue, "\n")
+  
+  invisible(x)
+}
+

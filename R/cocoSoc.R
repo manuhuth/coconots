@@ -76,3 +76,16 @@ cocoSoc <- function(data, models = "all", print.progress=TRUE,
   return(list_out)
 
   } # end function
+
+#' @export
+summary.cocoSoc <- function(object, ...) {
+  class(object) <- "summary.cocoSoc"
+  return(object)
+}
+
+#' @export
+print.summary.cocoSoc <- function(x, ...) {
+  
+  print(x$scores_df, print.gap=3, quote=FALSE, na.print="")
+  
+}
