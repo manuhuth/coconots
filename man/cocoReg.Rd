@@ -2,7 +2,7 @@
 % Please edit documentation in R/cocoReg.R
 \name{cocoReg}
 \alias{cocoReg}
-\title{cocoReg}
+\title{Fitting First- and Second Order (G)PAR Models}
 \usage{
 cocoReg(
   type,

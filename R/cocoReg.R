@@ -1,4 +1,4 @@
-#' @title cocoReg
+#' @title Fitting First- and Second Order (G)PAR Models 
 #' @description The function fits first- and second-order (Generalized) Poisson
 #' integer autoregressive [(G)PAR] time series models for count data as discussed in Jung and Tremayne (2011). Autoregressive dependence on past counts is modeled using a special random operator that preserves integer values and, through closure under convolution, ensures that the marginal distribution remains within the same family as the innovations.
 #'
