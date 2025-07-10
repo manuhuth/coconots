@@ -103,7 +103,7 @@ cocoReg <- function(type, order, data, xreg = NULL,
   
   if (julia){
     start_time <- Sys.time()
-    fit_julia <<- cocoRegJulia(type, order, data, xreg, start, link_function, b.beta)
+    fit_julia <- cocoRegJulia(type, order, data, xreg, start, link_function, b.beta)
     end_time <- Sys.time()
     
     juliaLet("global fit2 = x", x=fit_julia)
