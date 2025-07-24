@@ -11,6 +11,7 @@
 #' @details Bootstrap-generated acceptance envelopes for the autocorrelation function provides an overall evaluation by comparing it with the sample autocorrelation function in a joint plot. 
 #' @importFrom forecast Acf
 #' @importFrom matrixStats rowQuantiles
+#' @importFrom ggplot2 autoplot
 #' @references 
 #' Tsay, R. S. (1992) Model checking via parametric bootstraps in time series analysis. \emph{Applied Statistics} \bold{41}, 1--15.
 #' @examples
@@ -209,7 +210,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
   return(list_out)
 } # end function
 
-#' @export
+#' @exportS3Method
 print.cocoBoot <- function(x, ...) {
   cat("cocoBoot Object")
   cat("\nModel Type: ", x$type, sep = "")
@@ -224,7 +225,7 @@ print.cocoBoot <- function(x, ...) {
 #' @importFrom ggplot2 autoplot
 #' @export
 ggplot2::autoplot
-#' @export
+#' @exportS3Method
 autoplot.cocoBoot <- function(object, ...){
   
   pl <- ggplot2::ggplot(object$df_plot, ggplot2::aes_string("x", "y")) +
@@ -239,7 +240,7 @@ autoplot.cocoBoot <- function(object, ...){
   
 }
 
-#' @export
+#' @exportS3Method
 plot.cocoBoot <- function(x, ...) {
   p <- autoplot(
     x,
@@ -248,7 +249,7 @@ plot.cocoBoot <- function(x, ...) {
   print(p)
 }
 
-#' @export
+#' @exportS3Method
 summary.cocoBoot <- function(object, ...) {
   sum_obj <- list(
     model_type    = object$type,
@@ -273,7 +274,7 @@ summary.cocoBoot <- function(object, ...) {
   return(sum_obj)
 }
 
-#' @export
+#' @exportS3Method
 print.summary.cocoBoot <- function(x, ...) {
   cat("---- Bootstrap Assessment Summary ----\n")
   cat("Model Type:         ", x$model_type, "\n")

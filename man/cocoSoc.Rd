@@ -16,30 +16,30 @@ cocoSoc(
 \arguments{
 \item{data}{A numeric vector containing the data to be used for modeling}
 
-\item{models}{A character string specifying which models to use. Default is `"all"`, which uses both Poisson and GP models.}
+\item{models}{A character string specifying which models to use. Default is \code{"all"}, which uses both Poisson and GP models.}
 
-\item{print.progress}{A logical value indicating whether to print progress messages (Default: `TRUE`).}
+\item{print.progress}{A logical value indicating whether to print progress messages (Default: \code{TRUE}).}
 
 \item{max_x_score}{An integer which is used as the maximum count for the computation
-of the score (defaul: `50`)}
+of the score (defaul: \code{50})}
 
 \item{julia}{if TRUE, \code{cocoSoc} is run with \proglang{julia} (default: FALSE)}
 
-\item{...}{Additional arguments to be passed to the `cocoReg` function.}
+\item{...}{Additional arguments to be passed to the \code{cocoReg} function.}
 }
 \value{
-A list of class `"cocoSoc"` containing:
+A list of class \code{"cocoSoc"} containing:
 \describe{
-  \item{fits}{A list of fitted model objects.}
-  \item{scores_list}{A list of score objects for each model.}
-  \item{scores_df}{A data frame containing the logarithmic, quadratic, and ranked probability scores for each model.}
+\item{fits}{A list of fitted model objects.}
+\item{scores_list}{A list of score objects for each model.}
+\item{scores_df}{A data frame containing the logarithmic, quadratic, and ranked probability scores for each model.}
 }
 }
 \description{
 This function computes log, quadrtic and ranked probability scores for Poisson and Generalized Poisson models.
 }
 \details{
-Supports model selection by computing score over a range of models while maintaining a common sample and 
+Supports model selection by computing score over a range of models while maintaining a common sample and
 a common specification.
 }
 \author{

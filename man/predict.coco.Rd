@@ -33,7 +33,7 @@
 
 \item{epsilon}{If max is NULL, epsilon determines the range of the support that is used by subsequent automatic plotting using R's plot() function.}
 
-\item{xcast}{An optional matrix of covariate values for the forecasting. If `NULL`, the function assumes no covariates.}
+\item{xcast}{An optional matrix of covariate values for the forecasting. If \code{NULL}, the function assumes no covariates.}
 
 \item{decimals}{Number of decimal places for the forecast probabilities}
 
@@ -52,11 +52,10 @@ Returns forecasts for each mass point of the k-step ahead
 distribution for the fitted model. The exact predictive distributions for
 one-step ahead predictions for
 the models included here are provided in Jung and Tremayne (2011), maximum
-likelihood estimates replace the true model parameters. 
+likelihood estimates replace the true model parameters.
 For k>1 forecast distributions are estimated using a parametric bootstrap. See Jung and Tremanye (2006).
 Out-of-sample values
 for covariates can be provided, if necessary.
-
 
 for k > 1
 }
@@ -73,6 +72,6 @@ plot(forecast[[1]]) #plot one-step ahead forecast distribution
 \references{
 Jung, R.C. and Tremayne, A. R. (2011) Convolution-closed models for count time series with applications. \emph{Journal of Time Series Analysis}, \bold{32}, 3, 268--280.
 
-Jung, R.C. and Tremayne, A.R. (2006) Coherent forecasting in integer time series models. 
- \emph{International Journal of Forecasting} \bold{22}, 223--238
+Jung, R.C. and Tremayne, A.R. (2006) Coherent forecasting in integer time series models.
+\emph{International Journal of Forecasting} \bold{22}, 223--238
 }

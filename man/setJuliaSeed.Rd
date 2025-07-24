@@ -13,7 +13,7 @@ setJuliaSeed(julia_seed)
 Sets the seed for \proglang{julia}'s random number generator to ensure reproducibility.
 }
 \details{
-This function initializes the necessary \proglang{julia} functions and sets the random seed for \proglang{julia}. 
+This function initializes the necessary \proglang{julia} functions and sets the random seed for \proglang{julia}.
 If the provided seed is NULL, the function does nothing.
 }
 \author{

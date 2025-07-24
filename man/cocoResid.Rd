@@ -20,7 +20,7 @@ Calculates the (Pearson) residuals of a fitted model for model evaluation purpos
 }
 \details{
 The Pearson residuals are computed as the scaled
-deviation of the observed count from its conditional expectation given the relevant 
+deviation of the observed count from its conditional expectation given the relevant
 past history, including covariates, if applicable. If a fitted model is correctly specified,
 the Pearson residuals should exhibit mean zero, variance one, and no significant serial correlation.
 }

@@ -10,7 +10,7 @@ cocoScore(coco, max_x = 50, julia = FALSE)
 \item{coco}{An object of class coco}
 
 \item{max_x}{An integer which is used as the maximum count for the computation
-of the score (default: `50`)}
+of the score (default: \code{50})}
 
 \item{julia}{if TRUE, the scores are computed with \proglang{julia} (default: FALSE).}
 }
@@ -22,9 +22,9 @@ The function computes log, quadratic and ranked probability scores for assessing
 }
 \details{
 Scoring rules assign a numerical score based on the predictive
- distribution and the observed data  to measure the quality of probabilistic predictions.
+distribution and the observed data  to measure the quality of probabilistic predictions.
 They are provided here as a model selection tool and are computed as
- averages over the relevant set of (in-sample) predictions. Scoring rules are, generally, negatively oriented
+averages over the relevant set of (in-sample) predictions. Scoring rules are, generally, negatively oriented
 penalties that one seeks to minimize. The literature has developed a large number of scoring
 rules and, unless there is a unique and clearly defined underlying decision problem,
 there is no automatic choice of a (proper) scoring rule to be used in any given situation.

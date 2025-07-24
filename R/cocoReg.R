@@ -1,6 +1,6 @@
 #' @title Fitting First- and Second Order (G)PAR Models 
 #' @description The function fits first- and second-order (Generalized) Poisson
-#' integer autoregressive [(G)PAR] time series models for count data as discussed in Jung and Tremayne (2011). Autoregressive dependence on past counts is modeled using a special random operator that preserves integer values and, through closure under convolution, ensures that the marginal distribution remains within the same family as the innovations.
+#' integer autoregressive \code{(G)PAR} time series models for count data as discussed in Jung and Tremayne (2011). Autoregressive dependence on past counts is modeled using a special random operator that preserves integer values and, through closure under convolution, ensures that the marginal distribution remains within the same family as the innovations.
 #'
 #' These models can be viewed as stationary finite-order Markov chains, where the innovation distribution can be either Poisson or Generalized Poisson, the latter accounting for overdispersion. Estimation is performed via maximum likelihood, with an option to impose linear constraints. Without constraints, parameters may fall outside the theoretically feasible space, but optimization may be faster.
 #'
@@ -21,7 +21,9 @@
 #' @param julia if TRUE, the model is estimated with \proglang{julia}. This can improve computational speed significantly since \proglang{julia} makes use of derivatives using autodiff. In this case, only \code{type}, \code{order}, \code{data}, \code{xreg}, and \code{start} are used as other inputs (default: FALSE).
 #' @param julia_installed if TRUE, the model \proglang{R} output will contain a \proglang{julia} compatible output element.
 #' @param link_function Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity` and `relu`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values by setting `b.beta` to a small positive value.
-#' @importFrom JuliaConnectoR juliaGet
+#' @importFrom JuliaConnectoR juliaGet juliaLet
+#' @importFrom stats nobs rstandard vcov coef residuals fitted extractAIC logLik
+#' @importFrom ggplot2 autoplot
 #' @author Manuel Huth
 #' @return an object of class coco. It contains the parameter estimates, standard errors, the log-likelihood, 
 #' and information on the model specifications. If \proglang{julia} is used for parameter estimation or the \proglang{julia} installation
@@ -88,7 +90,6 @@
 #' data <- cocoSim(order = 1, type = "Poisson", par = par, xreg = cov, length = length)
 #' fit <- cocoReg(order = 1, type = "Poisson", data = data, xreg = cov)
 #' @export
-
 cocoReg <- function(type, order, data, xreg = NULL, 
                     constrained.optim = TRUE, b.beta = -10,
                     start = NULL, start.val.adjust = TRUE, method_optim = "Nelder-Mead",
@@ -106,7 +107,7 @@ cocoReg <- function(type, order, data, xreg = NULL,
     fit_julia <- cocoRegJulia(type, order, data, xreg, start, link_function, b.beta)
     end_time <- Sys.time()
     
-    juliaLet("global fit2 = x", x=fit_julia)
+    JuliaConnectoR::juliaLet("global fit2 = x", x=fit_julia)
     fit_no_optimization_in_dict <- juliaEval('
                delete!(fit2, "optimization")
                ')
@@ -153,7 +154,7 @@ cocoReg <- function(type, order, data, xreg = NULL,
   return(output)
 }
 
-#' @export
+#' @exportS3Method
 summary.coco <- function(object, ..., score = FALSE) {
   # Attach score flag to the object and set the class to "summary.coco"
   object$score <- score
@@ -161,7 +162,7 @@ summary.coco <- function(object, ..., score = FALSE) {
   return(object)
 }
 
-#' @export
+#' @exportS3Method
 print.summary.coco <- function(x, ...) {
   coco <- x
   
@@ -246,7 +247,7 @@ print.summary.coco <- function(x, ...) {
   cat(output_lines, "\n")
 }
 
-#' @export
+#' @exportS3Method
 print.coco <- function(x, ...) {
   # Title and basic model information
   cat("Fitted coco Model\n")
@@ -279,7 +280,7 @@ print.coco <- function(x, ...) {
   invisible(x)
 }
 
-#' @export
+#' @exportS3Method
 fitted.coco <- function(object, ...) {
   # Compute the residuals (fitted values, residuals, and other diagnostics)
   res <- cocoResid(object, ...)
@@ -287,13 +288,13 @@ fitted.coco <- function(object, ...) {
   res$fitted
 }
 
-#' @export
+#' @exportS3Method
 residuals.coco <- function(object, ...) {
   res <- cocoResid(object, ...)
   res$residuals
 }
 
-#' @export
+#' @exportS3Method
 coef.coco <- function(object, ...) {
   params <- object$par
   names(params) <- get_coco_param_names(object)
@@ -301,7 +302,7 @@ coef.coco <- function(object, ...) {
 }
 
 
-#' @export
+#' @exportS3Method
 vcov.coco <- function(object, ...) {
   if (!is.null(object[["inv hessian"]])) {
     V <- object[["inv hessian"]]
@@ -315,25 +316,25 @@ vcov.coco <- function(object, ...) {
   V
 }
 
-#' @export
-rstandard.coco <- function(object, ...) {
-  res <- cocoResid(object, ...)
+#' @exportS3Method
+rstandard.coco <- function(model, ...) {
+  res <- cocoResid(model, ...)
   res$pe.resid
 }
 
-#' @export
+#' @exportS3Method
 nobs.coco <- function(object, ...) {
   length(object$ts)
 }
 
-#' @export
+#' @exportS3Method
 extractAIC.coco <- function(fit, scale = 0, k = 2, ...) {
   df <- length(fit$par)
   aic_value <- -2 * fit$likelihood + k * df
   c(df, aic_value)
 }
 
-#' @export
+#' @exportS3Method
 logLik.coco <- function(object, ...) {
   object$likelihood
 }
@@ -371,7 +372,7 @@ get_coco_param_names <- function(object) {
   param_names
 }
 
-#' @export
+#' @exportS3Method
 autoplot.coco <- function(object, which = "fitted", ...) {
   # Ensure ggplot2 namespace is loaded
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -433,7 +434,7 @@ autoplot.coco <- function(object, which = "fitted", ...) {
   }
 }
 
-#' @export
+#' @exportS3Method
 plot.coco <- function(x, interactive = TRUE, ...) {
   
   if (interactive) {

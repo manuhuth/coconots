@@ -77,13 +77,13 @@ cocoSoc <- function(data, models = "all", print.progress=TRUE,
 
   } # end function
 
-#' @export
+#' @exportS3Method
 summary.cocoSoc <- function(object, ...) {
   class(object) <- "summary.cocoSoc"
   return(object)
 }
 
-#' @export
+#' @exportS3Method
 print.summary.cocoSoc <- function(x, ...) {
   
   print(x$scores_df, print.gap=3, quote=FALSE, na.print="")

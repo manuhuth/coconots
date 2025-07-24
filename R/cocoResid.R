@@ -3,7 +3,8 @@
 #' @param coco An object of class "coco
 #' @param val.num A non-negative real number that halts the calculation once the cumulative probability reaches 1-\code{val.num}
 #' @author Manuel Huth
-#' @importFrom stats var
+#' @importFrom stats var fitted residuals
+#' @importFrom ggplot2 autoplot
 #' @return a list that includes the (Pearson) residuals, conditional expectations, conditional variances,
 #' and information on the model specifications.
 #'@details The Pearson residuals are computed as the scaled
@@ -153,12 +154,12 @@ cocoResid <- function(coco, val.num = 1e-10) {
 #' @importFrom ggplot2 autoplot theme_bw ggtitle
 #' @export
 ggplot2::autoplot
-#' @export
+#' @exportS3Method
 autoplot.cocoResid <- function(object, ...){
   forecast::ggAcf(object$pe.resid) + theme_bw() + ggtitle("Pearson Residuals") + ggplot2::theme(text = ggplot2::element_text(size = 20)) 
 }
 
-#' @export
+#' @exportS3Method
 plot.cocoResid <- function(x, ...) {
   p <- autoplot(
     x,
@@ -167,13 +168,13 @@ plot.cocoResid <- function(x, ...) {
   print(p)
 }
 
-#'@export
+#'@exportS3Method
 print.cocoResid <- function(x, ...) {
   print(autoplot(x, ...,))
   invisible(x)
 }
 
-#' @export
+#' @exportS3Method
 print.cocoResid <- function(x, ...) {
   cat("cocoResid Object\n")
   cat("Model Type: ", x$type, "\n")
@@ -194,7 +195,7 @@ print.cocoResid <- function(x, ...) {
   invisible(x)
 }
 
-#' @export
+#' @exportS3Method
 summary.cocoResid <- function(object, ...) {
   # Build a summary list extracting key information from the cocoResid object
   res <- list(
@@ -220,7 +221,7 @@ summary.cocoResid <- function(object, ...) {
   return(res)
 }
 
-#' @export
+#' @exportS3Method
 print.summary.cocoResid <- function(x, ...) {
   cat("---- Residual Analysis Summary ----\n")
   cat("Model Type: ", x$model_type, "\n")
@@ -244,12 +245,12 @@ print.summary.cocoResid <- function(x, ...) {
 }
 
 
-#' @export
+#' @exportS3Method
 fitted.cocoResid <- function(object, ...) {
   object$fitted
 }
 
-#' @export
+#' @exportS3Method
 residuals.cocoResid <- function(object, ...) {
   object$residuals
 }

@@ -15,6 +15,8 @@
 #'
 #' @return A list of frequency tables. Each table represents a k-step ahead forecast frequency distribution based on the simulation runs.
 #' 
+#' @importFrom ggplot2 autoplot
+#' @importFrom stats predict
 #' @details Returns forecasts for each mass point of the k-step ahead
 #' distribution for the fitted model. The exact predictive distributions for
 #' one-step ahead predictions for
@@ -42,7 +44,7 @@
 #' Jung, R.C. and Tremayne, A.R. (2006) Coherent forecasting in integer time series models. 
 #'  \emph{International Journal of Forecasting} \bold{22}, 223--238
 #' @rdname predict.coco
-#' @export
+#' @exportS3Method
 predict.coco <- function(object, k=1, number_simulations=1000,
                          alpha=0.05,
                          simulate_one_step_ahead = FALSE,
@@ -80,7 +82,7 @@ predict.coco <- function(object, k=1, number_simulations=1000,
 #' @importFrom ggplot2 autoplot
 #' @export
 ggplot2::autoplot
-#' @export
+#' @exportS3Method
 autoplot.cocoForecast <- function(object, breaks=NULL, width=0.1, ...){
   
   pl <- ggplot2::ggplot(mapping = ggplot2::aes(x = object$x, y = object$densities_plot)) +
@@ -92,7 +94,7 @@ autoplot.cocoForecast <- function(object, breaks=NULL, width=0.1, ...){
   pl
 }
 
-#' @export
+#' @exportS3Method
 plot.cocoForecast <- function(x, ...) {
   p <- autoplot(
     x,
@@ -101,7 +103,7 @@ plot.cocoForecast <- function(x, ...) {
   suppressWarnings({print(p)})
 }
 
-#' @export
+#' @exportS3Method
 plot.cocoForecast <- function(x, ...) {
   p <- autoplot(
     x,
@@ -113,7 +115,7 @@ plot.cocoForecast <- function(x, ...) {
 #' @importFrom ggplot2 autoplot
 #' @export
 ggplot2::autoplot
-#' @export
+#' @exportS3Method
 autoplot.cocoForecastCollection <- function(object, forecast_type="mode",
                                             n_lags_plot=30, ...){
   return_forecast <- function(i){
@@ -152,7 +154,7 @@ autoplot.cocoForecastCollection <- function(object, forecast_type="mode",
   pl
 }
 
-#' @export
+#' @exportS3Method
 plot.cocoForecastCollection <- function(x, ...) {
   p <- autoplot(
     x,
@@ -161,7 +163,7 @@ plot.cocoForecastCollection <- function(x, ...) {
   suppressWarnings({print(p)})
 }
 
-#'@export
+#'@exportS3Method
 print.cocoForecastCollection <- function(x, ...) {
   suppressWarnings({print(autoplot(x, ...,))})
   invisible(x)

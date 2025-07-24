@@ -19,6 +19,7 @@
 #' 
 #' @importFrom stats pchisq
 #' @importFrom stats qchisq
+#' @importFrom ggplot2 autoplot
 #' 
 #' @references 
 #' Czado, C., Gneiting, T. and Held, L. (2009) Predictive model assessment for count data. \emph{Biometrics} \bold{65}, 1254--61.
@@ -263,7 +264,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
 #' @importFrom ggplot2 autoplot
 #' @export
 ggplot2::autoplot
-#' @export
+#' @exportS3Method
 autoplot.cocoPit <- function(object, ...){
   
   df <- data.frame(object$`PIT values`, 1:rep(length(object$`PIT values`)),
@@ -284,7 +285,7 @@ autoplot.cocoPit <- function(object, ...){
   pl
 }
 
-#' @export
+#' @exportS3Method
 plot.cocoPit <- function(x, ...) {
   p <- autoplot(
     x,
@@ -293,13 +294,13 @@ plot.cocoPit <- function(x, ...) {
   print(p)
 }
 
-#'@export
+#'@exportS3Method
 print.cocoPit <- function(x, ...) {
   print(autoplot(x, ...,))
   invisible(x)
 }
 
-#' @export
+#' @exportS3Method
 print.cocoPit <- function(x, ...) {
   cat("cocoPit Object")
   cat("\nModel Type: ", x$type, sep = "")
@@ -312,7 +313,7 @@ print.cocoPit <- function(x, ...) {
   invisible(x)
 }
 
-#' @export
+#' @exportS3Method
 summary.cocoPit <- function(object, ...) {
   sum_obj <- list(
     model_type          = object$type,
@@ -329,7 +330,7 @@ summary.cocoPit <- function(object, ...) {
   return(sum_obj)
 }
 
-#' @export
+#' @exportS3Method
 print.summary.cocoPit <- function(x, ...) {
   cat("---- PIT Assessment Summary ----\n")
   cat("Model Type:          ", x$model_type, "\n")

@@ -35,14 +35,14 @@ for more information on the usage.}
 
 \item{julia_seed}{Seed for the \proglang{julia} implementation. Only used if \proglang{julia} equals TRUE.}
 
-\item{link_function}{Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity` and `relu`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values.}
+\item{link_function}{Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is \code{log}, but other available options include \code{identity} and \code{relu}. This parameter is applicable only when covariates are used. Note that using the \code{identity} link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values.}
 }
 \value{
 a vector of the simulated time series
 }
 \description{
 The function generates a time series of low counts from the (G)PAR model class for a specified
- innovation distribution, sample size, lag order,
+innovation distribution, sample size, lag order,
 and parameter values.
 }
 \details{
@@ -57,7 +57,7 @@ appropriate burn-in period for the covariate case. One way to do this is to
 simulate a time series using \code{\link{cocoSim}} with appropriate covariates and pass the
 resulting time series to the
 init argument of a new \code{\link{cocoSim}} run so that the first time series is used as
-the burn-in period. 
+the burn-in period.
 If init is not specified for the covariate case, a warning will be returned
 to prompt the user to specify a custom burn-in period. This helps ensure that
 the simulation accurately captures the dynamics of the system being modeled.
