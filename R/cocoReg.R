@@ -336,7 +336,13 @@ extractAIC.coco <- function(fit, scale = 0, k = 2, ...) {
 
 #' @exportS3Method
 logLik.coco <- function(object, ...) {
-  object$likelihood
+  val <- object$likelihood
+  npar <- length(object$par)
+  
+  attr(val, "nobs") <- length(object$ts)
+  attr(val, "df") <- npar
+  class(val) <- "logLik"
+  val
 }
 
 get_coco_param_names <- function(object) {
