@@ -82,17 +82,20 @@ predict.coco <- function(object, k=1, number_simulations=1000,
 #' @importFrom ggplot2 autoplot
 #' @export
 ggplot2::autoplot
+
+
 #' @exportS3Method
-autoplot.cocoForecast <- function(object, breaks=NULL, width=0.1, ...){
+autoplot.cocoForecast <- function(object, width = 0.9, ...) {
+  df <- data.frame(x = factor(object$x, levels = sort(unique(object$x))),
+                   p = as.numeric(object$densities_plot))
   
-  pl <- ggplot2::ggplot(mapping = ggplot2::aes(x = object$x, y = object$densities_plot)) +
-    ggplot2::geom_bar(stat="identity", position="dodge", width=width) + 
+  ggplot2::ggplot(df, ggplot2::aes(x = x, y = p)) +
+    ggplot2::geom_col(width = width) +
     ggplot2::labs(title = "Probability Forecast", x = "Support", y = "Probability") +
-    ggplot2::xlim(c(0, max(object$x))) +
-    ggplot2::theme_bw() + ggplot2::theme(text = ggplot2::element_text(size = 20)) 
-  
-  pl
+    ggplot2::theme_bw() +
+    ggplot2::theme(text = ggplot2::element_text(size = 20))
 }
+
 
 #' @exportS3Method
 plot.cocoForecast <- function(x, ...) {
