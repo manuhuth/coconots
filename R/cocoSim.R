@@ -31,12 +31,24 @@
 #'the simulation accurately captures the dynamics of the system being modeled.
 #' @author Manuel Huth
 #' @examples
+#' #First Order Model
 #' lambda <- 1
 #' alpha <- 0.4
 #' set.seed(12345)
 #' 
 #' # Simulate using the RCPP implementation
 #' data_rcpp <- cocoSim(order = 1, type = "Poisson", par = c(lambda, alpha), length = 100)
+#' 
+#' @examples
+#' # Second Order Model
+#' lambda <- 1
+#' alpha_1 <- 0.3
+#' alpha_2 <- 0.1
+#' alpha_3 <- 0.2
+#' eta <- 0.2
+#' data_j <- cocoSim(order = 2, type = "GP",
+#'                   par = c(lambda, alpha_1, alpha_2,alpha_3,eta),
+#'                   length = 100)
 #' @export
 
 cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL, 

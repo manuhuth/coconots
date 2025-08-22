@@ -1,0 +1,1 @@
+We have modified the LogLik S3 method as requested by the journal of statistical software in order to resubmit our paper about coconots to the journal. In order to have the submitted file in line with the CRAN version, we would like to update the CRAN version.
