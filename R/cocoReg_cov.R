@@ -80,12 +80,12 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
   if (link_function=="log"){
     covariates_glm_fit <- stats::glm(data ~ -1 + ., family="poisson", data=df_covariates)
     starting_values_covariates <- stats::na.omit(covariates_glm_fit$coefficients)
-  } else if (link_function %in% c("identity", "relu")) {
+  } else if (link_function %in% c("identity", "relu", "softplus")) {
     covariates_glm_fit <- stats::lm(data ~ -1 + ., data=df_covariates)
     starting_values_covariates <- stats::na.omit(covariates_glm_fit$coefficients)
     starting_values_covariates[starting_values_covariates <= 0] <- 1e-5
   } else {
-    stop("Choose either identity, log, or relu as link function.")
+    stop("Choose either identity, log, relu, or softplus as link function.")
   }
 
   # PAR1

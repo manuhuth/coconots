@@ -19,7 +19,7 @@ Description: Useful tools for fitting, validating, and forecasting of practical 
 LazyData: true
 LinkingTo: Rcpp
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Depends: 
     R (>= 4.0.2)
 Imports:

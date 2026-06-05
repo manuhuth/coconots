@@ -23,6 +23,8 @@ double applyLinkFunction(double mathelp, std::string link_function) {
     return mathelp;
   } else if (link_function == "relu") {
     return (mathelp > 0) ? mathelp : 1e-10;
+  } else if (link_function == "softplus") {
+    return (mathelp > 0) ? mathelp + log(1.0 + exp(-mathelp)) : log(1.0 + exp(mathelp));
   } else {
     stop("Unknown link function");
   }

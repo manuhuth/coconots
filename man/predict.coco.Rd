@@ -42,7 +42,7 @@
 \item{...}{Optional arguments.}
 }
 \value{
-A list of frequency tables. Each table represents a k-step ahead forecast frequency distribution based on the simulation runs.
+A \code{cocoForecastCollection} object (list of \code{cocoForecast} objects, one per step ahead). Use \code{summary()} to obtain a data frame of point forecasts (mean, median, mode) and prediction intervals. Individual steps are accessible via \code{forecast[[i]]}.
 }
 \description{
 Computes the k-step ahead forecast (distributions) using the models in the coconots package.

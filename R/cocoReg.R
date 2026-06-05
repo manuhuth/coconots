@@ -20,7 +20,7 @@
 #' @param cores numeric indicating the number of cores to use, currently only available in the \proglang{R} version (default: 2)
 #' @param julia if TRUE, the model is estimated with \proglang{julia}. This can improve computational speed significantly since \proglang{julia} makes use of derivatives using autodiff. In this case, only \code{type}, \code{order}, \code{data}, \code{xreg}, and \code{start} are used as other inputs (default: FALSE).
 #' @param julia_installed if TRUE, the model \proglang{R} output will contain a \proglang{julia} compatible output element.
-#' @param link_function Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity` and `relu`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values by setting `b.beta` to a small positive value.
+#' @param link_function Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity`, `relu`, and `softplus`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values by setting `b.beta` to a small positive value.
 #' @importFrom JuliaConnectoR juliaGet juliaLet
 #' @importFrom stats nobs rstandard vcov coef residuals fitted extractAIC logLik
 #' @importFrom ggplot2 autoplot
@@ -43,10 +43,12 @@
 #' If no covariates are used \eqn{\lambda_t = \lambda} and if covariates are used
 #' \deqn{g(\lambda_t) = \left(\beta_0 + \sum_{j = 1}^k \beta_j \cdot z_{t,j} \right),}
 #' whereby \eqn{z_{t,j}} is the \eqn{j}-th covariate at time \eqn{t} and \eqn{g} is a link function. 
-#' Current supported link functions are the identity \eqn{g(x) = x} and a logarithmic link function 
-#' \eqn{g(x) = \ln x}. To ensure positivity of \eqn{\lambda} if the identity function is used, \eqn{\beta_j, z_{t,j} > 0} must be enforced.
-#' Alternatively, computational values of \eqn{\lambda \leq 0} can be set to a small positive value. 
-#' This option is named 'relu', due to its similarity to a ReLu function commonly used in machine learning.
+#' Currently supported link functions are: the identity \eqn{g(x) = x}, the logarithmic link
+#' \eqn{g(x) = \ln x}, relu \eqn{g(x) = \max(x, \epsilon)} for small \eqn{\epsilon > 0}, and softplus
+#' \eqn{g(x) = \log(\exp(x) - 1)}. To ensure positivity of \eqn{\lambda} if the identity function is used, \eqn{\beta_j, z_{t,j} > 0} must be enforced.
+#' Alternatively, computational values of \eqn{\lambda \leq 0} can be set to a small positive value.
+#' This option is named 'relu', due to its similarity to a ReLU function commonly used in machine learning.
+#' The softplus link uses a numerically stable implementation of its inverse \eqn{\log(1 + \exp(x))}, ensuring \eqn{\lambda > 0} and smooth gradients everywhere.
 #' 
 #' 
 #' Standard errors are computed by the square root of the diagonal elements of the inverse Hessian.

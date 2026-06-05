@@ -54,7 +54,7 @@ cocoReg(
 
 \item{julia_installed}{if TRUE, the model \proglang{R} output will contain a \proglang{julia} compatible output element.}
 
-\item{link_function}{Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is \code{log}, but other available options include \code{identity} and \code{relu}. This parameter is applicable only when covariates are used. Note that using the \code{identity} link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values by setting \code{b.beta} to a small positive value.}
+\item{link_function}{Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is \code{log}, but other available options include \code{identity}, \code{relu}, and \code{softplus}. This parameter is applicable only when covariates are used. Note that using the \code{identity} link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values by setting \code{b.beta} to a small positive value.}
 }
 \value{
 an object of class coco. It contains the parameter estimates, standard errors, the log-likelihood,
@@ -84,10 +84,12 @@ the marginal distributions of \eqn{\{X_t\}} are therefore Poisson or Generalized
 If no covariates are used \eqn{\lambda_t = \lambda} and if covariates are used
 \deqn{g(\lambda_t) = \left(\beta_0 + \sum_{j = 1}^k \beta_j \cdot z_{t,j} \right),}
 whereby \eqn{z_{t,j}} is the \eqn{j}-th covariate at time \eqn{t} and \eqn{g} is a link function.
-Current supported link functions are the identity \eqn{g(x) = x} and a logarithmic link function
-\eqn{g(x) = \ln x}. To ensure positivity of \eqn{\lambda} if the identity function is used, \eqn{\beta_j, z_{t,j} > 0} must be enforced.
+Currently supported link functions are: the identity \eqn{g(x) = x}, the logarithmic link
+\eqn{g(x) = \ln x}, relu \eqn{g(x) = \max(x, \epsilon)} for small \eqn{\epsilon > 0}, and softplus
+\eqn{g(x) = \log(\exp(x) - 1)}. To ensure positivity of \eqn{\lambda} if the identity function is used, \eqn{\beta_j, z_{t,j} > 0} must be enforced.
 Alternatively, computational values of \eqn{\lambda \leq 0} can be set to a small positive value.
-This option is named 'relu', due to its similarity to a ReLu function commonly used in machine learning.
+This option is named 'relu', due to its similarity to a ReLU function commonly used in machine learning.
+The softplus link uses a numerically stable implementation of its inverse \eqn{\log(1 + \exp(x))}, ensuring \eqn{\lambda > 0} and smooth gradients everywhere.
 
 Standard errors are computed by the square root of the diagonal elements of the inverse Hessian.
 

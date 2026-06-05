@@ -13,7 +13,7 @@
 #' @param julia  if TRUE, the estimate is predicted with \proglang{julia} (Default: FALSE).
 #' @param ... Optional arguments.
 #'
-#' @return A list of frequency tables. Each table represents a k-step ahead forecast frequency distribution based on the simulation runs.
+#' @return A \code{cocoForecastCollection} object (list of \code{cocoForecast} objects, one per step ahead). Use \code{summary()} to obtain a data frame of point forecasts (mean, median, mode) and prediction intervals. Individual steps are accessible via \code{forecast[[i]]}.
 #' 
 #' @importFrom ggplot2 autoplot
 #' @importFrom stats predict
@@ -106,15 +106,6 @@ plot.cocoForecast <- function(x, ...) {
   suppressWarnings({print(p)})
 }
 
-#' @exportS3Method
-plot.cocoForecast <- function(x, ...) {
-  p <- autoplot(
-    x,
-    ...
-  )
-  suppressWarnings({print(p)})
-}
-
 #' @importFrom ggplot2 autoplot
 #' @export
 ggplot2::autoplot
@@ -169,5 +160,51 @@ plot.cocoForecastCollection <- function(x, ...) {
 #'@exportS3Method
 print.cocoForecastCollection <- function(x, ...) {
   suppressWarnings({print(autoplot(x, ...,))})
+  invisible(x)
+}
+
+#' @exportS3Method
+summary.cocoForecast <- function(object, ...) {
+  out <- data.frame(
+    step   = if (!is.null(object$k)) object$k else 1L,
+    mean   = object$mean,
+    median = object$median,
+    mode   = object$mode,
+    lower  = object$lower,
+    upper  = object$upper
+  )
+  class(out) <- c("summary.cocoForecast", "data.frame")
+  out
+}
+
+#' @exportS3Method
+print.summary.cocoForecast <- function(x, ...) {
+  cat("---- Forecast Summary ----\n")
+  print.data.frame(x, row.names = FALSE, ...)
+  invisible(x)
+}
+
+#' @exportS3Method
+summary.cocoForecastCollection <- function(object, ...) {
+  rows <- lapply(seq_along(object), function(i) {
+    fc <- object[[i]]
+    data.frame(
+      step   = if (!is.null(fc$k)) fc$k else i,
+      mean   = fc$mean,
+      median = fc$median,
+      mode   = fc$mode,
+      lower  = fc$lower,
+      upper  = fc$upper
+    )
+  })
+  out <- do.call(rbind, rows)
+  class(out) <- c("summary.cocoForecastCollection", "data.frame")
+  out
+}
+
+#' @exportS3Method
+print.summary.cocoForecastCollection <- function(x, ...) {
+  cat("---- Forecast Summary ----\n")
+  print.data.frame(x, row.names = FALSE, ...)
   invisible(x)
 }
