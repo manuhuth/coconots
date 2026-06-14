@@ -6,3 +6,8 @@
 ^README\.Rmd$
 ^CRAN-SUBMISSION$
 ^cran-comments\.md$
+^CLAUDE\.md$
+^\.claude$
+^Figure7\.png$
+^coconots_env$
+^count_env$
