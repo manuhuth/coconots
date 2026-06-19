@@ -116,14 +116,14 @@ cocoReg <- function(type, order, data, xreg = NULL,
     
     fit_R <- JuliaConnectoR::juliaGet(fit_no_optimization_in_dict)
 
-    julia_out <- transformJuliaRegOutputToR(xreg=xreg, pars=fit_R[["values"]][[8]],
+    julia_out <- transformJuliaRegOutputToR(xreg=xreg, pars=getJuliaValue(fit_R, "parameter"),
                                             grad=NULL, hes=NULL,
-                                            inv_hes=fit_R[["values"]][[7]],
-                                            se=fit_R[["values"]][[10]],
+                                            inv_hes=getJuliaValue(fit_R, "covariance_matrix"),
+                                            se=getJuliaValue(fit_R, "se"),
                                             data=data,
                                             type=type,
                                             order=order,
-                                            likelihood=fit_R[["values"]][[1]],
+                                            likelihood=getJuliaValue(fit_R, "log_likelihood"),
                                             end_time = end_time,
                                             start_time=start_time, 
                                             julia_reg=fit_no_optimization_in_dict)

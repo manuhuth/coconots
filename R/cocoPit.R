@@ -55,8 +55,8 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
     addJuliaFunctions()
     coco_pit <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPit", coco$julia_reg, J))
     J_test <- J
-    u <- coco_pit$values[[2]]
-    d <- coco_pit$values[[1]]
+    u <- getJuliaValue(coco_pit, "bins")
+    d <- getJuliaValue(coco_pit, "Pit_values")
   } else {
 
   data <- coco$ts

@@ -26,15 +26,15 @@ cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-12, xcast=NULL,
     }
     coco_forecast <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPredictOneStep",
                                                                          coco$julia_reg, 0:max_use, xcast))
-    densities <- coco_forecast$values[[4]]
+    densities <- getJuliaValue(coco_forecast, "probabilities")
     if (is.null(max)){
       cumulative <- cumsum(densities)
       index_use <- min(which(cumulative >= 1-epsilon))
       densities <- densities[1:index_use]
     }
     
-    mode <- coco_forecast$values[[1]]
-    median <- coco_forecast$values[[2]]
+    mode <- getJuliaValue(coco_forecast, "prediction_mode")
+    median <- getJuliaValue(coco_forecast, "prediction_median")
   } else {
     if (length(seasonality == 1)) {
       seasonality = c(seasonality, seasonality + 1)
