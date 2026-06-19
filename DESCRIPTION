@@ -16,11 +16,13 @@ Authors@R: c(
            role =  "aut"
            ))
 Description: Useful tools for fitting, validating, and forecasting of practical convolution-closed time series models for low counts are provided. Marginal distributions of the data can be modelled via Poisson and Generalized Poisson innovations. Regression effects can be incorporated through time varying innovation rates. The models are described in Jung and Tremayne (2011) <doi:10.1111/j.1467-9892.2010.00697.x> and the model assessment tools are presented in Czado et al. (2009) <doi:10.1111/j.1541-0420.2009.01191.x> and, Tsay (1992) <doi:10.2307/2347612>.
+URL: https://github.com/manuhuth/coconots, https://manuhuth.github.io/coconots/
+BugReports: https://github.com/manuhuth/coconots/issues
 LazyData: true
 LinkingTo: Rcpp
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Depends: 
+Depends:
     R (>= 4.0.2)
 Imports:
     forecast,
@@ -31,7 +33,9 @@ Imports:
     JuliaConnectoR,
     Rcpp,
     stats
-Suggests: 
+Suggests:
+    pkgdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Config/Needs/website: pkgdown
 License: MIT + file LICENSE

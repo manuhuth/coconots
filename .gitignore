@@ -6,3 +6,13 @@ src/*.o
 src/*.so
 src/*.dll
 CLAUDE.md
+
+# R package build artifacts
+*.tar.gz
+*.Rcheck/
+/docs/
+Rplots.pdf
+
+# Local Julia / Python environments
+/coconots_env/
+/count_env/

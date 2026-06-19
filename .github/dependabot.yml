@@ -1,0 +1,15 @@
+# Keep GitHub Actions versions current so the CI toolchain does not silently
+# rot (e.g. the Node 20 / setup-julia@v1 breakage). Grouped into a single
+# weekly PR.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"

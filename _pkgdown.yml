@@ -1,0 +1,36 @@
+url: https://manuhuth.github.io/coconots/
+
+template:
+  bootstrap: 5
+
+reference:
+- title: Simulate
+  desc: Simulate convolution-closed count time series.
+  contents:
+  - cocoSim
+- title: Fit
+  desc: Fit (Generalized) Poisson integer autoregressive models.
+  contents:
+  - cocoReg
+- title: Forecast
+  desc: Probabilistic k-step-ahead forecasts.
+  contents:
+  - predict.coco
+- title: Model assessment
+  desc: Diagnostics, goodness-of-fit, scoring rules and model comparison.
+  contents:
+  - cocoBoot
+  - cocoPit
+  - cocoResid
+  - cocoScore
+  - cocoSoc
+- title: Julia backend
+  desc: Optional Julia backend (automatic differentiation; faster on complex models).
+  contents:
+  - installJuliaPackages
+  - setJuliaSeed
+- title: Datasets
+  contents:
+  - cuts
+  - downloads
+  - goldparticle
