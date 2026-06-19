@@ -66,10 +66,12 @@ jobs:
         with:
           # Coverage is informational; don't fail the build on upload hiccups.
           fail_ci_if_error: false
-          file: ./cobertura.xml
+          # codecov-action@v5 expects `files` (plural); `file` is silently ignored.
+          files: ./cobertura.xml
           plugins: noop
           disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
+          # The repo's Codecov upload token is stored under the secret name CODECOV.
+          token: ${{ secrets.CODECOV }}
 
       - name: Show testthat output
         if: always()
