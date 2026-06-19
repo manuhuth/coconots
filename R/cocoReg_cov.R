@@ -189,7 +189,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       names(pars) <- c("alpha", lambs)
       T <- length(data)
       xreg_matrix <- data.matrix(xreg)
-      likelihood <- -likelihoodGP1cov(20, pars[1], 0, pars[-c(1, 2)], T, seasonality[1], data, xreg_matrix, link_function)
+      likelihood <- -likelihoodGP1cov(20, pars[1], 0, pars[-1], T, seasonality[1], data, xreg_matrix, link_function)
 
       h <- function(par) {
         alpha <- par[1]
@@ -574,7 +574,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       names(pars) <- c("alpha1", "alpha2", "alpha3", lambs)
       T <- length(data)
       xreg_matrix <- data.matrix(xreg)
-      likelihood <- -likelihoodGP2cov(20, pars[1], pars[2], pars[3], 0, pars[-c(1:4)], T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+      likelihood <- -likelihoodGP2cov(20, pars[1], pars[2], pars[3], 0, pars[-c(1:3)], T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
 
 
       h <- function(par) {
