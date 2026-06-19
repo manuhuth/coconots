@@ -11,3 +11,6 @@
 ^Figure7\.png$
 ^coconots_env$
 ^count_env$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

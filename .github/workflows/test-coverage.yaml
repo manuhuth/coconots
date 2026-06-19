@@ -1,48 +1,86 @@
-# Derived from https://github.com/r-lib/actions/tree/v2/examples
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? https://github.com/r-lib/actions#where-to-find-help
-
+#
+# Julia is installed so the Julia-backed code paths are included in coverage.
 on:
   push:
     branches: [main, master]
   pull_request:
-    branches: [main, master]
 
 name: test-coverage
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-coverage:
     runs-on: ubuntu-latest
-
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      RSPM: https://packagemanager.posit.co/cran/latest
       NOT_CRAN: true
+      JULIA_PKG_USE_CLI_GIT: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
 
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+
+      - uses: julia-actions/cache@v2
+
+      - name: Install Coconots.jl
+        run: |
+          julia --color=yes -e '
+            using Pkg
+            Pkg.add(url = "https://github.com/manuhuth/Coconots.jl")
+            using Coconots
+          '
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr
+          extra-packages: any::covr, any::xml2
+          needs: coverage
 
-      - name: Run test coverage
+      - name: Test coverage
         run: |
-          covr::codecov()
+          cov <- covr::package_coverage(
+            quiet = FALSE,
+            clean = FALSE,
+            install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package")
+          )
+          covr::to_cobertura(cov)
         shell: Rscript {0}
 
-      - name: Show testthat logs
+      - uses: codecov/codecov-action@v5
+        with:
+          # Coverage is informational; don't fail the build on upload hiccups.
+          fail_ci_if_error: false
+          file: ./cobertura.xml
+          plugins: noop
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Show testthat output
         if: always()
         run: |
-          find . -name 'testthat.Rout*' -exec cat '{}' \; || true
+          ## --------------------------------------------------------------------
+          find '${{ runner.temp }}/package' -name 'testthat.Rout*' -exec cat '{}' \; || true
         shell: bash
 
-      - name: Upload test failure artifacts
+      - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-test-failures
-          path: check/*.Rcheck/tests/testthat.Rout.fail
+          path: ${{ runner.temp }}/package

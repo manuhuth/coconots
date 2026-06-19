@@ -1,11 +1,13 @@
 #-----------------cgeck install julia packages----
 test_that("insatll_Julia_packages", {
   skip_on_cran()
+  skip_if_no_julia()
   expect_no_error(installJuliaPackages())
 })
 #-----------------No covariates, constrained--------------------------------
 test_that("GP2Works", {
   skip_on_cran()
+  skip_if_no_julia()
   length <- 300
   par <- c(0.5,0.2,0.05,0.3,0.3) #lambda, alpha1, alpha2, alpha3, eta
   set.seed(123499)
@@ -27,6 +29,7 @@ test_that("GP2Works", {
 
 test_that("Poisson2Works", {
   skip_on_cran()
+  skip_if_no_julia()
   length <- 300
   par <- c(0.5, 0.2, 0.05, 0.3)
   set.seed(12347)
@@ -49,6 +52,7 @@ test_that("Poisson2Works", {
 
 test_that("GP1Works", {
   skip_on_cran()
+  skip_if_no_julia()
   length <- 300
   par <- c(0.5, 0.2, 0.2)
   set.seed(12341)
@@ -71,6 +75,7 @@ test_that("GP1Works", {
 
 test_that("Poisson1Works", {
   skip_on_cran()
+  skip_if_no_julia()
   length <- 300
   par <- c(0.5, 0.2)
   set.seed(12345)
@@ -94,6 +99,7 @@ test_that("Poisson1Works", {
 #-----------------Covariates, constrained--------------------------------
 test_that("Poisson1Works_cov", {
   skip_on_cran()
+  skip_if_no_julia()
  ##Poisson1 model with covariates
  length <- 300
  period <- 50
@@ -124,6 +130,7 @@ test_that("Poisson1Works_cov", {
 
 test_that("GP1Works_cov", {
   skip_on_cran()
+  skip_if_no_julia()
   ##Poisson1 model with covariates
   length <- 300
   period <- 50
@@ -152,6 +159,7 @@ test_that("GP1Works_cov", {
 
 test_that("Poisson2Works_cov", {
   skip_on_cran()
+  skip_if_no_julia()
   ##Poisson1 model with covariates
   length <- 300
   period <- 50
@@ -180,6 +188,7 @@ test_that("Poisson2Works_cov", {
 
 test_that("GP2Works_cov", {
   skip_on_cran()
+  skip_if_no_julia()
   ##Poisson1 model with covariates
   length <- 300
   period <- 50
@@ -437,6 +446,7 @@ test_that("GP2Works_cov_2", {
 #----------------Wrong models no covariates-----------------------------------
 test_that("wrong_modelsGP2", {
   skip_on_cran()
+  skip_if_no_julia()
   length <- 300
   par <- c(0.5,0.2,0.05,0.3,0.3)
   set.seed(123499)
@@ -452,6 +462,7 @@ test_that("wrong_modelsGP2", {
 
 test_that("wrong_modelsPoisson2", {
   skip_on_cran()
+  skip_if_no_julia()
   length <- 300
   par <- c(0.5, 0.2, 0.05, 0.3)
   set.seed(12347)
@@ -468,6 +479,7 @@ test_that("wrong_modelsPoisson2", {
 
 test_that("wrong_modelsGP1", {
   skip_on_cran()
+  skip_if_no_julia()
   length <- 300
   par <- c(0.5, 0.2, 0.2)
   set.seed(12341)
@@ -483,6 +495,7 @@ test_that("wrong_modelsGP1", {
 
 test_that("wrong_modelsPoisson1", {
   skip_on_cran()
+  skip_if_no_julia()
   length <- 300
   par <- c(0.5, 0.2)
   set.seed(12345)

@@ -5,6 +5,8 @@
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/manuhuth/coconots/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/manuhuth/coconots/actions/workflows/R-CMD-check.yaml)
+[![julia-tests](https://github.com/manuhuth/coconots/actions/workflows/julia-tests.yaml/badge.svg)](https://github.com/manuhuth/coconots/actions/workflows/julia-tests.yaml)
+[![pkgdown](https://github.com/manuhuth/coconots/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/manuhuth/coconots/actions/workflows/pkgdown.yaml)
 [![CRAN
 status](https://www.r-pkg.org/badges/version/coconots)](https://CRAN.R-project.org/package=coconots)
 [![Codecov test

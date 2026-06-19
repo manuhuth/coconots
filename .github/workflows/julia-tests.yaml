@@ -1,0 +1,90 @@
+# Exercises the optional Julia backend (JuliaConnectoR + Coconots.jl).
+#
+# Runs R CMD check with a working Julia install and NOT_CRAN=true so that the
+# skip_on_cran() / skip_if_no_julia() guarded tests actually execute. The
+# matrix covers the supported Julia versions on all three platforms, including
+# Windows (the previous setup-julia@v1 failure mode, fixed in @v2).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+name: julia-tests
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  julia-tests:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (Julia-${{ matrix.config.julia }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest,  julia: '1.11'}
+          - {os: ubuntu-latest,  julia: '1.12'}
+          - {os: windows-latest, julia: '1.11'}
+          - {os: windows-latest, julia: '1.12'}
+          - {os: macos-latest,   julia: '1.11'}
+          - {os: macos-latest,   julia: '1.12'}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      NOT_CRAN: true
+      JULIA_PKG_USE_CLI_GIT: true
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.config.julia }}
+
+      - uses: julia-actions/cache@v2
+
+      - name: Install Coconots.jl
+        run: |
+          julia --color=yes -e '
+            using Pkg
+            Pkg.add(url = "https://github.com/manuhuth/Coconots.jl")
+            using Coconots
+          '
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+
+  # Single aggregated status used as the required check for branch protection.
+  julia-tests-status:
+    if: always()
+    needs: julia-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all julia-tests jobs to pass
+        run: |
+          if [ "${{ needs.julia-tests.result }}" != "success" ]; then
+            echo "julia-tests matrix result: ${{ needs.julia-tests.result }}"
+            exit 1
+          fi
+          echo "All julia-tests jobs passed."

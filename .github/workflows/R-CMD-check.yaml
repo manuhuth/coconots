@@ -1,85 +1,77 @@
-
+# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
+# Need help debugging build failures? https://github.com/r-lib/actions#where-to-find-help
+#
+# Pure CRAN-style R CMD check across platforms. The optional Julia backend is
+# NOT installed here: the Julia-dependent tests skip gracefully via
+# skip_if_no_julia(), and the Julia backend is exercised in julia-tests.yaml.
 on:
   push:
     branches: [main, master]
   pull_request:
-    branches: [main, master]
 
 name: R-CMD-check
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   R-CMD-check:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.config.os }}
 
-    name: "${{ matrix.os }} (R-${{ matrix.r }}, Julia-${{ matrix.julia }})"
+    name: ${{ matrix.config.os }} (R-${{ matrix.config.r }})
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        r: ['release', 'devel', 'oldrel-1']
-        julia: ['1.11']
-        include:
-          - os: windows-latest
-            r: 'devel'
-            http-user-agent: 'release'
-          - os: ubuntu-latest
-            r: 'devel'
-            http-user-agent: 'release'
-          - os: macos-latest
-            r: 'devel'
-            http-user-agent: 'release'
+        config:
+          - {os: macos-latest,   r: 'release'}
+          - {os: windows-latest, r: 'release'}
+          - {os: ubuntu-latest,  r: 'release'}
+          - {os: ubuntu-latest,  r: 'oldrel-1'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      RSPM: https://packagemanager.posit.co/cran/latest
-      RENV_CONFIG_REPOS_OVERRIDE: https://packagemanager.posit.co/cran/latest
-      TZ: UTC
-      _R_CHECK_SYSTEM_CLOCK_: FALSE
-      NOT_CRAN: true
+      # This matrix is intentionally Julia-free; force the Julia integration
+      # tests to skip even on runner images that ship with Julia (e.g. Ubuntu).
+      COCONOTS_SKIP_JULIA_TESTS: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: r-lib/actions/setup-pandoc@v2
 
       - uses: r-lib/actions/setup-r@v2
         with:
-          r-version: ${{ matrix.r }}
-          http-user-agent: ${{ matrix.http-user-agent }}
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: ${{ matrix.julia }}
-        env:
-          JULIA_PKG_USE_CLI_GIT: true
-
-
-
-      - name: Cache R & Julia packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.local/share/R/*
-            ~/R/*
-            ~/.julia/packages
-            ~/.julia/artifacts
-          key: ${{ runner.os }}-R${{ matrix.r }}-Julia${{ matrix.julia }}-${{ hashFiles('DESCRIPTION') }}
-
-      - name: Install Julia dependencies
-        run: |
-          julia -e '
-            using Pkg
-            Pkg.add(url = "https://github.com/manuhuth/Coconots.jl")
-          '
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::rcmdcheck
+          needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
 
+  # Single aggregated status used as the required check for branch protection,
+  # so the protection rule does not need to enumerate every matrix leg.
+  r-cmd-check-status:
+    if: always()
+    needs: R-CMD-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all R-CMD-check jobs to pass
+        run: |
+          if [ "${{ needs.R-CMD-check.result }}" != "success" ]; then
+            echo "R-CMD-check matrix result: ${{ needs.R-CMD-check.result }}"
+            exit 1
+          fi
+          echo "All R-CMD-check jobs passed."
