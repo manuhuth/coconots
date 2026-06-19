@@ -37,6 +37,9 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      # This matrix is intentionally Julia-free; force the Julia integration
+      # tests to skip even on runner images that ship with Julia (e.g. Ubuntu).
+      COCONOTS_SKIP_JULIA_TESTS: true
 
     steps:
       - uses: actions/checkout@v5
