@@ -1,5 +1,7 @@
 # coconots
 
+📖 **Documentation:** <https://manuhuth.github.io/coconots/>
+
 Functions to analyse time series consisting of low counts are provided.
 The focus in the current version is on practical models that can capture
 first and higher-order dependence based on the work of Joe (1996). Both
