@@ -14,7 +14,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
   }
 
   if (is.data.frame(xreg)) {
-    data <- as.matrix(xreg)
+    xreg <- as.matrix(xreg)
   }
 
   if ((outer.it <= 0) | (outer.it != round(outer.it))) {

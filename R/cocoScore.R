@@ -48,8 +48,9 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   if (!is.null(coco$julia_reg) & julia){
     addJuliaFunctions()
     coco_score <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("compute_scores", coco$julia_reg, max_x))
-    return(list("log.score" = coco_score$values[[1]], "quad.score" = coco_score$values[[2]],
-                 "rps.score" = coco_score$values[[3]],
+    return(list("log.score" = getJuliaValue(coco_score, "logarithmic_score"),
+                "quad.score" = getJuliaValue(coco_score, "quadratic_score"),
+                "rps.score" = getJuliaValue(coco_score, "ranked_probability_score"),
                 "aic" = 2*length(coco$par) - 2 * coco$likelihood,
                 "bic" = length(coco$par) * log(length(coco$ts)) - 2 * coco$likelihood
                 ))

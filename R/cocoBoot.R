@@ -52,7 +52,7 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
     addJuliaFunctions()
     coco_boot <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoBoot", coco$julia_reg, 1:numb.lags, rep.Bootstrap, 1-confidence))
     #acfdata <- coco_boot$values[[2]]
-    ac <- t(coco_boot$values[[1]]) 
+    ac <- t(getJuliaValue(coco_boot, "pacfs"))
     #confidence_bands <- data.frame(cbind(coco_boot$values[[3]], coco_boot$values[[4]]))
     #colnames(confidence_bands) <- c("upper", "lower")
   } else {

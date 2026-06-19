@@ -50,9 +50,9 @@ cocoSoc <- function(data, models = "all", print.progress=TRUE,
       
       name_mod <- paste0(name, order)
       
-      fits[[name_mod]] <- cocoReg(type, order, data_use, ...)
+      fits[[name_mod]] <- cocoReg(type, order, data_use, julia = julia, ...)
 
-      scores[[name_mod]] <- cocoScore(fits[[name_mod]], max_x = max_x_score, julia=T)
+      scores[[name_mod]] <- cocoScore(fits[[name_mod]], max_x = max_x_score, julia = julia)
       index <- index + 1
     }
   }
