@@ -509,3 +509,19 @@ test_that("wrong_modelsPoisson1", {
   expect_no_error(fit)
 
 })
+test_that("julia thread default respects an existing JULIA_NUM_THREADS", {
+  old <- Sys.getenv("JULIA_NUM_THREADS", unset = NA)
+  on.exit(if (is.na(old)) Sys.unsetenv("JULIA_NUM_THREADS") else
+    Sys.setenv(JULIA_NUM_THREADS = old))
+
+  Sys.setenv(JULIA_NUM_THREADS = "3")
+  coconots:::set_julia_threads()
+  expect_identical(Sys.getenv("JULIA_NUM_THREADS"), "3")
+
+  Sys.unsetenv("JULIA_NUM_THREADS")
+  coconots:::set_julia_threads()
+  set_value <- Sys.getenv("JULIA_NUM_THREADS")
+  if (!identical(set_value, "")) {
+    expect_gte(as.integer(set_value), 1L)
+  }
+})

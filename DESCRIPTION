@@ -31,6 +31,7 @@ Imports:
     ggplot2,
     matrixStats,
     JuliaConnectoR,
+    parallel,
     Rcpp,
     stats
 Suggests:

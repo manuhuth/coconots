@@ -76,3 +76,33 @@ getJuliaValue <- function(julia_dict, key) {
   }
   julia_dict[["values"]][[idx]]
 }
+#' Default JULIA_NUM_THREADS before the Julia session starts
+#'
+#' Coconots.jl parallelizes its likelihood evaluations, but a Julia process
+#' starts single-threaded unless JULIA_NUM_THREADS is set when it is spawned.
+#' JuliaConnectoR reads the environment variable at start-up, so this must run
+#' before the first `juliaEval`/`juliaCall` of the session. Sets a conservative
+#' default of half the physical cores; a user-provided JULIA_NUM_THREADS (e.g.
+#' from .Renviron) is never overridden. Has no effect on an already-running
+#' Julia session.
+#'
+#' @return Invisibly, the thread count that applies (or `NULL` if unknown).
+#' @noRd
+set_julia_threads <- function() {
+  existing <- Sys.getenv("JULIA_NUM_THREADS")
+  if (!identical(existing, "")) {
+    return(invisible(existing))
+  }
+  cores <- tryCatch(parallel::detectCores(logical = FALSE),
+                    error = function(e) NA_integer_)
+  if (is.na(cores) || cores < 1L) {
+    cores <- tryCatch(parallel::detectCores(logical = TRUE),
+                      error = function(e) NA_integer_)
+  }
+  if (is.na(cores) || cores < 1L) {
+    return(invisible(NULL))
+  }
+  threads <- max(1L, cores %/% 2L)
+  Sys.setenv(JULIA_NUM_THREADS = as.character(threads))
+  invisible(threads)
+}
