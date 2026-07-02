@@ -66,7 +66,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
 
         T <- length(data)
 
-        mlef <- likelihoodGP1(20, lambda, alpha, eta, T, seasonality[1], data)
+        mlef <- likelihoodGP1(lambda, alpha, eta, T, seasonality[1], data)
 
         return(mlef)
       } # end function
@@ -148,7 +148,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       pars <- as.vector(unlist(fit$par, use.names = FALSE))
       names(pars) <- c("lambda", "alpha")
       T <- length(data)
-      likelihood <- -likelihoodGP1(20, pars[1], pars[2], 0, T, seasonality[1], data)
+      likelihood <- -likelihoodGP1(pars[1], pars[2], 0, T, seasonality[1], data)
 
       gra <- numDeriv::grad(func=mlf, x=pars, method = method.hessian, data=data)
       hes <- numDeriv::hessian(func=mlf, x=pars, method = method.hessian, data=data)
@@ -202,7 +202,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
 
         T <- length(data)
 
-        mlef <- likelihoodGP1(20, lambda, alpha, eta, T, seasonality[1], data)
+        mlef <- likelihoodGP1(lambda, alpha, eta, T, seasonality[1], data)
 
         return(mlef)
       } # end function
@@ -295,7 +295,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       pars <- as.vector(unlist(fit$par, use.names = FALSE))
       names(pars) <- c("lambda", "alpha", "eta")
       T <- length(data)
-      likelihood <- -likelihoodGP1(20, pars[1], pars[2], pars[3], T, seasonality[1], data)
+      likelihood <- -likelihoodGP1(pars[1], pars[2], pars[3], T, seasonality[1], data)
 
 
       gra <- numDeriv::grad(func=mlf, x=pars, method = method.hessian, data=data)
@@ -354,7 +354,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
 
         T <- length(data)
 
-        mlef <- likelihoodGP2(20, lambda, alpha1, alpha2, alpha3, eta, T, seasonality[1], seasonality[2], data)
+        mlef <- likelihoodGP2(lambda, alpha1, alpha2, alpha3, eta, T, seasonality[1], seasonality[2], data)
 
         return(mlef)
       } # end function
@@ -369,10 +369,9 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         p1 <- acf$acf[seasonality[1] + 1]
         p2 <- acf$acf[seasonality[2] + 1]
 
-        v <- c()
-        for (t in (seasonality[2] + 1):length(data)) {
-          v[t - seasonality[2]] <- (data[t] - mean(data)) * (data[t - seasonality[1]] - mean(data)) * (data[t - seasonality[2]] - mean(data))
-        }
+        mean_data <- mean(data)
+        idx <- (seasonality[2] + 1):length(data)
+        v <- (data[idx] - mean_data) * (data[idx - seasonality[1]] - mean_data) * (data[idx - seasonality[2]] - mean_data)
         mu111 <- sum(v) / length(data)
 
 
@@ -408,7 +407,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
             while (alpha1_s + alpha2_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
               alpha2_s <- alpha2_s * iteration.start.val
-              alpha3_2 <- alpha3_s * iteration.start.val
+              alpha3_s <- alpha3_s * iteration.start.val
             }
             warning(paste("The initial sum of 2*alpha1, alpha2 and alpha3 had not been in the feasible region and was adjusted", replace.start.val, ""))
           }
@@ -417,7 +416,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           if (2 * alpha1_s + alpha3_s > 1) {
             while (2 * alpha1_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
-              alpha3_2 <- alpha3_s * iteration.start.val
+              alpha3_s <- alpha3_s * iteration.start.val
             }
             warning(paste("The initial sum of alpha1 and alpha3 had not been in the feasible region and was adjusted", replace.start.val, ""))
           }
@@ -483,7 +482,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       pars <- as.vector(unlist(fit$par, use.names = FALSE))
       names(pars) <- c("lambda", "alpha1", "alpha2", "alpha3")
       T <- length(data)
-      likelihood <- -likelihoodGP2(20, pars[1], pars[2], pars[3], pars[4], 0, T, seasonality[1], seasonality[2], data)
+      likelihood <- -likelihoodGP2(pars[1], pars[2], pars[3], pars[4], 0, T, seasonality[1], seasonality[2], data)
 
 
       gra <- numDeriv::grad(func=mlf, x=pars, method = method.hessian, data=data)
@@ -545,7 +544,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
 
         T <- length(data)
 
-        mlef <- likelihoodGP2(20, lambda, alpha1, alpha2, alpha3, eta, T, seasonality[1], seasonality[2], data)
+        mlef <- likelihoodGP2(lambda, alpha1, alpha2, alpha3, eta, T, seasonality[1], seasonality[2], data)
 
         return(mlef)
       } # end function
@@ -559,10 +558,9 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         p1 <- acf$acf[[seasonality[1] + 1]]
         p2 <- acf$acf[[seasonality[2] + 1]]
 
-        v <- c()
-        for (t in (seasonality[2] + 1):length(data)) {
-          v[t - seasonality[2]] <- (data[t] - mean(data)) * (data[t - seasonality[1]] - mean(data)) * (data[t - seasonality[2]] - mean(data))
-        }
+        mean_data <- mean(data)
+        idx <- (seasonality[2] + 1):length(data)
+        v <- (data[idx] - mean_data) * (data[idx - seasonality[1]] - mean_data) * (data[idx - seasonality[2]] - mean_data)
         mu111 <- sum(v) / length(data)
 
         eta_s <- 1 - (mean(data) / stats::var(data))^0.5
@@ -614,7 +612,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
             while (alpha1_s + alpha2_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * 0.99
               alpha2_s <- alpha2_s * 0.99
-              alpha3_2 <- alpha3_s * 0.99
+              alpha3_s <- alpha3_s * 0.99
             }
             warning(paste("The initial sum of 2*alpha1, alpha2 and alpha3 had not been in the feasible region and was adjusted", ""))
           }
@@ -623,7 +621,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           if (2 * alpha1_s + alpha3_s > 1) {
             while (2 * alpha1_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * 0.99
-              alpha3_2 <- alpha3_s * 0.99
+              alpha3_s <- alpha3_s * 0.99
             }
             warning(paste("The initial sum of alpha1 and alpha3 had not been in the feasible region and was adjusted", ""))
           }
@@ -690,7 +688,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       pars <- as.vector(unlist(fit$par, use.names = FALSE))
       names(pars) <- c("lambda", "alpha1", "alpha2", "alpha3", "eta")
       T <- length(data)
-      likelihood <- -likelihoodGP2(20, pars[1], pars[2], pars[3], pars[4], pars[5], T, seasonality[1], seasonality[2], data)
+      likelihood <- -likelihoodGP2(pars[1], pars[2], pars[3], pars[4], pars[5], T, seasonality[1], seasonality[2], data)
 
 
       gra <- numDeriv::grad(func=mlf, x=pars, method = method.hessian, data=data)

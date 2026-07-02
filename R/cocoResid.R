@@ -29,10 +29,7 @@ cocoResid <- function(coco, val.num = 1e-10) {
     # set up values for lambda
     xreg <- coco$cov
     vec_lambda <- par[(length(par)-ncol(xreg)+1):length(par)]
-    lambdas <- c()
-    for (j in 1:length(data)) {
-      lambdas[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
-    }
+    lambdas <- applyLinkFunctionVec(xreg %*% vec_lambda, coco$link_function)
   } else {
     lambda <- par[1]
   }
@@ -94,24 +91,12 @@ cocoResid <- function(coco, val.num = 1e-10) {
         
       y <- data[j - seasonality[1]]
       z <- data[j - seasonality[2]]
-        
-      # compute conditional mean of R
-      meanR <- 0
-      varR <- 0
-      prob_accumulated <- 0
-      probabilities <- c()
-      r <- 0
-      while (prob_accumulated < (1 - val.num)) {
-        prob <- dR2(r, y, z, lambda, alpha1, alpha2, alpha3, eta)
-        probabilities <- c(probabilities, prob)
-        prob_accumulated <- prob_accumulated + prob
-        r <- r + 1
-      }
-      
-      #define objects for cond. mean and cond. variance computation
-      n_relevant_probabilities <- r-1 #r-1 as +1 is added in the end within the while loop
-      relevant_counts <- 0:(r-1)
-      
+
+      # P(R = r | y, z) for r = 0, 1, ... until 1 - val.num is covered,
+      # computed in a single C++ call
+      probabilities <- dR2_vec(y, z, lambda, alpha1, alpha2, alpha3, eta, val.num)
+      relevant_counts <- 0:(length(probabilities) - 1)
+
       #compute conditional mean and conditional variance
       meanR <- sum(probabilities * relevant_counts)
       varR <-  sum(probabilities * ((relevant_counts - meanR)^2))

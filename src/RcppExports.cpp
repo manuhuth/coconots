@@ -46,12 +46,11 @@ BEGIN_RCPP
 END_RCPP
 }
 // likelihoodGP2
-double likelihoodGP2(double sumlimit, double lambda, double alpha1, double alpha2, double alpha3, double eta, int T, int seas1, int seas2, std::vector<int> data);
-RcppExport SEXP _coconots_likelihoodGP2(SEXP sumlimitSEXP, SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP) {
+double likelihoodGP2(double lambda, double alpha1, double alpha2, double alpha3, double eta, int T, int seas1, int seas2, const std::vector<int>& data);
+RcppExport SEXP _coconots_likelihoodGP2(SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type sumlimit(sumlimitSEXP);
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< double >::type alpha2(alpha2SEXP);
@@ -60,35 +59,33 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
     Rcpp::traits::input_parameter< int >::type seas1(seas1SEXP);
     Rcpp::traits::input_parameter< int >::type seas2(seas2SEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
-    rcpp_result_gen = Rcpp::wrap(likelihoodGP2(sumlimit, lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data));
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type data(dataSEXP);
+    rcpp_result_gen = Rcpp::wrap(likelihoodGP2(lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data));
     return rcpp_result_gen;
 END_RCPP
 }
 // likelihoodGP1
-double likelihoodGP1(double sumlimit, double lambda, double alpha, double eta, int T, int seas, std::vector<int> data);
-RcppExport SEXP _coconots_likelihoodGP1(SEXP sumlimitSEXP, SEXP lambdaSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP TSEXP, SEXP seasSEXP, SEXP dataSEXP) {
+double likelihoodGP1(double lambda, double alpha, double eta, int T, int seas, const std::vector<int>& data);
+RcppExport SEXP _coconots_likelihoodGP1(SEXP lambdaSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP TSEXP, SEXP seasSEXP, SEXP dataSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type sumlimit(sumlimitSEXP);
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
     Rcpp::traits::input_parameter< int >::type seas(seasSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
-    rcpp_result_gen = Rcpp::wrap(likelihoodGP1(sumlimit, lambda, alpha, eta, T, seas, data));
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type data(dataSEXP);
+    rcpp_result_gen = Rcpp::wrap(likelihoodGP1(lambda, alpha, eta, T, seas, data));
     return rcpp_result_gen;
 END_RCPP
 }
 // simGP2
-std::vector<int> simGP2(double sumlimit, double lambda, double alpha1, double alpha2, double alpha3, double eta, int T, int N, int seas1, int seas2, std::vector<int> data, std::vector<double> uniform, std::vector<int> innovations);
-RcppExport SEXP _coconots_simGP2(SEXP sumlimitSEXP, SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP uniformSEXP, SEXP innovationsSEXP) {
+std::vector<int> simGP2(double lambda, double alpha1, double alpha2, double alpha3, double eta, int T, int N, int seas1, int seas2, std::vector<int> data, const std::vector<double>& uniform, const std::vector<int>& innovations);
+RcppExport SEXP _coconots_simGP2(SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP uniformSEXP, SEXP innovationsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type sumlimit(sumlimitSEXP);
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< double >::type alpha2(alpha2SEXP);
@@ -99,19 +96,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seas1(seas1SEXP);
     Rcpp::traits::input_parameter< int >::type seas2(seas2SEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type uniform(uniformSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type innovations(innovationsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simGP2(sumlimit, lambda, alpha1, alpha2, alpha3, eta, T, N, seas1, seas2, data, uniform, innovations));
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type uniform(uniformSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type innovations(innovationsSEXP);
+    rcpp_result_gen = Rcpp::wrap(simGP2(lambda, alpha1, alpha2, alpha3, eta, T, N, seas1, seas2, data, uniform, innovations));
     return rcpp_result_gen;
 END_RCPP
 }
 // simGP1
-std::vector<int> simGP1(double sumlimit, double lambda, double alpha, double eta, int T, int N, int seas, std::vector<int> data, std::vector<double> uniform, std::vector<int> innovations);
-RcppExport SEXP _coconots_simGP1(SEXP sumlimitSEXP, SEXP lambdaSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP uniformSEXP, SEXP innovationsSEXP) {
+std::vector<int> simGP1(double lambda, double alpha, double eta, int T, int N, int seas, std::vector<int> data, const std::vector<double>& uniform, const std::vector<int>& innovations);
+RcppExport SEXP _coconots_simGP1(SEXP lambdaSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP uniformSEXP, SEXP innovationsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type sumlimit(sumlimitSEXP);
     Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
@@ -119,9 +115,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     Rcpp::traits::input_parameter< int >::type seas(seasSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type uniform(uniformSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type innovations(innovationsSEXP);
-    rcpp_result_gen = Rcpp::wrap(simGP1(sumlimit, lambda, alpha, eta, T, N, seas, data, uniform, innovations));
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type uniform(uniformSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type innovations(innovationsSEXP);
+    rcpp_result_gen = Rcpp::wrap(simGP1(lambda, alpha, eta, T, N, seas, data, uniform, innovations));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -143,6 +139,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dGP2h_vec
+NumericVector dGP2h_vec(int xmax, int y, int z, double lambda, double alpha1, double alpha2, double alpha3, double eta);
+RcppExport SEXP _coconots_dGP2h_vec(SEXP xmaxSEXP, SEXP ySEXP, SEXP zSEXP, SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type xmax(xmaxSEXP);
+    Rcpp::traits::input_parameter< int >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type z(zSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha1(alpha1SEXP);
+    Rcpp::traits::input_parameter< double >::type alpha2(alpha2SEXP);
+    Rcpp::traits::input_parameter< double >::type alpha3(alpha3SEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    rcpp_result_gen = Rcpp::wrap(dGP2h_vec(xmax, y, z, lambda, alpha1, alpha2, alpha3, eta));
+    return rcpp_result_gen;
+END_RCPP
+}
 // dGP1h
 double dGP1h(int x, int y, double lambda, double alpha, double eta);
 RcppExport SEXP _coconots_dGP1h(SEXP xSEXP, SEXP ySEXP, SEXP lambdaSEXP, SEXP alphaSEXP, SEXP etaSEXP) {
@@ -155,6 +169,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
     rcpp_result_gen = Rcpp::wrap(dGP1h(x, y, lambda, alpha, eta));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dGP1h_vec
+NumericVector dGP1h_vec(int xmax, int y, double lambda, double alpha, double eta);
+RcppExport SEXP _coconots_dGP1h_vec(SEXP xmaxSEXP, SEXP ySEXP, SEXP lambdaSEXP, SEXP alphaSEXP, SEXP etaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type xmax(xmaxSEXP);
+    Rcpp::traits::input_parameter< int >::type y(ySEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    rcpp_result_gen = Rcpp::wrap(dGP1h_vec(xmax, y, lambda, alpha, eta));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -176,6 +205,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dR2_vec
+NumericVector dR2_vec(int y, int z, double lambda, double alpha1, double alpha2, double alpha3, double eta, double val_num);
+RcppExport SEXP _coconots_dR2_vec(SEXP ySEXP, SEXP zSEXP, SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP val_numSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type z(zSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha1(alpha1SEXP);
+    Rcpp::traits::input_parameter< double >::type alpha2(alpha2SEXP);
+    Rcpp::traits::input_parameter< double >::type alpha3(alpha3SEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< double >::type val_num(val_numSEXP);
+    rcpp_result_gen = Rcpp::wrap(dR2_vec(y, z, lambda, alpha1, alpha2, alpha3, eta, val_num));
+    return rcpp_result_gen;
+END_RCPP
+}
 // Pyz
 double Pyz(int y, int z, double lambda, double alpha1, double alpha2, double alpha3, double eta);
 RcppExport SEXP _coconots_Pyz(SEXP ySEXP, SEXP zSEXP, SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP) {
@@ -194,12 +241,11 @@ BEGIN_RCPP
 END_RCPP
 }
 // simGP2cov
-std::vector<int> simGP2cov(double sumlimit, double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int N, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg, std::vector<double> uniform, std::vector<int> innovations, std::string link_function);
-RcppExport SEXP _coconots_simGP2cov(SEXP sumlimitSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP uniformSEXP, SEXP innovationsSEXP, SEXP link_functionSEXP) {
+std::vector<int> simGP2cov(double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int N, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg, const std::vector<double>& uniform, const std::vector<int>& innovations, std::string link_function);
+RcppExport SEXP _coconots_simGP2cov(SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP uniformSEXP, SEXP innovationsSEXP, SEXP link_functionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type sumlimit(sumlimitSEXP);
     Rcpp::traits::input_parameter< double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< double >::type alpha2(alpha2SEXP);
     Rcpp::traits::input_parameter< double >::type alpha3(alpha3SEXP);
@@ -211,20 +257,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seas2(seas2SEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type uniform(uniformSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type innovations(innovationsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type uniform(uniformSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type innovations(innovationsSEXP);
     Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
-    rcpp_result_gen = Rcpp::wrap(simGP2cov(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations, link_function));
+    rcpp_result_gen = Rcpp::wrap(simGP2cov(alpha1, alpha2, alpha3, eta, lambdas, T, N, seas1, seas2, data, xreg, uniform, innovations, link_function));
     return rcpp_result_gen;
 END_RCPP
 }
 // simGP1cov
-std::vector<int> simGP1cov(double sumlimit, double alpha, double eta, NumericVector lambdas, int T, int N, int seas, std::vector<int> data, NumericMatrix xreg, std::vector<double> uniform, std::vector<int> innovations, std::string link_function);
-RcppExport SEXP _coconots_simGP1cov(SEXP sumlimitSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP uniformSEXP, SEXP innovationsSEXP, SEXP link_functionSEXP) {
+std::vector<int> simGP1cov(double alpha, double eta, NumericVector lambdas, int T, int N, int seas, std::vector<int> data, NumericMatrix xreg, const std::vector<double>& uniform, const std::vector<int>& innovations, std::string link_function);
+RcppExport SEXP _coconots_simGP1cov(SEXP alphaSEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP NSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP uniformSEXP, SEXP innovationsSEXP, SEXP link_functionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type sumlimit(sumlimitSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type lambdas(lambdasSEXP);
@@ -233,20 +278,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seas(seasSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type uniform(uniformSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type innovations(innovationsSEXP);
+    Rcpp::traits::input_parameter< const std::vector<double>& >::type uniform(uniformSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type innovations(innovationsSEXP);
     Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
-    rcpp_result_gen = Rcpp::wrap(simGP1cov(sumlimit, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations, link_function));
+    rcpp_result_gen = Rcpp::wrap(simGP1cov(alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations, link_function));
     return rcpp_result_gen;
 END_RCPP
 }
 // likelihoodGP2cov
-double likelihoodGP2cov(double sumlimit, double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int seas1, int seas2, std::vector<int> data, NumericMatrix xreg, std::string link_function);
-RcppExport SEXP _coconots_likelihoodGP2cov(SEXP sumlimitSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP) {
+double likelihoodGP2cov(double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int seas1, int seas2, const std::vector<int>& data, NumericMatrix xreg, std::string link_function);
+RcppExport SEXP _coconots_likelihoodGP2cov(SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type sumlimit(sumlimitSEXP);
     Rcpp::traits::input_parameter< double >::type alpha1(alpha1SEXP);
     Rcpp::traits::input_parameter< double >::type alpha2(alpha2SEXP);
     Rcpp::traits::input_parameter< double >::type alpha3(alpha3SEXP);
@@ -255,29 +299,28 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
     Rcpp::traits::input_parameter< int >::type seas1(seas1SEXP);
     Rcpp::traits::input_parameter< int >::type seas2(seas2SEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type data(dataSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
     Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
-    rcpp_result_gen = Rcpp::wrap(likelihoodGP2cov(sumlimit, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function));
+    rcpp_result_gen = Rcpp::wrap(likelihoodGP2cov(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function));
     return rcpp_result_gen;
 END_RCPP
 }
 // likelihoodGP1cov
-double likelihoodGP1cov(double sumlimit, double alpha, double eta, NumericVector lambdas, int T, int seas, std::vector<int> data, NumericMatrix xreg, std::string link_function);
-RcppExport SEXP _coconots_likelihoodGP1cov(SEXP sumlimitSEXP, SEXP alphaSEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP) {
+double likelihoodGP1cov(double alpha, double eta, NumericVector lambdas, int T, int seas, const std::vector<int>& data, NumericMatrix xreg, std::string link_function);
+RcppExport SEXP _coconots_likelihoodGP1cov(SEXP alphaSEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seasSEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type sumlimit(sumlimitSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type lambdas(lambdasSEXP);
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
     Rcpp::traits::input_parameter< int >::type seas(seasSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type data(dataSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
     Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
-    rcpp_result_gen = Rcpp::wrap(likelihoodGP1cov(sumlimit, alpha, eta, lambdas, T, seas, data, xreg, link_function));
+    rcpp_result_gen = Rcpp::wrap(likelihoodGP1cov(alpha, eta, lambdas, T, seas, data, xreg, link_function));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -286,18 +329,21 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coconots_fact", (DL_FUNC) &_coconots_fact, 1},
     {"_coconots_applyLinkFunction", (DL_FUNC) &_coconots_applyLinkFunction, 2},
     {"_coconots_innerProduct", (DL_FUNC) &_coconots_innerProduct, 2},
-    {"_coconots_likelihoodGP2", (DL_FUNC) &_coconots_likelihoodGP2, 10},
-    {"_coconots_likelihoodGP1", (DL_FUNC) &_coconots_likelihoodGP1, 7},
-    {"_coconots_simGP2", (DL_FUNC) &_coconots_simGP2, 13},
-    {"_coconots_simGP1", (DL_FUNC) &_coconots_simGP1, 10},
+    {"_coconots_likelihoodGP2", (DL_FUNC) &_coconots_likelihoodGP2, 9},
+    {"_coconots_likelihoodGP1", (DL_FUNC) &_coconots_likelihoodGP1, 6},
+    {"_coconots_simGP2", (DL_FUNC) &_coconots_simGP2, 12},
+    {"_coconots_simGP1", (DL_FUNC) &_coconots_simGP1, 9},
     {"_coconots_dGP2h", (DL_FUNC) &_coconots_dGP2h, 8},
+    {"_coconots_dGP2h_vec", (DL_FUNC) &_coconots_dGP2h_vec, 8},
     {"_coconots_dGP1h", (DL_FUNC) &_coconots_dGP1h, 5},
+    {"_coconots_dGP1h_vec", (DL_FUNC) &_coconots_dGP1h_vec, 5},
     {"_coconots_dR2", (DL_FUNC) &_coconots_dR2, 8},
+    {"_coconots_dR2_vec", (DL_FUNC) &_coconots_dR2_vec, 8},
     {"_coconots_Pyz", (DL_FUNC) &_coconots_Pyz, 7},
-    {"_coconots_simGP2cov", (DL_FUNC) &_coconots_simGP2cov, 15},
-    {"_coconots_simGP1cov", (DL_FUNC) &_coconots_simGP1cov, 12},
-    {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 12},
-    {"_coconots_likelihoodGP1cov", (DL_FUNC) &_coconots_likelihoodGP1cov, 9},
+    {"_coconots_simGP2cov", (DL_FUNC) &_coconots_simGP2cov, 14},
+    {"_coconots_simGP1cov", (DL_FUNC) &_coconots_simGP1cov, 11},
+    {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 11},
+    {"_coconots_likelihoodGP1cov", (DL_FUNC) &_coconots_likelihoodGP1cov, 8},
     {NULL, NULL, 0}
 };
 
