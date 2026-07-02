@@ -46,8 +46,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // likelihoodGP2
-double likelihoodGP2(double lambda, double alpha1, double alpha2, double alpha3, double eta, int T, int seas1, int seas2, const std::vector<int>& data);
-RcppExport SEXP _coconots_likelihoodGP2(SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP) {
+double likelihoodGP2(double lambda, double alpha1, double alpha2, double alpha3, double eta, int T, int seas1, int seas2, const std::vector<int>& data, int cores);
+RcppExport SEXP _coconots_likelihoodGP2(SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -60,7 +60,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seas1(seas1SEXP);
     Rcpp::traits::input_parameter< int >::type seas2(seas2SEXP);
     Rcpp::traits::input_parameter< const std::vector<int>& >::type data(dataSEXP);
-    rcpp_result_gen = Rcpp::wrap(likelihoodGP2(lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data));
+    Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
+    rcpp_result_gen = Rcpp::wrap(likelihoodGP2(lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data, cores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -286,8 +287,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // likelihoodGP2cov
-double likelihoodGP2cov(double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int seas1, int seas2, const std::vector<int>& data, NumericMatrix xreg, std::string link_function);
-RcppExport SEXP _coconots_likelihoodGP2cov(SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP) {
+double likelihoodGP2cov(double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int seas1, int seas2, const std::vector<int>& data, NumericMatrix xreg, std::string link_function, int cores);
+RcppExport SEXP _coconots_likelihoodGP2cov(SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP, SEXP coresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -302,7 +303,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::vector<int>& >::type data(dataSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
     Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
-    rcpp_result_gen = Rcpp::wrap(likelihoodGP2cov(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function));
+    Rcpp::traits::input_parameter< int >::type cores(coresSEXP);
+    rcpp_result_gen = Rcpp::wrap(likelihoodGP2cov(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -329,7 +331,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coconots_fact", (DL_FUNC) &_coconots_fact, 1},
     {"_coconots_applyLinkFunction", (DL_FUNC) &_coconots_applyLinkFunction, 2},
     {"_coconots_innerProduct", (DL_FUNC) &_coconots_innerProduct, 2},
-    {"_coconots_likelihoodGP2", (DL_FUNC) &_coconots_likelihoodGP2, 9},
+    {"_coconots_likelihoodGP2", (DL_FUNC) &_coconots_likelihoodGP2, 10},
     {"_coconots_likelihoodGP1", (DL_FUNC) &_coconots_likelihoodGP1, 6},
     {"_coconots_simGP2", (DL_FUNC) &_coconots_simGP2, 12},
     {"_coconots_simGP1", (DL_FUNC) &_coconots_simGP1, 9},
@@ -342,7 +344,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coconots_Pyz", (DL_FUNC) &_coconots_Pyz, 7},
     {"_coconots_simGP2cov", (DL_FUNC) &_coconots_simGP2cov, 14},
     {"_coconots_simGP1cov", (DL_FUNC) &_coconots_simGP1cov, 11},
-    {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 11},
+    {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 12},
     {"_coconots_likelihoodGP1cov", (DL_FUNC) &_coconots_likelihoodGP1cov, 8},
     {NULL, NULL, 0}
 };

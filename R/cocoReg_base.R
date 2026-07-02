@@ -6,7 +6,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
                          method_optim=method_optim,
                          optim_control = FALSE, constrained.optim = TRUE, start = NULL,
                          start.val.adjust = TRUE, replace.start.val = 1e-5,
-                         iteration.start.val = 0.99, method.hessian = "Richardson", julia_installed=FALSE, link_function="log", ...) {
+                         iteration.start.val = 0.99, method.hessian = "Richardson", julia_installed=FALSE, link_function="log", cores = 1, ...) {
   start_time <- Sys.time()
 
   if (replace.start.val <= 0) {
@@ -354,7 +354,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
 
         T <- length(data)
 
-        mlef <- likelihoodGP2(lambda, alpha1, alpha2, alpha3, eta, T, seasonality[1], seasonality[2], data)
+        mlef <- likelihoodGP2(lambda, alpha1, alpha2, alpha3, eta, T, seasonality[1], seasonality[2], data, cores)
 
         return(mlef)
       } # end function
@@ -544,7 +544,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
 
         T <- length(data)
 
-        mlef <- likelihoodGP2(lambda, alpha1, alpha2, alpha3, eta, T, seasonality[1], seasonality[2], data)
+        mlef <- likelihoodGP2(lambda, alpha1, alpha2, alpha3, eta, T, seasonality[1], seasonality[2], data, cores)
 
         return(mlef)
       } # end function

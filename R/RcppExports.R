@@ -13,8 +13,8 @@ innerProduct <- function(x, y) {
     .Call(`_coconots_innerProduct`, x, y)
 }
 
-likelihoodGP2 <- function(lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data) {
-    .Call(`_coconots_likelihoodGP2`, lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data)
+likelihoodGP2 <- function(lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data, cores = 1L) {
+    .Call(`_coconots_likelihoodGP2`, lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2, data, cores)
 }
 
 likelihoodGP1 <- function(lambda, alpha, eta, T, seas, data) {
@@ -65,8 +65,8 @@ simGP1cov <- function(alpha, eta, lambdas, T, N, seas, data, xreg, uniform, inno
     .Call(`_coconots_simGP1cov`, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations, link_function)
 }
 
-likelihoodGP2cov <- function(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function) {
-    .Call(`_coconots_likelihoodGP2cov`, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function)
+likelihoodGP2cov <- function(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores = 1L) {
+    .Call(`_coconots_likelihoodGP2cov`, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores)
 }
 
 likelihoodGP1cov <- function(alpha, eta, lambdas, T, seas, data, xreg, link_function) {

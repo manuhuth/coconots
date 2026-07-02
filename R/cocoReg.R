@@ -17,7 +17,7 @@
 #' @param replace.start.val numeric value indicating the value to replace any invalid starting values, currently only available in the \proglang{R} version
 #' @param iteration.start.val numeric value indicating the proportion of the interval to use as the new starting value, currently only available in the \proglang{R} version
 #' @param method.hessian character string indicating the method to be used to approximate the Hessian matrix, currently only available in the \proglang{R} version
-#' @param cores numeric indicating the number of cores to use, currently only available in the \proglang{R} version (default: 2)
+#' @param cores numeric indicating the number of threads used to evaluate the order-2 likelihood on the RCPP backend. Defaults to the number of physical cores minus one (capped at 2 while \code{_R_CHECK_LIMIT_CORES_} is set, e.g. during CRAN checks). Has no effect on order-1 models or the Julia backend. Results are identical for any number of threads.
 #' @param julia if TRUE, the model is estimated with \proglang{julia}. This can improve computational speed significantly since \proglang{julia} makes use of derivatives using autodiff. In this case, only \code{type}, \code{order}, \code{data}, \code{xreg}, and \code{start} are used as other inputs (default: FALSE).
 #' @param julia_installed if TRUE, the model \proglang{R} output will contain a \proglang{julia} compatible output element.
 #' @param link_function Specifies the link function for the conditional mean of the innovation (\eqn{\lambda}). The default is `log`, but other available options include `identity`, `relu`, and `softplus`. This parameter is applicable only when covariates are used. Note that using the `identity` link function may result in \eqn{\lambda} becoming negative. To prevent this, ensure all covariates are positive and restrict the parameter \eqn{\beta} to positive values by setting `b.beta` to a small positive value.
@@ -96,10 +96,14 @@ cocoReg <- function(type, order, data, xreg = NULL,
                     constrained.optim = TRUE, b.beta = -10,
                     start = NULL, start.val.adjust = TRUE, method_optim = "Nelder-Mead",
                     replace.start.val = 1e-5, iteration.start.val = 0.6,
-                    method.hessian = "Richardson", cores=2, julia=FALSE, 
+                    method.hessian = "Richardson", cores=NULL, julia=FALSE,
                     julia_installed=FALSE, link_function="log") {
   seasonality <- c(1, 2) #will be used as argument in future versions
-  
+
+  if (is.null(cores)) {
+    cores <- coco_default_cores()
+  }
+
   if ((type != "GP") & (type != "Poisson")) {
     stop("Option 'type' must be either Poisson or GP")
   }
@@ -140,14 +144,16 @@ cocoReg <- function(type, order, data, xreg = NULL,
       type = type, order = order, data = data, seasonality = seasonality, 
       constrained.optim = constrained.optim, start = start,
       start.val.adjust = start.val.adjust, replace.start.val = replace.start.val, method_optim=method_optim,
-      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed, link_function=link_function
+      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed, link_function=link_function,
+      cores = cores
     )
   } else {
     output <- cocoReg_cov(
       type = type, order = order, data = data, xreg = xreg, seasonality = seasonality,
       constrained.optim = constrained.optim, b.beta = b.beta, start = start, method_optim=method_optim,
       start.val.adjust = start.val.adjust, replace.start.val = replace.start.val,
-      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed, link_function=link_function
+      iteration.start.val = iteration.start.val, method.hessian = method.hessian, julia_installed=julia_installed, link_function=link_function,
+      cores = cores
     )
   }
   
