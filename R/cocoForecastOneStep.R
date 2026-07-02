@@ -57,22 +57,19 @@ cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-12, xcast=NULL,
     type <- coco$type
     order <- coco$order
     
-    densities <- c()
-    
     x <- 0:max_use
-    
+
     if (order == 1){
       if (type == "Poisson"){parameter <- c(parameter,0)}
-      for (number in x) { 
-        densities[number+1] <- dGP1(x=number, y=y, par=parameter)
-      }
-    } 
-    
+      validate_gp1_par(parameter[1], parameter[2], parameter[3])
+      densities <- as.numeric(dGP1h_vec(max_use, y, parameter[1], parameter[2], parameter[3]))
+    }
+
     if (order == 2){
       if (type == "Poisson"){parameter <- c(parameter,0)}
-      for (number in x) { 
-        densities[number+1] <- dGP2(x=number, y=y, z=z, par=parameter)
-      }
+      validate_gp2_par(parameter[1], parameter[2], parameter[3], parameter[4], parameter[5])
+      densities <- as.numeric(dGP2h_vec(max_use, y, z, parameter[1], parameter[2],
+                                        parameter[3], parameter[4], parameter[5]))
     }
     
     mode <- match(max(densities), densities) - 1

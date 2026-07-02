@@ -72,36 +72,46 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
     xreg <- coco$cov
     betas <- par[(length(par)-ncol(xreg)+1):length(par)]
     lambda_raw <- xreg %*% betas
-    lambdas <- apply(lambda_raw, 1, function(x) applyLinkFunction(x, coco$link_function))
-    
+    lambdas <- applyLinkFunctionVec(lambda_raw, coco$link_function)
+
     par_original <- par
-    
+
   }
-  
+
+  if (any((round(data) != data) | (data < 0))) {
+    stop("y must be a non-negative integer")
+  }
+
   #Poisson/GP 1
   if  (coco$order == 1){
     calculate_scores <- function(t) {
       if (!is.null(coco$cov)){
-        par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))]) 
+        par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))])
       }
-      
+      validate_gp1_par(par[1], par[2], par[3])
+
+      # all three scores share the transition densities P(x | y_t) for
+      # x = 0..max_x (plus data[t] if beyond), computed in one C++ call
+      dvec <- dGP1h_vec(max(max_x, data[t]), data[t - seas[1]], par[1], par[2], par[3])
+      density_obs <- dvec[data[t] + 1]
+
       # log score
-      log_score <- -log(dGP1(data[t], data[t - seas[1]], par))
-      
+      log_score <- -log(density_obs)
+
       # quadratic score
-      norm_p <- sum(sapply(0:max_x, function(j) dGP1(j, data[t - seas[1]], par)^2))
-      quad_score <- -2 * dGP1(data[t], data[t - seas[1]], par) + norm_p
-      
+      norm_p <- sum(dvec[1:(max_x + 1)]^2)
+      quad_score <- -2 * density_obs + norm_p
+
       # ranked probability score
-      sum_sq_diff <- sum(sapply(0:max_x, function(j) (pGP1(j, data[t - seas[1]], par) - (j >= data[t]))^2))
-      rps_score <- sum_sq_diff
-      
+      cdf <- cumsum(dvec)[1:(max_x + 1)]
+      rps_score <- sum((cdf - (0:max_x >= data[t]))^2)
+
       return(c(log_score, quad_score, rps_score))
     }
-    
+
     # Use sapply for the outer loop
     scores <- sapply((seas[1] + 1):T, calculate_scores)
-    
+
     # Summarize scores
     log.score <- mean(scores[1, ])
     quad.score <- mean(scores[2, ])
@@ -114,26 +124,31 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   if (coco$order == 2){
     calculate_scores <- function(t) {
       if (!is.null(coco$cov)){
-        par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))]) 
+        par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))])
       }
-      
+      validate_gp2_par(par[1], par[2], par[3], par[4], par[5])
+
+      dvec <- dGP2h_vec(max(max_x, data[t]), data[t - seas[1]], data[t - seas[2]],
+                        par[1], par[2], par[3], par[4], par[5])
+      density_obs <- dvec[data[t] + 1]
+
       # log score
-      log_score <- -log(dGP2(data[t], data[t - seas[1]], data[t - seas[2]], par))
-      
+      log_score <- -log(density_obs)
+
       # quadratic score
-      norm_p <- sum(sapply(0:max_x, function(j) dGP2(j, data[t - seas[1]], data[t - seas[2]], par)^2))
-      quad_score <- -2 * dGP2(data[t], data[t - seas[1]], data[t - seas[2]], par) + norm_p
-      
+      norm_p <- sum(dvec[1:(max_x + 1)]^2)
+      quad_score <- -2 * density_obs + norm_p
+
       # ranked probability score
-      sum_sq_diff <- sum(sapply(0:max_x, function(j) (pGP2(j, data[t - seas[1]], data[t - seas[2]], par) - (j >= data[t]))^2))
-      rps_score <- sum_sq_diff
-      
+      cdf <- cumsum(dvec)[1:(max_x + 1)]
+      rps_score <- sum((cdf - (0:max_x >= data[t]))^2)
+
       return(c(log_score, quad_score, rps_score))
     }
-    
+
     # Use sapply for the outer loop
     scores <- sapply((seas[2] + 1):T, calculate_scores)
-    
+
     # Summarize scores
     log.score <- mean(scores[1, ])
     quad.score <- mean(scores[2, ])

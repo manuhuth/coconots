@@ -58,140 +58,33 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
   } else {
     
     seasonality <- c(1,2) #will be used as argument in future versions
-  
+
     conf.alpha <- 1 - confidence
-    
-    if ( is.null(coco$cov) ) {
-      if ((coco$type == "GP") & (coco$order == 2)) {
-        par <- coco$par
-        lambda <- par[1]
-        alpha1 <- par[2]
-        alpha2 <- par[3]
-        alpha3 <- par[4]
-        eta <- par[5]
-        U <- 1 / (1 - alpha1 - alpha2 - alpha3)
-        xreg <- NULL
-      }
-  
-      if ((coco$type == "Poisson") & (coco$order == 2)) {
-        par <- coco$par
-        lambda <- par[1]
-        alpha1 <- par[2]
-        alpha2 <- par[3]
-        alpha3 <- par[4]
-        U <- 1 / (1 - alpha1 - alpha2 - alpha3)
-        xreg <- NULL
-      }
-  
-      if ((coco$type == "GP") & (coco$order == 1)) {
-        par <- coco$par
-        lambda <- par[1]
-        alpha <- par[2]
-        eta <- par[3]
-        xreg <- NULL
-      }
-  
-      if ((coco$type == "Poisson") & (coco$order == 1)) {
-        par <- coco$par
-        lambda <- par[1]
-        alpha <- par[2]
-        xreg <- NULL
-      }
-    }
-  
-  
-    if ( !is.null(coco$cov) )  {
-      if ((coco$type == "Poisson") & (coco$order == 1)) {
-        par <- coco$par
-        alpha <- par[1]
-  
-        vec_lambda <- par[-(1)]
-        xreg <- coco$cov
-        data <- coco$ts
-  
-        # set up values for lambda
-        lambda <- c()
-        for (j in 1:length(data)) {
-          lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
-        }
-      }
-  
-      if ((coco$type == "GP") & (coco$order == 1)) {
-        par <- coco$par
-        alpha <- par[1]
-        eta <- par[2]
-        vec_lambda <- par[-(1:2)]
-        xreg <- coco$cov
-        data <- coco$ts
-  
-        lambda <- c()
-        for (j in 1:length(data)) {
-          lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
-        }
-      }
-  
-      if ((coco$type == "Poisson") & (coco$order == 2)) {
-        par <- coco$par
-        alpha1 <- par[1]
-        alpha2 <- par[2]
-        alpha3 <- par[3]
-        vec_lambda <- par[-(1:3)]
-        xreg <- coco$cov
-        data <- coco$ts
-        U <- 1 / (1 - alpha1 - alpha2 - alpha3)
-  
-        lambda <- c()
-        for (j in 1:length(data)) {
-          lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
-        }
-      }
-  
-      if ((coco$type == "GP") & (coco$order == 2)) {
-        par <- coco$par
-        alpha1 <- par[1]
-        alpha2 <- par[2]
-        alpha3 <- par[3]
-        eta <- par[4]
-  
-        vec_lambda <- par[-(1:4)]
-        xreg <- coco$cov
-        data <- coco$ts
-        U <- 1 / (1 - alpha1 - alpha2 - alpha3)
-  
-        lambda <- c()
-        for (j in 1:length(data)) {
-          lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
-        }
-      }
-    }
-  
-  
+
+    par <- coco$par
+
     # Parametric Bootstrap
     T <- length(data)
     nlags <- numb.lags
     nB <- rep.Bootstrap
-    B <- matrix(NaN, nrow = T, ncol = nB)
     ac <- matrix(NaN, nrow = nlags, ncol = nB)
-    conf <- conf.alpha
-  
+
     if ((is.null(coco$cov)) ) {
       for (b in 1:nB) {
         help <- cocoSim(order = coco$order, type = coco$type, par = par, length = (T + 10))[11:(T + 10)]
-        B[, b] <- help
         ac[, b] <- forecast::Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
       }
     }
-  
-  
+
+
     if (!is.null(coco$cov)) {
-      xreg <- as.matrix(xreg)
+      xreg <- as.matrix(coco$cov)
       for (b in 1:nB) {
         help <- cocoSim(type = coco$type, order = coco$order, par = par, length = T, xreg = xreg, link_function=coco$link_function)
-        B[, b] <- help
         ac[, b] <- forecast::Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
       }
     }
-  
+
 
   } #end julia
   acfdata <- forecast::Acf(data, plot = FALSE, lag.max = numb.lags)$acf[2:(numb.lags + 1)]

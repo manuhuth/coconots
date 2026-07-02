@@ -78,7 +78,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     innovations <- stats::rpois(n = T, lambda)
     uniform <- stats::runif(n = T, 0, 1)
 
-    data <- simGP1(20, lambda, alpha, eta, T, N, seasonality[1], data, uniform, innovations)
+    data <- simGP1(lambda, alpha, eta, T, N, seasonality[1], data, uniform, innovations)
 
 
     end_time <- Sys.time()
@@ -108,7 +108,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     innovations <- rgenpois(n = T, lambda, eta)
     uniform <- stats::runif(n = T, 0, 1)
 
-    data <- simGP1(20, lambda, alpha, eta, T, N, seasonality[1], data, uniform, innovations)
+    data <- simGP1(lambda, alpha, eta, T, N, seasonality[1], data, uniform, innovations)
 
     end_time <- Sys.time()
     time <- end_time - start_time
@@ -138,7 +138,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     innovations <- stats::rpois(n = T, lambda)
     uniform <- stats::runif(n = T, 0, 1)
     data <- simGP2(
-      20, lambda, alpha1, alpha2, alpha3, eta, T, N, seasonality[1],
+      lambda, alpha1, alpha2, alpha3, eta, T, N, seasonality[1],
       seasonality[2], data, uniform, innovations
     )
 
@@ -171,7 +171,7 @@ cocoSim_base <- function(type, order, par, size, seasonality = c(1, 2), init = N
     innovations <- rgenpois(n = T, lambda, eta)
     uniform <- stats::runif(n = T, 0, 1)
     data <- simGP2(
-      20, lambda, alpha1, alpha2, alpha3, eta, T, N, seasonality[1],
+      lambda, alpha1, alpha2, alpha3, eta, T, N, seasonality[1],
       seasonality[2], data, uniform, innovations
     )
 

@@ -91,19 +91,14 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
   # PAR1
   if ((type == "Poisson") & (order == 1)) {
     PAR1 <- function(data) {
+      xreg_matrix <- data.matrix(xreg)
       mlf <- function(par, data) {
         alpha <- par[1]
-
         eta <- 0
-        vec_lambda <- c()
-        for (j in 1:ncol(xreg)) {
-          nam <- paste("lambda", j, sep = "")
-          vec_lambda[j] <- assign(nam, par[j + 1])
-        }
+        vec_lambda <- par[-1]
 
         T <- length(data)
-        xreg_matrix <- data.matrix(xreg)
-        mlef <- likelihoodGP1cov(20, alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP1cov(alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
         return(mlef)
       } # end function
 
@@ -182,30 +177,18 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       } # end constrained.optim False
 
       pars <- as.vector(unlist(fit$par, use.names = FALSE))
-      lambs <- c()
-      for (j in 1:ncov) {
-        lambs[j] <- paste("beta", j, sep = "")
-      }
+      lambs <- paste0("beta", 1:ncov)
       names(pars) <- c("alpha", lambs)
       T <- length(data)
-      xreg_matrix <- data.matrix(xreg)
-      likelihood <- -likelihoodGP1cov(20, pars[1], 0, pars[-1], T, seasonality[1], data, xreg_matrix, link_function)
+      likelihood <- -likelihoodGP1cov(pars[1], 0, pars[-1], T, seasonality[1], data, xreg_matrix, link_function)
 
       h <- function(par) {
         alpha <- par[1]
-
         eta <- 0
-
-        data <- data
-        vec_lambda <- c()
-        for (j in 1:ncol(xreg)) {
-          nam <- paste("lambda", j, sep = "")
-          vec_lambda[j] <- assign(nam, par[j + 1])
-        }
+        vec_lambda <- par[-1]
 
         T <- length(data)
-        xreg_matrix <- data.matrix(xreg)
-        mlef <- likelihoodGP1cov(20, alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP1cov(alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
         return(mlef)
       } # end ml function
 
@@ -254,19 +237,14 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
   #GP1
   if ((type == "GP") & (order == 1)) {
     GP1 <- function(data) {
+      xreg_matrix <- data.matrix(xreg)
       mlf <- function(par, data) {
         alpha <- par[1]
         eta <- par[2]
-
-        vec_lambda <- c()
-        for (j in 1:ncol(xreg)) {
-          nam <- paste("lambda", j, sep = "")
-          vec_lambda[j] <- assign(nam, par[j + 2])
-        }
+        vec_lambda <- par[-(1:2)]
 
         T <- length(data)
-        xreg_matrix <- data.matrix(xreg)
-        mlef <- likelihoodGP1cov(20, alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP1cov(alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
         return(mlef)
       } # end function
 
@@ -354,29 +332,18 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       } # end constrained.optim False
 
       pars <- as.vector(unlist(fit$par, use.names = FALSE))
-      lambs <- c()
-      for (j in 1:ncov) {
-        lambs[j ] <- paste("beta", j, sep = "")
-      }
+      lambs <- paste0("beta", 1:ncov)
       names(pars) <- c("alpha", "eta", lambs)
       T <- length(data)
-      xreg_matrix <- data.matrix(xreg)
-      likelihood <- -likelihoodGP1cov(20, pars[1], pars[2], pars[-c(1, 2)], T, seasonality[1], data, xreg_matrix, link_function)
+      likelihood <- -likelihoodGP1cov(pars[1], pars[2], pars[-c(1, 2)], T, seasonality[1], data, xreg_matrix, link_function)
 
       h <- function(par) {
         alpha <- par[1]
         eta <- par[2]
-
-        data <- data
-        vec_lambda <- c()
-        for (j in 1:ncol(xreg)) {
-          nam <- paste("lambda", j, sep = "")
-          vec_lambda[j] <- assign(nam, par[j + 2])
-        }
+        vec_lambda <- par[-(1:2)]
 
         T <- length(data)
-        xreg_matrix <- data.matrix(xreg)
-        mlef <- likelihoodGP1cov(20, alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP1cov(alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
         return(mlef)
       } # end ml function
 
@@ -429,23 +396,16 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
   #PAR2
   if ((type == "Poisson") & (order == 2)) {
     PAR2 <- function(data) {
+      xreg_matrix <- data.matrix(xreg)
       mlf <- function(par, data) {
-        xreg <- xreg
         alpha1 <- par[1]
         alpha2 <- par[2]
         alpha3 <- par[3]
-
         eta <- 0
-
-        vec_lambda <- c()
-        for (j in 1:ncol(xreg)) {
-          nam <- paste("lambda", j, sep = "")
-          vec_lambda[j] <- assign(nam, par[j + 3])
-        }
+        vec_lambda <- par[-(1:3)]
 
         T <- length(data)
-        xreg_matrix <- data.matrix(xreg)
-        mlef <- likelihoodGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
 
         return(mlef)
       } # end function
@@ -456,10 +416,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         p1 <- acf$acf[seasonality[1] + 1]
         p2 <- acf$acf[seasonality[2] + 1]
 
-        v <- c()
-        for (t in (seasonality[2] + 1):length(data)) {
-          v[t - seasonality[2]] <- (data[t] - mean(data)) * (data[t - seasonality[1]] - mean(data)) * (data[t - seasonality[2]] - mean(data))
-        }
+        mean_data <- mean(data)
+        idx <- (seasonality[2] + 1):length(data)
+        v <- (data[idx] - mean_data) * (data[idx - seasonality[1]] - mean_data) * (data[idx - seasonality[2]] - mean_data)
         mu111 <- sum(v) / length(data)
 
 
@@ -490,7 +449,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             while (alpha1_s + alpha2_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
               alpha2_s <- alpha2_s * iteration.start.val
-              alpha3_2 <- alpha3_s * iteration.start.val
+              alpha3_s <- alpha3_s * iteration.start.val
             }
             warning(paste("The initial sum of 2*alpha1, alpha2 and alpha3 had not been in the feasible region and was adjusted", replace.start.val, ""))
           }
@@ -499,7 +458,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           if (2 * alpha1_s + alpha3_s > 1) {
             while (2 * alpha1_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
-              alpha3_2 <- alpha3_s * iteration.start.val
+              alpha3_s <- alpha3_s * iteration.start.val
             }
             warning(paste("The initial sum of alpha1 and alpha3 had not been in the feasible region and was adjusted", replace.start.val, ""))
           }
@@ -567,34 +526,21 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       } # end constrained.optim False
 
       pars <- as.vector(unlist(fit$par, use.names = FALSE))
-      lambs <- c()
-      for (j in 1:ncov) {
-        lambs[j] <- paste("beta", j, sep = "")
-      }
+      lambs <- paste0("beta", 1:ncov)
       names(pars) <- c("alpha1", "alpha2", "alpha3", lambs)
       T <- length(data)
-      xreg_matrix <- data.matrix(xreg)
-      likelihood <- -likelihoodGP2cov(20, pars[1], pars[2], pars[3], 0, pars[-c(1:3)], T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+      likelihood <- -likelihoodGP2cov(pars[1], pars[2], pars[3], 0, pars[-c(1:3)], T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
 
 
       h <- function(par) {
-        data <- data
-
         alpha1 <- par[1]
         alpha2 <- par[2]
         alpha3 <- par[3]
-
         eta <- 0
-
-        vec_lambda <- c()
-        for (j in 1:ncol(xreg)) {
-          nam <- paste("lambda", j, sep = "")
-          vec_lambda[j] <- assign(nam, par[j + 3])
-        }
+        vec_lambda <- par[-(1:3)]
 
         T <- length(data)
-        xreg_matrix <- data.matrix(xreg)
-        mlef <- likelihoodGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
         return(mlef)
       } # end ml function
 
@@ -647,27 +593,16 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
   # GP2
   if ((type == "GP") & (order == 2)) {
     GP2 <- function(data) {
+      xreg_matrix <- data.matrix(xreg)
       mlf <- function(par, data) {
-        xreg <- xreg
         alpha1 <- par[1]
         alpha2 <- par[2]
         alpha3 <- par[3]
         eta <- par[4]
-        U <- (1 - alpha1 - alpha2 - alpha3)^(-1)
-
-        ### 1
-        #### define lambda_t
-        vec_lambda <- c()
-        for (j in 1:ncol(xreg)) {
-          nam <- paste("lambda", j, sep = "")
-          vec_lambda[j] <- assign(nam, par[j + 4])
-        }
-        vec_lambda <- vec_lambda
-
+        vec_lambda <- par[-(1:4)]
 
         T <- length(data)
-        xreg_matrix <- data.matrix(xreg)
-        mlef <- likelihoodGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
 
         return(mlef)
       } # end function
@@ -678,10 +613,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         p1 <- acf$acf[[seasonality[1] + 1]]
         p2 <- acf$acf[[seasonality[2] + 1]]
 
-        v <- c()
-        for (t in (seasonality[2] + 1):length(data)) {
-          v[t - seasonality[2]] <- (data[t] - mean(data)) * (data[t - seasonality[1]] - mean(data)) * (data[t - seasonality[2]] - mean(data))
-        }
+        mean_data <- mean(data)
+        idx <- (seasonality[2] + 1):length(data)
+        v <- (data[idx] - mean_data) * (data[idx - seasonality[1]] - mean_data) * (data[idx - seasonality[2]] - mean_data)
         mu111 <- sum(v) / length(data)
 
 
@@ -730,7 +664,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             while (alpha1_s + alpha2_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
               alpha2_s <- alpha2_s * iteration.start.val
-              alpha3_2 <- alpha3_s * iteration.start.val
+              alpha3_s <- alpha3_s * iteration.start.val
             }
             warning(paste("The initial sum of 2*alpha1, alpha2 and alpha3 had not been in the feasible region and was adjusted", ""))
           }
@@ -739,7 +673,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           if (2 * alpha1_s + alpha3_s > 1) {
             while (2 * alpha1_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
-              alpha3_2 <- alpha3_s * iteration.start.val
+              alpha3_s <- alpha3_s * iteration.start.val
             }
             warning(paste("The initial sum of alpha1 and alpha3 had not been in the feasible region and was adjusted", ""))
           }
@@ -817,36 +751,21 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       } # end constrained.optim False
 
       pars <- as.vector(unlist(fit$par, use.names = FALSE))
-      lambs <- c()
-      for (j in 1:ncov) {
-        lambs[j] <- paste("beta", j, sep = "")
-      }
+      lambs <- paste0("beta", 1:ncov)
       names(pars) <- c("alpha1", "alpha2", "alpha3", "eta", lambs)
       T <- length(data)
-      xreg_matrix <- data.matrix(xreg)
-      likelihood <- -likelihoodGP2cov(20, pars[1], pars[2], pars[3], pars[4], pars[-c(1:4)], T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+      likelihood <- -likelihoodGP2cov(pars[1], pars[2], pars[3], pars[4], pars[-c(1:4)], T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
 
 
       h <- function(par) {
-        data <- data
-
-
         alpha1 <- par[1]
         alpha2 <- par[2]
         alpha3 <- par[3]
         eta <- par[4]
-        U <- (1 - alpha1 - alpha2 - alpha3)^(-1)
-        ### define lambda_t
-        vec_lambda <- c()
-        for (j in 1:ncol(xreg)) {
-          nam <- paste("lambda", j, sep = "")
-          vec_lambda[j] <- assign(nam, par[j + 4])
-        }
+        vec_lambda <- par[-(1:4)]
 
         T <- length(data)
-        xreg_matrix <- data.matrix(xreg)
-        mlef <- likelihoodGP2cov(20, alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
-
+        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
 
         return(mlef)
       } # end ml function

@@ -111,11 +111,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
       xreg <- coco$cov
 
 
-      # set up values for lambda
-      lambda <- c()
-      for (j in 1:length(data)) {
-        lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
-      }
+      lambda <- applyLinkFunctionVec(xreg %*% vec_lambda, coco$link_function)
     }
 
     if ((coco$type == "GP") & (coco$order == 1)) {
@@ -127,10 +123,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
       xreg <- coco$cov
 
 
-      lambda <- c()
-      for (j in 1:length(data)) {
-        lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
-      }
+      lambda <- applyLinkFunctionVec(xreg %*% vec_lambda, coco$link_function)
     }
 
     if ((coco$type == "Poisson") & (coco$order == 2)) {
@@ -143,10 +136,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
 
       U <- 1 / (1 - alpha1 - alpha2 - alpha3)
 
-      lambda <- c()
-      for (j in 1:length(data)) {
-        lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
-      }
+      lambda <- applyLinkFunctionVec(xreg %*% vec_lambda, coco$link_function)
     }
 
     if ((coco$type == "GP") & (coco$order == 2)) {
@@ -161,10 +151,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
 
       U <- 1 / (1 - alpha1 - alpha2 - alpha3)
 
-      lambda <- c()
-      for (j in 1:length(data)) {
-        lambda[j] <- applyLinkFunction(as.numeric(as.vector(xreg[j, ])) %*% vec_lambda, coco$link_function)
-      }
+      lambda <- applyLinkFunctionVec(xreg %*% vec_lambda, coco$link_function)
     }
   }
 
@@ -177,66 +164,38 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   J_test <- J
   J <- J + 1 # add 1 because the first bin is not used
   meanPIT <- matrix(0, nrow = T, ncol = J)
+  u <- seq(0, 1, length = J)
+
+  if (coco$type == "Poisson") {
+    eta <- 0
+  }
+  if (coco$order == 1) {
+    validate_gp1_par(lambda, alpha, eta)
+  } else {
+    validate_gp2_par(lambda, alpha1, alpha2, alpha3, eta)
+  }
+  if (any((round(data) != data) | (data < 0))) {
+    stop("y must be a non-negative integer")
+  }
 
   for (t in (seasonality[2] + 1):T) {
-    if ((coco$type == "Poisson") & (coco$order == 1)) {
-      part <- c(lambda[t], alpha, 0)
-      Px <- pGP1(data[t], data[t - seasonality[1]], part)
-      if (data[t] >= 1) {
-        Px1 <- pGP1(data[t] - 1, data[t - seasonality[1]], part)
-      }
-      if (data[t] < 1) {
-        Px1 <- 0
-      }
+    # Px = P(X_t <= x_t), Px1 = P(X_t <= x_t - 1): both are prefixes of the
+    # same cumulative sum of transition densities, computed in one C++ call
+    if (coco$order == 1) {
+      dvec <- dGP1h_vec(data[t], data[t - seasonality[1]], lambda[t], alpha, eta)
+    } else {
+      dvec <- dGP2h_vec(data[t], data[t - seasonality[1]], data[t - seasonality[2]],
+                        lambda[t], alpha1, alpha2, alpha3, eta)
     }
+    cdf <- cumsum(dvec)
+    Px <- cdf[data[t] + 1]
+    Px1 <- if (data[t] >= 1) cdf[data[t]] else 0
 
-    if ((coco$type == "GP") & (coco$order == 1)) {
-      part <- c(lambda[t], alpha, eta)
-      Px <- pGP1(data[t], data[t - seasonality[1]], part)
-      if (data[t] >= 1) {
-        Px1 <- pGP1(data[t] - 1, data[t - seasonality[1]], part)
-      }
-      if (data[t] < 1) {
-        Px1 <- 0
-      }
-    }
-
-    if ((coco$type == "Poisson") & (coco$order == 2)) {
-      part <- c(lambda[t], alpha1, alpha2, alpha3, 0)
-      Px <- pGP2(data[t], data[t - seasonality[1]], data[t - seasonality[2]], part)
-      if (data[t] >= 1) {
-        Px1 <- pGP2(data[t] - 1, data[t - seasonality[1]], data[t - seasonality[2]], part)
-      }
-      if (data[t] < 1) {
-        Px1 <- 0
-      }
-    }
-
-    if ((coco$type == "GP") & (coco$order == 2)) {
-      part <- c(lambda[t], alpha1, alpha2, alpha3, eta)
-      Px <- pGP2(data[t], data[t - seasonality[1]], data[t - seasonality[2]], part)
-      if (data[t] >= 1) {
-        Px1 <- pGP2(data[t] - 1, data[t - seasonality[1]], data[t - seasonality[2]], part)
-      }
-      if (data[t] < 1) {
-        Px1 <- 0
-      }
-    }
-
-    u <- seq(0, 1, length = J)
-    N <- 1
-    PIT <- matrix(0, nrow = N, ncol = J)
-    for (i in 1:N) {
-      temp <- numeric(J)
-      for (s in 1:length(u)) {
-        temp[s] <- (u[s] - Px1[i]) / (Px[i] - Px1[i])
-        if (is.na(temp[s])) temp[s] <- 1
-        if (temp[s] < 0) temp[s] <- 0
-        if (temp[s] > 1) temp[s] <- 1
-      }
-      PIT[i, ] <- temp
-    }
-    meanPIT[t, ] <- colMeans(PIT)
+    temp <- (u - Px1) / (Px - Px1)
+    temp[is.na(temp)] <- 1
+    temp[temp < 0] <- 0
+    temp[temp > 1] <- 1
+    meanPIT[t, ] <- temp
   } # end t
 
   PIT <- colMeans(meanPIT)
