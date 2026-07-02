@@ -4,7 +4,8 @@
 #' @return no return value, called to install \proglang{julia} packages in \proglang{julia}.
 #' @export
 installJuliaPackages <- function(){
-  
+  set_julia_threads()
+
   strings1 <- c('"Coconots"')
   strings2 <- c('Pkg.add("Coconots")')
   for (i in 1:length(strings1)){
