@@ -61,7 +61,7 @@ integer autoregressive <code>(G)PAR</code> time series models for count data as 
 <span>  replace.start.val <span class="op">=</span> <span class="fl">1e-05</span>,</span>
 <span>  iteration.start.val <span class="op">=</span> <span class="fl">0.6</span>,</span>
 <span>  method.hessian <span class="op">=</span> <span class="st">"Richardson"</span>,</span>
-<span>  cores <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  julia <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  julia_installed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  link_function <span class="op">=</span> <span class="st">"log"</span></span>
@@ -121,7 +121,7 @@ integer autoregressive <code>(G)PAR</code> time series models for count data as 
 
 
 <dt id="arg-cores">cores<a class="anchor" aria-label="anchor" href="#arg-cores"></a></dt>
-<dd><p>numeric indicating the number of cores to use, currently only available in the R version (default: 2)</p></dd>
+<dd><p>numeric indicating the number of threads used to evaluate the order-2 likelihood on the RCPP backend. Defaults to the number of physical cores minus one (capped at 2 while <code>_R_CHECK_LIMIT_CORES_</code> is set, e.g. during CRAN checks). Has no effect on order-1 models or the Julia backend. Results are identical for any number of threads.</p></dd>
 
 
 <dt id="arg-julia">julia<a class="anchor" aria-label="anchor" href="#arg-julia"></a></dt>

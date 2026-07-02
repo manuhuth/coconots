@@ -12,6 +12,16 @@ and the model assessment tools are presented in Czado et al. (2009)
 and, Tsay (1992) [doi:10.2307/2347612](https://doi.org/10.2307/2347612)
 .
 
+## See also
+
+Useful links:
+
+- <https://github.com/manuhuth/coconots>
+
+- <https://manuhuth.github.io/coconots/>
+
+- Report bugs at <https://github.com/manuhuth/coconots/issues>
+
 ## Author
 
 **Maintainer**: Manuel Huth <manuel.huth@yahoo.com>
