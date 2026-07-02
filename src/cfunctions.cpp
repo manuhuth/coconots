@@ -3,6 +3,8 @@
 # include <vector>
 # include <cmath>
 # include <unordered_map>
+# include <atomic>
+# include <thread>
 # include <Rcpp.h>
 
 // [[Rcpp::depends(Rcpp)]]
@@ -71,6 +73,41 @@ const int MAX_TABLE_INDEX = 1000000;
 inline void check_table_index(int n) {
   if (n > MAX_TABLE_INDEX)
     stop("Count values are too large for the (Generalized) Poisson recursions.");
+}
+
+inline int resolve_threads(int n, int cores) {
+  int nthreads = std::max(1, cores);
+  const unsigned hc = std::thread::hardware_concurrency();
+  if (hc > 0) nthreads = std::min(nthreads, static_cast<int>(hc));
+  return std::max(1, std::min(nthreads, n));
+}
+
+// Runs f(thread_id, i) for i = 0..n-1 on `nthreads` threads with dynamic
+// scheduling (work per item varies widely across (y, z) histories).
+// Workers must not touch the R API; any C++ exception is captured and
+// re-raised as an R error on the main thread after all workers joined.
+template <class F>
+void parallel_for(int n, int nthreads, F f) {
+  if (nthreads <= 1 || n <= 1) {
+    for (int i = 0; i < n; ++i) f(0, i);
+    return;
+  }
+  std::atomic<int> next(0);
+  std::atomic<bool> failed(false);
+  auto work = [&](int tid) {
+    try {
+      int i;
+      while ((i = next.fetch_add(1, std::memory_order_relaxed)) < n) f(tid, i);
+    } catch (...) {
+      failed.store(true);
+    }
+  };
+  std::vector<std::thread> pool;
+  pool.reserve(nthreads - 1);
+  for (int k = 1; k < nthreads; ++k) pool.emplace_back(work, k);
+  work(0);
+  for (std::size_t k = 0; k < pool.size(); ++k) pool[k].join();
+  if (failed.load()) stop("coconots: a worker thread failed (out of memory?)");
 }
 
 // ------------------------------------------------------------------ order 1
@@ -229,8 +266,9 @@ struct GVec {
   double tail;
 };
 
-void gp2_build_g(int y, int z, const GP2Params& p, GP2Tables& tb, GVec& out) {
-  tb.ensure(std::max(std::max(y, z), 0));
+// Tables must already cover max(y, z, 0); with const tables this is safe to
+// run concurrently for distinct `out` targets.
+void gp2_build_g(int y, int z, const GP2Params& p, const GP2Tables& tb, GVec& out) {
   const double pyz = gp2_pyz(y, z, p);
   const int rmax = y + z;
   out.g.resize(rmax + 1);
@@ -248,7 +286,10 @@ inline long long g_key(int y, int z) {
 
 inline GVec& g_lookup(GCache& cache, int y, int z, const GP2Params& p, GP2Tables& tb) {
   GVec& gv = cache[g_key(y, z)];
-  if (gv.g.empty()) gp2_build_g(y, z, p, tb, gv);
+  if (gv.g.empty()) {
+    tb.ensure(std::max(std::max(y, z), 0));
+    gp2_build_g(y, z, p, tb, gv);
+  }
   return gv;
 }
 
@@ -277,7 +318,7 @@ double innerProduct(NumericVector x, NumericVector y) {
 // [[Rcpp::export]]
 double likelihoodGP2(double lambda, double alpha1, double alpha2,
                      double alpha3, double eta, int T, int seas1, int seas2,
-                     const std::vector<int>& data)
+                     const std::vector<int>& data, int cores = 1)
 {
   GP2Params p;
   p.init(lambda, alpha1, alpha2, alpha3, eta);
@@ -289,6 +330,27 @@ double likelihoodGP2(double lambda, double alpha1, double alpha2,
   if (maxval >= 0) tb.ensure(maxval);
 
   GCache cache;
+
+  // Register the distinct (y, z) histories first, then build their g-vectors
+  // concurrently: each build is independent and the tables are read-only once
+  // ensured up to maxval. Pointers into the node-based unordered_map stay
+  // valid across later insertions. The serial accumulation below is unchanged,
+  // so results are bit-identical to the single-threaded evaluation.
+  struct Job { int y, z; GVec* gv; };
+  std::vector<Job> jobs;
+  for (int t = seas2 + 1; t <= T; ++t) {
+    const int y = data[t - seas1 - 1];
+    const int z = data[t - seas2 - 1];
+    if (y >= 0 && z >= 0) {
+      std::pair<GCache::iterator, bool> ins = cache.emplace(g_key(y, z), GVec());
+      if (ins.second) jobs.push_back(Job{y, z, &ins.first->second});
+    }
+  }
+  const int nthreads = resolve_threads(static_cast<int>(jobs.size()), cores);
+  parallel_for(static_cast<int>(jobs.size()), nthreads, [&](int, int i) {
+    gp2_build_g(jobs[i].y, jobs[i].z, p, tb, *jobs[i].gv);
+  });
+
   double mlef = 0.0;
   for (int t = seas2 + 1; t <= T; ++t) {
     const int x = data[t - 1];
@@ -644,20 +706,38 @@ std::vector<int> simGP1cov(double alpha, double eta,
 // [[Rcpp::export]]
 double likelihoodGP2cov(double alpha1, double alpha2, double alpha3,
                         double eta, NumericVector lambdas, int T, int seas1, int seas2,
-                        const std::vector<int>& data, NumericMatrix xreg, std::string link_function)
+                        const std::vector<int>& data, NumericMatrix xreg, std::string link_function,
+                        int cores = 1)
 {
   const LinkFunction link = parseLinkFunction(link_function);
-  GP2Params p;
-  GP2Tables tb;
 
-  double mlef = 0.0;
-  for (int t = seas2 + 1; t <= T; ++t) {
+  // lambda_t varies with t, so nothing can be cached across observations --
+  // but each observation's contribution is independent. Compute them
+  // concurrently with thread-private tables and accumulate serially in t
+  // order afterwards, keeping results bit-identical to the serial loop.
+  // Bound the table sizes once here so workers never raise an R error.
+  int maxval = -1;
+  for (std::size_t i = 0; i < data.size(); ++i) maxval = std::max(maxval, data[i]);
+  check_table_index(maxval);
+
+  const int nterms = T - seas2;
+  if (nterms <= 0) return 0.0;
+  std::vector<double> logn(nterms);
+
+  const int nthreads = resolve_threads(nterms, cores);
+  std::vector<GP2Params> pv(nthreads);
+  std::vector<GP2Tables> tbv(nthreads);
+
+  parallel_for(nterms, nthreads, [&](int tid, int i) {
+    const int t = seas2 + 1 + i;
     const int x = data[t - 1];
     const int y = data[t - seas1 - 1];
     const int z = data[t - seas2 - 1];
 
     const double mathelp = rowInnerProduct(xreg, t - 1, lambdas);
     const double lambda = applyLink(mathelp, link);
+    GP2Params& p = pv[tid];
+    GP2Tables& tb = tbv[tid];
     p.init(lambda, alpha1, alpha2, alpha3, eta);
     tb.init(p);
     tb.ensure(std::max(std::max(std::max(x, y), z), 0));
@@ -673,8 +753,11 @@ double likelihoodGP2cov(double alpha1, double alpha2, double alpha3,
     if (nain <= 0) {
       nain = 1e-12;
     }
-    mlef = mlef + log(nain);
-  }
+    logn[i] = log(nain);
+  });
+
+  double mlef = 0.0;
+  for (int i = 0; i < nterms; ++i) mlef = mlef + logn[i];
 
   return (-mlef);
 }

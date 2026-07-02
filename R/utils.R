@@ -107,3 +107,30 @@ set_julia_threads <- function() {
   Sys.setenv(JULIA_NUM_THREADS = as.character(threads))
   invisible(threads)
 }
+
+#' Default thread count for the RCPP likelihood kernels
+#'
+#' Number of physical cores minus one (leaving one core free for the system),
+#' mirroring the set_julia_threads() convention. Capped at 2 when
+#' _R_CHECK_LIMIT_CORES_ is set, so R CMD check on CRAN never sees more than
+#' the two cores its policy allows. Falls back to 1 if the core count cannot
+#' be determined.
+#'
+#' @noRd
+coco_default_cores <- function() {
+  cores <- tryCatch(parallel::detectCores(logical = FALSE),
+                    error = function(e) NA_integer_)
+  if (is.na(cores) || cores < 1L) {
+    cores <- tryCatch(parallel::detectCores(logical = TRUE),
+                      error = function(e) NA_integer_)
+  }
+  if (is.na(cores) || cores < 1L) {
+    return(1L)
+  }
+  cores <- max(1L, cores - 1L)
+  limit <- Sys.getenv("_R_CHECK_LIMIT_CORES_")
+  if (nzchar(limit) && !identical(tolower(limit), "false")) {
+    cores <- min(cores, 2L)
+  }
+  cores
+}

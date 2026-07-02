@@ -17,7 +17,7 @@ cocoReg(
   replace.start.val = 1e-05,
   iteration.start.val = 0.6,
   method.hessian = "Richardson",
-  cores = 2,
+  cores = NULL,
   julia = FALSE,
   julia_installed = FALSE,
   link_function = "log"
@@ -48,7 +48,7 @@ cocoReg(
 
 \item{method.hessian}{character string indicating the method to be used to approximate the Hessian matrix, currently only available in the \proglang{R} version}
 
-\item{cores}{numeric indicating the number of cores to use, currently only available in the \proglang{R} version (default: 2)}
+\item{cores}{numeric indicating the number of threads used to evaluate the order-2 likelihood on the RCPP backend. Defaults to the number of physical cores minus one (capped at 2 while \code{_R_CHECK_LIMIT_CORES_} is set, e.g. during CRAN checks). Has no effect on order-1 models or the Julia backend. Results are identical for any number of threads.}
 
 \item{julia}{if TRUE, the model is estimated with \proglang{julia}. This can improve computational speed significantly since \proglang{julia} makes use of derivatives using autodiff. In this case, only \code{type}, \code{order}, \code{data}, \code{xreg}, and \code{start} are used as other inputs (default: FALSE).}
 

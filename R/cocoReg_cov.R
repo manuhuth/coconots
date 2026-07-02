@@ -6,7 +6,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
                         outer.it = 500, outer.eps = 1e-10, optim_control = FALSE, constrained.optim = TRUE, b.beta = -10,
                         start = NULL, start.val.adjust = TRUE, method_optim= "Nelder-Mead",
                         replace.start.val = 1e-5, iteration.start.val = 0.99,
-                        method.hessian = "Richardson", julia_installed=FALSE, link_function="log", ...) {
+                        method.hessian = "Richardson", julia_installed=FALSE, link_function="log", cores = 1, ...) {
   start_time <- Sys.time()
 
   if (is.data.frame(data)) {
@@ -405,7 +405,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         vec_lambda <- par[-(1:3)]
 
         T <- length(data)
-        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function, cores)
 
         return(mlef)
       } # end function
@@ -540,7 +540,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         vec_lambda <- par[-(1:3)]
 
         T <- length(data)
-        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function, cores)
         return(mlef)
       } # end ml function
 
@@ -602,7 +602,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         vec_lambda <- par[-(1:4)]
 
         T <- length(data)
-        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function, cores)
 
         return(mlef)
       } # end function
@@ -765,7 +765,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         vec_lambda <- par[-(1:4)]
 
         T <- length(data)
-        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
+        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function, cores)
 
         return(mlef)
       } # end ml function
