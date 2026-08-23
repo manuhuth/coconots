@@ -525,3 +525,34 @@ test_that("julia thread default respects an existing JULIA_NUM_THREADS", {
     expect_gte(as.integer(set_value), 1L)
   }
 })
+
+test_that("Poisson covariate models store the log-likelihood of their own betas", {
+  # Regression test for the beta1-dropping slice that produced a wrong stored
+  # $likelihood and a heap over-read in the C++ kernel (CRAN valgrind, 2.0.3).
+  # The Poisson objective must equal the GP objective evaluated at eta = 0.
+  length <- 200
+  period <- 50
+  cov <- cbind(sin = sin(2 * pi / period * (1:length)),
+               cos = cos(2 * pi / period * (1:length)))
+
+  set.seed(4711)
+  d1 <- suppressWarnings(
+    cocoSim(order = 1, type = "Poisson", par = c(0.4, 0.3, -0.2),
+            xreg = cov, length = length))
+  fit1 <- cocoReg(order = 1, type = "Poisson", data = d1, xreg = cov)
+  expect_equal(
+    fit1$likelihood,
+    -coconots:::likelihoodGP1cov(fit1$par[1], 0, fit1$par[-1], length(d1),
+                                 1, d1, cov, fit1$link_function))
+
+  set.seed(4712)
+  d2 <- suppressWarnings(
+    cocoSim(order = 2, type = "Poisson", par = c(0.2, 0.05, 0.3, 0.3, -0.2),
+            xreg = cov, length = length))
+  fit2 <- cocoReg(order = 2, type = "Poisson", data = d2, xreg = cov)
+  expect_equal(
+    fit2$likelihood,
+    -coconots:::likelihoodGP2cov(fit2$par[1], fit2$par[2], fit2$par[3], 0,
+                                 fit2$par[-(1:3)], length(d2), 1, 2, d2, cov,
+                                 fit2$link_function))
+})
