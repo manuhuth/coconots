@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">coconots</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,29 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.0.4" id="coconots-204">coconots 2.0.4<a class="anchor" aria-label="anchor" href="#coconots-204"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-2-0-4">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-0-4"></a></h3>
+<ul><li>Fixed a heap buffer over-read reported by CRAN’s valgrind check. The post-hoc log-likelihood for Poisson models with covariates reused the Generalized-Poisson parameter slicing, which drops <code>eta</code>. Poisson models carry no <code>eta</code>, so the slicing also discarded the first covariate coefficient and passed a coefficient vector one element shorter than the number of covariate columns to <code>likelihoodGP1cov()</code> / <code>likelihoodGP2cov()</code>, which then read one <code>double</code> past the end of that vector on every observation. The stored <code>$likelihood</code> (and hence AIC/BIC) was wrong for these models; parameter estimates and standard errors were unaffected.</li>
+<li>
+<code>likelihoodGP2cov()</code> clamped an underflowing per-observation likelihood to <code>1/10^-12 = 1e+12</code>, rewarding the optimizer for entering the degenerate region. It now clamps to <code>1e-12</code>.</li>
+<li>The order-2 starting-value shrink loops assigned to a dead variable, so <code>alpha3</code> never shrank and the loop could fail to terminate.</li>
+<li>
+<code><a href="../reference/cocoReg.html">cocoReg()</a></code> with a <code>data.frame</code> <code>xreg</code> overwrote <code>data</code> instead of coercing <code>xreg</code>.</li>
+<li>
+<code><a href="../reference/cocoSoc.html">cocoSoc()</a></code> now forwards its <code>julia</code> argument to the internal <code><a href="../reference/cocoReg.html">cocoReg()</a></code> fits and to <code><a href="../reference/cocoScore.html">cocoScore()</a></code>, instead of hardcoding <code>julia = TRUE</code> when scoring.</li>
+<li>Julia result dictionaries are now read by key name rather than by integer position, which depended on Julia’s hash iteration order and could shift silently across Julia versions.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="performance-2-0-4">Performance<a class="anchor" aria-label="anchor" href="#performance-2-0-4"></a></h3>
+<ul><li>
+<code><a href="../reference/cocoReg.html">cocoReg()</a></code> gained a live <code>cores</code> argument. The order-2 likelihood kernels of the RCPP backend are multithreaded via <code>std::thread</code>; accumulation stays serial in the original order, so results are bit-identical for any thread count. <code>cores</code> defaults to the number of physical cores minus one, capped at 2 while <code>_R_CHECK_LIMIT_CORES_</code> is set.</li>
+<li>Estimation kernels and the assessment tools (<code><a href="../reference/cocoScore.html">cocoScore()</a></code>, <code><a href="../reference/cocoPit.html">cocoPit()</a></code>, <code><a href="../reference/cocoResid.html">cocoResid()</a></code>, <code><a href="../reference/cocoBoot.html">cocoBoot()</a></code>, <code>rgenpois()</code>) were rewritten around batched density evaluations, lookup tables and memoization. Numerical results are unchanged (order-1 paths exactly, order-2 paths to ~1 ulp).</li>
+<li>
+<code>JULIA_NUM_THREADS</code> is now set to the number of physical cores minus one before the first <code>JuliaConnectoR</code> call, unless the user already set it. A Julia process otherwise starts single-threaded, leaving <code>Coconots.jl</code>’s threaded likelihood idle.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.3" id="coconots-203">coconots 2.0.3<a class="anchor" aria-label="anchor" href="#coconots-203"></a></h2><p class="text-muted">CRAN release: 2026-06-14</p>
 <ul><li>Added a <code>softplus</code> link function for the conditional mean of the innovation rate in <code><a href="../reference/cocoReg.html">cocoReg()</a></code> (covariate models). Uses a numerically stable formulation, is smooth everywhere, and guarantees a positive rate.</li>
 <li>Added S3 <code>summary</code> methods for forecast objects (<code>cocoForecast</code>, <code>cocoForecastCollection</code>) returning a data frame of point forecasts (mean, median, mode) and prediction intervals per forecast horizon.</li>
@@ -51,7 +74,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>
