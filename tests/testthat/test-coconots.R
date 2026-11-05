@@ -585,7 +585,8 @@ test_that("cocoPit (R) of order-1 models uses t = 2, ..., T", {
   n_pit <- length(data) - 1
   d <- pit$`PIT values`
   expect_equal(pit$p_value,
-               stats::pchisq(sum((d * n_pit - n_pit / 10)^2 / (n_pit / 10)), 9))
+               stats::pchisq(sum((d * n_pit - n_pit / 10)^2 / (n_pit / 10)), 9,
+                             lower.tail = FALSE))
 
   # covariate path (per-observation loop)
   n <- 150
@@ -722,4 +723,34 @@ test_that("Coconots.jl computes the same default start as cocoReg (R)", {
     expect_equal(start_julia, default_start_reference(m$type, m$order, data)$julia,
                  tolerance = 1e-10)
   }
+})
+
+test_that("PIT chi-square p-value is the upper tail", {
+  # a perfectly uniform histogram has statistic 0 and p-value 1
+  expect_equal(coconots:::pitChisqPValue(rep(0.1, 10), 99, 10), 1)
+  # all mass in one bin: statistic (n - n/J)^2/(n/J) + (J - 1) n/J = n (J - 1)
+  d <- c(1, rep(0, 9))
+  expect_equal(coconots:::pitChisqPValue(d, 99, 10),
+               stats::pchisq(99 * 9, 9, lower.tail = FALSE))
+  expect_lt(coconots:::pitChisqPValue(d, 99, 10), 1e-10)
+})
+
+test_that("cocoResid uses t = order + 1, ..., T for both orders", {
+  set.seed(2711)
+  data <- cocoSim(order = 1, type = "GP", par = c(1, 0.3, 0.2), length = 60)
+  fit <- cocoReg(order = 1, type = "GP", data = data)
+  res <- cocoResid(fit)
+  expect_length(res$residuals, length(data) - 1)
+  lambda <- fit$par[[1]]; alpha <- fit$par[[2]]; eta <- fit$par[[3]]
+  fitted_ref <- alpha * data[1:59] + lambda / (1 - eta)
+  expect_equal(unname(res$fitted), fitted_ref, tolerance = 1e-12)
+  expect_equal(unname(res$residuals), data[2:60] - fitted_ref, tolerance = 1e-12)
+
+  set.seed(2712)
+  data2 <- cocoSim(order = 2, type = "Poisson", par = c(0.5, 0.2, 0.05, 0.3),
+                   length = 60)
+  fit2 <- cocoReg(order = 2, type = "Poisson", data = data2)
+  res2 <- cocoResid(fit2)
+  expect_length(res2$residuals, length(data2) - 2)
+  expect_equal(unname(res2$residuals), unname(data2[3:60] - res2$fitted))
 })

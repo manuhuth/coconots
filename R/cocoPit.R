@@ -230,7 +230,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   # number of PIT time points (t = order + 1, ..., T); d sums to one, so
   # d * n_pit are the bin counts of the non-randomized PIT histogram
   n_pit <- length(data) - coco$order
-  pval <- stats::pchisq(sum((d * n_pit - n_pit / J_test)^2 / (n_pit / J_test)), J_test-1)
+  pval <- pitChisqPValue(d, n_pit, J_test)
   diff <- (sqrt(stats::qchisq(1-alpha, J_test-1)/J_test^2*n_pit) ) / n_pit
   confidence_band_values <- 1 / J_test + c(-1, 1) * diff 
   
@@ -245,6 +245,15 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   
   class(list_out) <- "cocoPit"
   return(list_out)
+}
+
+# p-value of the chi-square goodness-of-fit test of uniformity of the J bins
+# of a PIT histogram d (bin masses summing to one) over n_pit time points:
+# upper tail P(chi^2_{J-1} >= stat) with stat = sum((n d - n/J)^2 / (n/J)).
+# Used for the R and the Julia PIT alike.
+pitChisqPValue <- function(d, n_pit, J) {
+  stat <- sum((d * n_pit - n_pit / J)^2 / (n_pit / J))
+  stats::pchisq(stat, J - 1, lower.tail = FALSE)
 }
 
 #' @importFrom ggplot2 autoplot
