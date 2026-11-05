@@ -314,9 +314,38 @@ struct GP2TablesT {
 };
 typedef GP2TablesT<double> GP2Tables;
 
-// Bivariate GP normalizer P(y, z); r-invariant.
+// gp2_pyz when lu13a = lambda U (alpha1 + alpha3) is exactly zero, i.e.
+// alpha1 = alpha3 = 0 (the Julia backend returns boundary estimates exactly
+// at 0). The j = 0 summand of gp2_pyz carries the factor
+// (beta1 + beta3) * pow(lu13a, -1) of the GP pmf of rate lu13a at 0, which is
+// 0 * Inf = NaN there. Since beta1 + beta3 = lambda U alpha1 + lambda U alpha3
+// equals lu13a identically in the parameters, that factor is 1 (its limit, as
+// gp2_rate_factor), so the j = 0 summand is evaluated without it. The
+// summands j >= 1 are those of gp2_pyz (finite at lu13a = 0, the exponent of
+// pow(lu13a + eta j, j - 1) is non-negative). Both parts are the analytic
+// expression of P(y, z) at every parameter value, so dual numbers carry the
+// exact partials (coco_ad::pow has zero partials for the exponent 0).
+template <class S>
+inline S gp2_pyz_zero_rate(int y, int z, const GP2ParamsT<S>& p) {
+  const S scale = pow(p.lu13, 2) *
+    exp(-(p.beta1 + p.beta3) - 2 * p.lu13 - y * p.eta - z * p.eta);
+  const S head = pow(p.lu13 + p.eta * y, y - 1) / factorial(y) *
+    pow(p.lu13 + p.eta * z, z - 1) / factorial(z);
+  const int minyz = std::min(y, z);
+  S tail = 0.0;
+  for (int j = 1; j <= minyz; ++j) {
+    tail = tail + pow(p.lu13 + p.eta * (y - j), y - j - 1) / factorial(y - j) *
+      pow(p.lu13 + p.eta * (z - j), z - j - 1) / factorial(z - j) *
+      pow(p.lu13a + p.eta * j, j - 1) / factorial(j) * exp(j * p.eta);
+  }
+  return (head + (p.beta1 + p.beta3) * tail) * scale;
+}
+
+// Bivariate GP normalizer P(y, z); r-invariant. With lu13a exactly zero,
+// gp2_pyz_zero_rate (the arithmetic for lu13a != 0 is unchanged).
 template <class S>
 inline S gp2_pyz(int y, int z, const GP2ParamsT<S>& p) {
+  if (is_zero_value(p.lu13a)) return gp2_pyz_zero_rate(y, z, p);
   const S help = (p.beta1 + p.beta3) * pow(p.lu13, 2) *
     exp(-(p.beta1 + p.beta3) - 2 * p.lu13 - y * p.eta - z * p.eta);
   const int minyz = std::min(y, z);
@@ -613,9 +642,11 @@ inline void gp_pmf_fill(std::vector<S>& q, int n, const S& rate, const S& eta,
 // term(0) is a normal number well above underflow (the summands are
 // log-concave in j, so later underflowing terms are below rounding relative
 // to the sum) and the sum is finite, otherwise the generic loop runs.
+// With lu13a exactly zero, gp2_pyz_zero_rate (as gp2_pyz).
 template <class S>
 inline S gp2_pyz_cov(int y, int z, const GP2ParamsT<S>& p, bool poisson,
                      const std::vector<S>& epos, std::vector<S>& hbuf) {
+  if (is_zero_value(p.lu13a)) return gp2_pyz_zero_rate(y, z, p);
   const S help = (p.beta1 + p.beta3) * pow(p.lu13, 2) *
     exp(-(p.beta1 + p.beta3) - 2 * p.lu13 - y * p.eta - z * p.eta);
   const int minyz = std::min(y, z);

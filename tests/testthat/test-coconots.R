@@ -916,3 +916,125 @@ test_that("order-2 conditional pmf and residuals are finite at alphas exactly on
   expect_equal(r0$residuals, r1$residuals, tolerance = 1e-8)
   expect_equal(r0$cond.var, r1$cond.var, tolerance = 1e-8)
 })
+
+test_that("order-2 likelihood, densities, residuals and PIT are finite at alpha1 = alpha3 = 0", {
+  # With alpha1 = alpha3 = 0 the rate lambda U (alpha1 + alpha3) in the
+  # bivariate normalizer P(y, z) is zero and the C++ j = 0 summand evaluated
+  # (beta1 + beta3) * pow(0, -1) = 0 * Inf = NaN. The limit is the value just
+  # inside the boundary. Gradients are compared with one-sided finite
+  # differences at the boundary (the AD gradient at alpha = 1e-12 itself loses
+  # digits to the cancellation in (beta1 + beta3) / (lambda U (alpha1 + alpha3))).
+  fd_grad <- function(f, par, idx, h = 1e-6) {
+    # second-order one-sided difference into par[idx] > 0, central otherwise
+    sapply(seq_along(par), function(i) {
+      e <- replace(numeric(length(par)), i, h)
+      if (i %in% idx) {
+        (-3 * f(par) + 4 * f(par + e) - f(par + 2 * e)) / (2 * h)
+      } else {
+        (f(par + e) - f(par - e)) / (2 * h)
+      }
+    })
+  }
+
+  set.seed(20261108)
+  data <- cocoSim(order = 2, type = "GP", par = c(1.5, 0.05, 0.3, 0.05, 0.2), length = 150)
+  idata <- as.integer(data)
+  for (eta in c(0, 0.2)) {
+    l0 <- coconots:::likelihoodGP2(1.5, 0, 0.3, 0, eta, length(data), 1L, 2L, idata, 1L)
+    l1 <- coconots:::likelihoodGP2(1.5, 1e-12, 0.3, 1e-12, eta, length(data), 1L, 2L, idata, 1L)
+    expect_true(is.finite(l0))
+    expect_equal(l0, l1, tolerance = 1e-8)
+    for (yz in list(c(0L, 0L), c(3L, 2L), c(1L, 6L), c(5L, 5L))) {
+      p0 <- coconots:::Pyz(yz[1], yz[2], 1.5, 0, 0.3, 0, eta)
+      p1 <- coconots:::Pyz(yz[1], yz[2], 1.5, 1e-12, 0.3, 1e-12, eta)
+      expect_true(is.finite(p0) && p0 > 0)
+      expect_equal(p0, p1, tolerance = 1e-8)
+      d0 <- coconots:::dGP2h_vec(15L, yz[1], yz[2], 1.5, 0, 0.3, 0, eta)
+      d1 <- coconots:::dGP2h_vec(15L, yz[1], yz[2], 1.5, 1e-12, 0.3, 1e-12, eta)
+      expect_true(all(is.finite(d0)))
+      expect_equal(d0, d1, tolerance = 1e-8)
+    }
+    par0 <- c(1.5, 0, 0.3, 0, eta)
+    ad <- coconots:::likelihoodAD(par0, 2L, TRUE, idata, 1L, 2L, NULL, "log", 2L)
+    expect_equal(ad$value, l0, tolerance = 1e-10)
+    expect_true(all(is.finite(ad$gradient)))
+    expect_true(all(is.finite(ad$hessian)))
+    f <- function(p) coconots:::likelihoodGP2(p[1], p[2], p[3], p[4], p[5],
+                                              length(data), 1L, 2L, idata, 1L)
+    idx <- if (eta == 0) c(2, 4, 5) else c(2, 4)
+    expect_equal(as.numeric(ad$gradient), fd_grad(f, par0, idx), tolerance = 1e-5)
+  }
+
+  # covariates (likelihoodGP2cov, gp2_pyz_cov)
+  length <- 150
+  cov <- cbind(sin(2 * pi / 25 * (1:length)), cos(2 * pi / 25 * (1:length)))
+  set.seed(20261109)
+  datac <- cocoSim(order = 2, type = "GP", par = c(0.05, 0.3, 0.05, 0.2, 0.4, -0.2),
+                   xreg = cov, length = length)
+  idatac <- as.integer(datac)
+  for (eta in c(0, 0.2)) {
+    lc0 <- coconots:::likelihoodGP2cov(0, 0.3, 0, eta, c(0.4, -0.2), length, 1L, 2L,
+                                       idatac, cov, "log", 1L)
+    lc1 <- coconots:::likelihoodGP2cov(1e-12, 0.3, 1e-12, eta, c(0.4, -0.2), length, 1L, 2L,
+                                       idatac, cov, "log", 1L)
+    expect_true(is.finite(lc0))
+    expect_equal(lc0, lc1, tolerance = 1e-8)
+    parc0 <- c(0, 0.3, 0, eta, 0.4, -0.2)
+    adc <- coconots:::likelihoodAD(parc0, 2L, TRUE, idatac, 1L, 2L, cov, "log", 2L)
+    expect_equal(adc$value, lc0, tolerance = 1e-10)
+    expect_true(all(is.finite(adc$gradient)))
+    expect_true(all(is.finite(adc$hessian)))
+    fc <- function(p) coconots:::likelihoodGP2cov(p[1], p[2], p[3], p[4], p[5:6], length,
+                                                  1L, 2L, idatac, cov, "log", 1L)
+    idx <- if (eta == 0) c(1, 3, 4) else c(1, 3)
+    expect_equal(as.numeric(adc$gradient), fd_grad(fc, parc0, idx), tolerance = 1e-5)
+  }
+
+  # post-processing on fits moved to alpha1 = alpha3 = 0
+  fit <- cocoReg(order = 2, type = "GP", data = data)
+  fitc <- cocoReg(order = 2, type = "GP", data = datac, xreg = cov)
+  for (case in list(list(fit = fit, i = c(2, 4)), list(fit = fitc, i = c(1, 3)))) {
+    fit0 <- case$fit
+    fit0$par[case$i] <- 0
+    fit1 <- case$fit
+    fit1$par[case$i] <- 1e-12
+    r0 <- cocoResid(fit0)
+    r1 <- cocoResid(fit1)
+    expect_true(all(is.finite(r0$residuals)))
+    expect_equal(r0$residuals, r1$residuals, tolerance = 1e-8)
+    expect_equal(r0$cond.var, r1$cond.var, tolerance = 1e-8)
+    pit0 <- cocoPit(fit0, J = 10)
+    pit1 <- cocoPit(fit1, J = 10)
+    expect_true(all(is.finite(pit0$`PIT values`)))
+    expect_equal(as.numeric(pit0$`PIT values`), as.numeric(pit1$`PIT values`),
+                 tolerance = 1e-8)
+    expect_equal(pit0$p_value, pit1$p_value, tolerance = 1e-8)
+  }
+})
+
+test_that("R and Julia order-2 log-likelihoods agree at alpha1 = alpha3 = 0", {
+  skip_on_cran()
+  skip_if_no_julia()
+  coconots:::addJuliaFunctions()
+  set.seed(20261110)
+  data <- cocoSim(order = 2, type = "GP", par = c(1.5, 0.05, 0.3, 0.05, 0.2), length = 150)
+  length <- 150
+  cov <- cbind(sin(2 * pi / 25 * (1:length)), cos(2 * pi / 25 * (1:length)))
+  lambdas <- as.numeric(exp(cov %*% c(0.4, -0.2)))
+  for (eta in c(0, 0.2)) {
+    l_r <- coconots:::likelihoodGP2(1.5, 0, 0.3, 0, eta, length(data), 1L, 2L,
+                                    as.integer(data), 1L)
+    l_j <- as.numeric(JuliaConnectoR::juliaLet(
+      'Coconots.compute_negative_log_likelihood_GP2(1.5, 0.0, 0.3, 0.0, eta, Int.(data))',
+      eta = eta, data = as.numeric(data)))
+    expect_true(is.finite(l_j))
+    expect_equal(l_j, l_r, tolerance = 1e-8)
+    lc_r <- coconots:::likelihoodGP2cov(0, 0.3, 0, eta, c(0.4, -0.2), length, 1L, 2L,
+                                        as.integer(data), cov, "log", 1L)
+    lc_j <- as.numeric(JuliaConnectoR::juliaLet(
+      'Coconots.compute_negative_log_likelihood_GP2(lambdas, 0.0, 0.3, 0.0, eta, Int.(data))',
+      lambdas = lambdas, eta = eta, data = as.numeric(data)))
+    expect_true(is.finite(lc_j))
+    expect_equal(lc_j, lc_r, tolerance = 1e-8)
+  }
+})
