@@ -116,7 +116,8 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
 
         eta_s <- 0
 
-        sta <- c(alpha_s, starting_values_covariates )
+        sta <- c(alpha_s, covariateStartingValues(data, xreg, link_function, 1 - alpha_s,
+                                                  starting_values_covariates, b.beta))
 
       }
 
@@ -272,7 +273,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           }
         }
 
-        sta <- c(alpha_s, eta_s, starting_values_covariates)
+        sta <- c(alpha_s, eta_s, covariateStartingValues(data, xreg, link_function,
+                                                         (1 - alpha_s) * (1 - eta_s),
+                                                         starting_values_covariates, b.beta))
 
       }
 
@@ -467,7 +470,10 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         }
         #starting values covariates
 
-        sta <- c(alpha1_s, alpha2_s, alpha3_s, starting_values_covariates)
+        sta <- c(alpha1_s, alpha2_s, alpha3_s,
+                 covariateStartingValues(data, xreg, link_function,
+                                         1 - alpha1_s - alpha2_s - alpha3_s,
+                                         starting_values_covariates, b.beta))
       }
 
 
@@ -690,7 +696,10 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           }
         }
 
-        sta <- c(alpha1_s, alpha2_s, alpha3_s, eta_s, starting_values_covariates)
+        sta <- c(alpha1_s, alpha2_s, alpha3_s, eta_s,
+                 covariateStartingValues(data, xreg, link_function,
+                                         (1 - alpha1_s - alpha2_s - alpha3_s) * (1 - eta_s),
+                                         starting_values_covariates, b.beta))
 
       }
 
@@ -822,4 +831,52 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
     } # end GP2
     return(GP2(data))
   } # end if GP2
+}
+
+# Default starting values of the covariate coefficients beta.
+# The (GP-)INAR models have E[X_t] = lambda / ((1 - sum(alpha)) (1 - eta)), so for
+# slowly varying lambda_t the innovation rate is lambda_t = scale * mu_t with
+# scale = (1 - sum(alpha)) (1 - eta) evaluated at the alpha/eta starts and mu_t the
+# marginal mean of the counts. Per link:
+#   log:            Poisson GLM of the counts on xreg with offset -log(scale)
+#                   (with an intercept column: intercept shifted by log(scale));
+#   identity, relu: scale times the least-squares fit of the counts on xreg;
+#   softplus:       least-squares fit of softplus^{-1}(lambda_t) on xreg with
+#                   lambda_t = exp(xreg beta_log) from the log-link GLM above.
+# Returns `fallback` (the marginal fit) if scale is not in (0, 1] or the result is
+# not admissible (non-finite, beta <= b.beta, or lambda_t <= 0 for some row).
+# Mirrored in Coconots.jl `compute_covariate_starting_values`.
+covariateStartingValues <- function(data, xreg, link_function, scale, fallback, b.beta) {
+  if (!is.finite(scale) || scale <= 0 || scale > 1) {
+    return(fallback)
+  }
+  y <- as.numeric(data)
+  X <- data.matrix(xreg)
+  beta <- tryCatch({
+    if (link_function %in% c("identity", "relu")) {
+      scale * stats::lm.fit(X, y)$coefficients
+    } else {
+      beta_log <- stats::glm.fit(X, y, family = stats::poisson(),
+                                 offset = rep(-log(scale), length(y)))$coefficients
+      if (link_function == "log") {
+        beta_log
+      } else {
+        lambda <- exp(drop(X %*% beta_log))
+        stats::lm.fit(X, lambda + log(-expm1(-lambda)))$coefficients
+      }
+    }
+  }, error = function(e) NULL)
+  if (is.null(beta) || length(beta) != length(fallback) ||
+      any(!is.finite(beta)) || any(beta <= b.beta)) {
+    return(fallback)
+  }
+  lin <- drop(X %*% beta)
+  if (any(!is.finite(lin)) ||
+      (link_function %in% c("identity", "relu") && any(lin <= 0)) ||
+      (link_function == "log" && any(exp(lin) <= 0))) {
+    return(fallback)
+  }
+  beta <- as.numeric(beta)
+  names(beta) <- names(fallback)
+  return(beta)
 }
