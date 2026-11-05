@@ -1,6 +1,10 @@
 cocoForecastKSteps <- function(fit, k=3, number_simulations=1000, alpha=0.05, covariates=NULL,
                                decimals=4, 
                                julia=FALSE){
+  coco_check_count_limit(fit$ts)
+  coco_check_length(length(fit$ts), fit$order, "predict",
+                    sprintf("an order-%d model conditions on the last %d observation(s)",
+                            fit$order, fit$order))
   if (julia){
 
     forecasts <- cocoForecastKStepsJulia(fit, k=k, number_simulations = number_simulations,

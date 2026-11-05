@@ -13,6 +13,14 @@ cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-12, xcast=NULL,
     }
   }
   
+  # the predictive pmf on 0..max needs factorials up to max, and the
+  # forecast conditions on the last `order` observations
+  coco_check_support_limit(max, "max")
+  coco_check_count_limit(coco$ts)
+  coco_check_length(length(coco$ts), coco$order, "predict",
+                    sprintf("an order-%d model conditions on the last %d observation(s)",
+                            coco$order, coco$order))
+
   if (is.null(max)){
     max_use <- 60
   } else{
@@ -72,9 +80,11 @@ cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-12, xcast=NULL,
   
   # Without an explicit max, the support is doubled until it carries at least
   # 1 - epsilon of the mass (heavy GP tails need more than the initial 60
-  # points), until a non-finite density appears (the recursions overflow for
-  # very large counts) or until max_support is reached.
-  max_support <- 1000
+  # points), until a non-finite density appears (the recursions can overflow
+  # for counts close to the limit) or until max_support is reached. The
+  # support ends at the largest supported count COCO_MAX_COUNT on both
+  # backends (the C++ factorials overflow above it).
+  max_support <- COCO_MAX_COUNT
   res <- pmf_on_support(max_use)
   if (is.null(max)){
     repeat {
@@ -87,6 +97,9 @@ cocoForecastOneStep <- function(coco, max=NULL, epsilon=1e-12, xcast=NULL,
     }
   }
   densities <- get_densities(res)
+  if (!is.null(max)){
+    coco_check_finite_pmf(densities, "predictive pmf")
+  }
   
   if (is.null(max)){
     # keep the leading run of finite densities, then truncate at 1 - epsilon

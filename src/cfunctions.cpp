@@ -7,6 +7,9 @@
 # include <utility>
 # include <atomic>
 # include <thread>
+# include <mutex>
+# include <string>
+# include <stdexcept>
 # include <Rcpp.h>
 # include "coco_ad.h"
 
@@ -16,11 +19,16 @@ using namespace Rcpp ;
 
 namespace {
 
-// Factorials up to 170! are exactly representable in double; larger values
-// overflow to Inf just like the former recursive implementation
-// (fact(i) = i * fact(i-1)), whose multiplication order the table reproduces.
+// Factorials up to 170! are exactly representable in double; 171! overflows.
+// Counts above 170 are outside the supported range of the model (all
+// densities are built from these factorials), so a factorial of an argument
+// above 170 raises an error instead of returning Inf. The error is thrown as
+// a plain C++ exception (no R API call), so it is safe inside the worker
+// threads of parallel_for, which re-raise its message on the main thread.
+const int MAX_COUNT = 170;
+
 struct FactTable {
-  static const int size = 180;
+  static const int size = MAX_COUNT + 1;
   double v[size];
   FactTable() {
     v[0] = 1.0;
@@ -30,12 +38,17 @@ struct FactTable {
 };
 const FactTable FACT_TABLE;
 
+[[noreturn]] void count_limit_error(int i) {
+  throw std::range_error(
+    "coconots: counts above " + std::to_string(MAX_COUNT) +
+    " are not supported (factorial overflow in the C++ backend); required count = " +
+    std::to_string(i));
+}
+
 inline double factorial(int i) {
   if (i < 2) return 1.0;
-  if (i < FactTable::size) return FACT_TABLE.v[i];
-  double f = FACT_TABLE.v[FactTable::size - 1];
-  for (int k = FactTable::size; k <= i; ++k) f = k * f;
-  return f;
+  if (i <= MAX_COUNT) return FACT_TABLE.v[i];
+  count_limit_error(i);
 }
 
 enum LinkFunction { LINK_LOG, LINK_IDENTITY, LINK_RELU, LINK_SOFTPLUS };
@@ -118,10 +131,19 @@ void parallel_for(int n, int nthreads, F f) {
   }
   std::atomic<int> next(0);
   std::atomic<bool> failed(false);
+  std::mutex msg_mutex;
+  std::string msg;
   auto work = [&](int tid) {
     try {
       int i;
-      while ((i = next.fetch_add(1, std::memory_order_relaxed)) < n) f(tid, i);
+      while ((i = next.fetch_add(1, std::memory_order_relaxed)) < n) {
+        if (failed.load(std::memory_order_relaxed)) return;
+        f(tid, i);
+      }
+    } catch (const std::exception& e) {
+      std::lock_guard<std::mutex> lock(msg_mutex);
+      if (msg.empty()) msg = e.what();
+      failed.store(true);
     } catch (...) {
       failed.store(true);
     }
@@ -131,7 +153,10 @@ void parallel_for(int n, int nthreads, F f) {
   for (int k = 1; k < nthreads; ++k) pool.emplace_back(work, k);
   work(0);
   for (std::size_t k = 0; k < pool.size(); ++k) pool[k].join();
-  if (failed.load()) stop("coconots: a worker thread failed (out of memory?)");
+  if (failed.load()) {
+    if (!msg.empty()) stop(msg);
+    stop("coconots: a worker thread failed (out of memory?)");
+  }
 }
 
 // ------------------------------------------------------------------ order 1
@@ -480,7 +505,8 @@ inline double entries_limit(double n_double) {
 // transcendental calls (same math; values agree up to rounding).
 
 // Largest index for which the recurrences below are used; beyond it the
-// factorials overflow and the former per-entry formula is kept unchanged.
+// former per-entry formula is kept (factorial() raises the count-limit error
+// there, since 171! overflows).
 const int GP_REC_MAX = 170;
 
 // True iff x and (for dual numbers) all its partials are exactly zero; for
@@ -1354,7 +1380,11 @@ double dR2(int r, int y, int z, double lambda, double alpha1, double alpha2, dou
 
 
 // P(R = r | y, z) for r = 0, 1, ... until the cumulative probability
-// reaches 1 - val_num, mirroring the accumulation loop in cocoResid().
+// reaches 1 - val_num, mirroring the accumulation loop in cocoResid(). The
+// support of R given (y, z) is 0..y+z, so the loop stops there at the latest:
+// rounding can keep the cumulative mass below 1 - val_num for tiny val_num,
+// and the former unbounded loop then never terminated (the terms beyond
+// y + z are zero).
 // [[Rcpp::export]]
 NumericVector dR2_vec(int y, int z, double lambda, double alpha1, double alpha2,
                       double alpha3, double eta, double val_num)
@@ -1366,10 +1396,11 @@ NumericVector dR2_vec(int y, int z, double lambda, double alpha1, double alpha2,
   tb.ensure(std::max(std::max(y, z), 0));
 
   const double pyz = gp2_pyz(y, z, p);
+  const int rmax = std::max(y, 0) + std::max(z, 0);
   std::vector<double> probs;
   double acc = 0.0;
   int r = 0;
-  while (acc < 1 - val_num) {
+  while (acc < 1 - val_num && r <= rmax) {
     const double prob = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
     probs.push_back(prob);
     acc = acc + prob;

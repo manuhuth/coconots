@@ -44,6 +44,16 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
   }
   
   data <- coco$ts
+
+  # the sample ACF of a series of length T is defined up to lag T - 1
+  coco_check_count_limit(data)
+  coco_check_length(length(data), coco$order + 2, "cocoBoot",
+                    sprintf("a fitted order-%d model has at least %d observations", coco$order, coco$order + 2))
+  if (numb.lags > length(data) - 1) {
+    stop(sprintf(paste0("cocoBoot: numb.lags = %d must be smaller than the length of the ",
+                        "time series (%d); the sample autocorrelation is defined up to lag %d"),
+                 as.integer(numb.lags), length(data), length(data) - 1L), call. = FALSE)
+  }
   
   if (!is.null(coco$julia_reg) & julia){
     if (!is.null(julia_seed)){

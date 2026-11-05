@@ -54,6 +54,109 @@ validate_gp2_par <- function(lambda, alpha1, alpha2, alpha3, eta) {
   invisible(NULL)
 }
 
+#' Largest supported count
+#'
+#' All transition densities are built from factorials of the counts, and
+#' 171! overflows in double precision. Counts above this limit are outside
+#' the supported range on both backends (the C++ factorial raises the same
+#' error when a computation would need one of them).
+#' @noRd
+COCO_MAX_COUNT <- 170L
+
+#' Count values of a data argument (vector, ts, matrix or data frame)
+#' @noRd
+coco_count_values <- function(data) {
+  if (is.data.frame(data)) {
+    data <- as.matrix(data)
+  }
+  as.numeric(data)
+}
+
+#' Error if any count exceeds COCO_MAX_COUNT; `what` names the count in the
+#' message ("observed", "initial", "simulated").
+#' @noRd
+coco_check_count_limit <- function(data, what = "observed") {
+  x <- coco_count_values(data)
+  x <- x[!is.na(x)]
+  if (length(x) > 0 && max(x) > COCO_MAX_COUNT) {
+    stop(sprintf(paste0("coconots: counts above %d are not supported (factorial overflow ",
+                        "in the C++ backend); %s count = %s"),
+                 COCO_MAX_COUNT, what, format(max(x))), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' Error if the largest support point of a predictive pmf (argument `arg`,
+#' e.g. max_x of cocoScore or max of predict) exceeds COCO_MAX_COUNT.
+#' @noRd
+coco_check_support_limit <- function(value, arg) {
+  if (!is.null(value) && length(value) == 1 && !is.na(value) && value > COCO_MAX_COUNT) {
+    stop(sprintf(paste0("coconots: '%s' = %s exceeds the largest supported count %d ",
+                        "(counts above %d are not supported: factorial overflow in the ",
+                        "C++ backend)"),
+                 arg, format(value), COCO_MAX_COUNT, COCO_MAX_COUNT), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' Error if a series of length `n` is shorter than `min_n`; `fun` names the
+#' function and `reason` states what the minimum is needed for.
+#' @noRd
+coco_check_length <- function(n, min_n, fun, reason) {
+  if (n < min_n) {
+    stop(sprintf("%s: the time series has %d observation(s), but at least %d are required (%s)",
+                 fun, as.integer(n), as.integer(min_n), reason), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' Error if a vector of probabilities contains non-finite values (NaN or
+#' Inf), which arise from floating-point overflow or underflow in the
+#' density recursions (e.g. counts close to the supported maximum with a
+#' large dispersion parameter eta).
+#' @noRd
+coco_check_finite_pmf <- function(p, what) {
+  if (any(!is.finite(p))) {
+    stop(sprintf(paste0("coconots: the %s is not finite (floating-point overflow in the ",
+                        "density recursions for these counts and parameters; this can happen ",
+                        "for counts close to the supported maximum of %d with a large eta)"),
+                 what, COCO_MAX_COUNT), call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+#' Error if the covariate matrix is rank deficient: the likelihood is then
+#' not identified (the regression coefficients of aliased columns are not
+#' determined) and the GLM starting values contain NA coefficients. The
+#' aliased columns are those that the pivoted QR decomposition (tolerance of
+#' stats::lm) moves behind the rank.
+#' @noRd
+coco_check_xreg_rank <- function(xreg) {
+  X <- xreg
+  if (is.data.frame(X)) {
+    X <- as.matrix(X)
+  }
+  X <- as.matrix(X)
+  if (!is.numeric(X) || ncol(X) == 0 || any(!is.finite(X))) {
+    return(invisible(NULL))
+  }
+  qrx <- qr(X, tol = 1e-07)
+  if (qrx$rank < ncol(X)) {
+    names_x <- colnames(X)
+    if (is.null(names_x)) {
+      names_x <- paste0("X", seq_len(ncol(X)))
+    }
+    names_x[names_x == ""] <- paste0("X", which(names_x == ""))
+    aliased <- qrx$pivot[(qrx$rank + 1):ncol(X)]
+    stop(sprintf(paste0("xreg is rank deficient: column(s) %s are linear combinations of ",
+                        "others (rank %d < %d columns); the model is not identified. ",
+                        "Remove the aliased column(s)."),
+                 paste(names_x[sort(aliased)], collapse = ", "), qrx$rank, ncol(X)),
+         call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 #' Extract a value from a materialised Julia Dict by key name
 #'
 #' `JuliaConnectoR::juliaGet()` materialises a Julia `Dict` into an R list with

@@ -26,6 +26,13 @@
 cocoSoc <- function(data, models = "all", print.progress=TRUE,
                        max_x_score=50, julia = FALSE, ...
           ) {
+  # the order-1 fits use data[-1]; both orders need cocoReg's minimum of
+  # order + 2 observations, i.e. 4 observations in data
+  coco_check_length(length(coco_count_values(data)), 4, "cocoSoc",
+                    "the order-1 models are fitted to data[-1] and the order-2 models to data, each needing order + 2 observations")
+  coco_check_count_limit(data)
+  coco_check_support_limit(max_x_score, "max_x_score")
+
   fits <- list()
   scores <- list()
   
