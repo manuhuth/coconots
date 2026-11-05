@@ -90,6 +90,15 @@ inline void check_table_index(int n) {
     stop("Count values are too large for the (Generalized) Poisson recursions.");
 }
 
+// Simulation needs a finite, positive innovation mean lambda_t = link(x_t' beta)
+// (the identity link gives lambda_t <= 0 for x_t' beta <= 0).
+inline void check_sim_lambda(double lam) {
+  if (!(lam > 0) || !R_FINITE(lam))
+    stop("The innovation mean lambda_t = link(x_t' beta) must be finite and positive "
+         "for every t, but lambda_t = %g occurs. With the identity link choose "
+         "covariates and beta such that x_t' beta > 0.", lam);
+}
+
 inline int resolve_threads(int n, int cores) {
   int nthreads = std::max(1, cores);
   const unsigned hc = std::thread::hardware_concurrency();
@@ -1185,18 +1194,20 @@ std::vector<int> simGP2(double lambda, double alpha1, double alpha2,
 
     const double unif = uniform[t - 1];
 
+    // the support of the thinning part is 0..y + z; if the accumulated
+    // probability stays <= unif up to y + z (rounding), y + z is drawn
+    const int rmax = y + z;
     int r = 0;
     double nain = 0.0;
     if (y >= 0 && z >= 0) {
       const GVec& gv = g_lookup(cache, y, z, p, tb);
-      const int rmax = y + z;
-      while (nain <= unif) {
-        nain = nain + ((r <= rmax) ? gv.g[r] : gv.tail);
+      while (nain <= unif && r <= rmax) {
+        nain = nain + gv.g[r];
         r = r + 1;
       }
     } else {
       const double pyz = gp2_pyz(y, z, p);
-      while (nain <= unif) {
+      while (nain <= unif && r <= rmax) {
         nain = nain + gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
         r = r + 1;
       }
@@ -1224,13 +1235,13 @@ std::vector<int> simGP1(double lambda, double alpha, double eta, int T, int N,
 
     const double unif = uniform[t - 1];
 
+    // support 0..y; if the accumulated probability stays <= unif up to y
+    // (rounding), y is drawn
     int r = 0;
     double nain = 0.0;
-    while (nain <= unif) {
-      if (y >= r) {
-        nain = nain + factorial(y) / factorial(y - r) / factorial(r) * tb.alpha * (1 - tb.alpha) *
-          tb.powA[r] * tb.powB[y - r] / tb.denom[y];
-      }
+    while (nain <= unif && r <= y) {
+      nain = nain + factorial(y) / factorial(y - r) / factorial(r) * tb.alpha * (1 - tb.alpha) *
+        tb.powA[r] * tb.powB[y - r] / tb.denom[y];
       r = r + 1;
     }
     data[t - 1] = r - 1 + innovations[t - 1];
@@ -1394,6 +1405,7 @@ std::vector<int> simGP2cov(double alpha1, double alpha2, double alpha3,
 
     const double mathelp = rowInnerProduct(xreg, t - N - 1, lambdas);
     const double lambda = applyLink(mathelp, link);
+    check_sim_lambda(lambda);
     p.init(lambda, alpha1, alpha2, alpha3, eta);
     tb.init(p);
     tb.ensure(std::max(std::max(y, z), 0));
@@ -1401,9 +1413,12 @@ std::vector<int> simGP2cov(double alpha1, double alpha2, double alpha3,
     const double pyz = gp2_pyz(y, z, p);
     const double unif = uniform[t - N - 1];
 
+    // support 0..y + z; if the accumulated probability stays <= unif up to
+    // y + z (rounding), y + z is drawn
+    const int rmax = y + z;
     int r = 0;
     double nain = 0.0;
-    while (nain <= unif) {
+    while (nain <= unif && r <= rmax) {
       nain = nain + gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
       r = r + 1;
     }
@@ -1428,17 +1443,18 @@ std::vector<int> simGP1cov(double alpha, double eta,
 
     const double mathelp = rowInnerProduct(xreg, t - 1 - N, lambdas);
     const double lambda = applyLink(mathelp, link);
+    check_sim_lambda(lambda);
     const double psi = eta * (1 - alpha) / lambda;
     const double denom = (y >= 0) ? pow(1 + psi * y, y - 1) : 0.0;
 
     const double unif = uniform[t - 1];
+    // support 0..y; if the accumulated probability stays <= unif up to y
+    // (rounding), y is drawn
     int r = 0;
     double nain = 0.0;
-    while (nain <= unif) {
-      if (y >= r) {
-        nain = nain + factorial(y) / factorial(y - r) / factorial(r) * alpha * (1 - alpha) *
-          pow(alpha + psi * r, r - 1) * pow(1 - alpha + psi * (y - r), y - r - 1) / denom;
-      }
+    while (nain <= unif && r <= y) {
+      nain = nain + factorial(y) / factorial(y - r) / factorial(r) * alpha * (1 - alpha) *
+        pow(alpha + psi * r, r - 1) * pow(1 - alpha + psi * (y - r), y - r - 1) / denom;
       r = r + 1;
     }
     data[t - 1] = r - 1 + innovations[t - N - 1];
@@ -1471,12 +1487,93 @@ inline double hmmpa_dgenpois(int x, double l1, double l2) {
   return b;
 }
 
+// Inversion of the Generalized Poisson CDF with the cumulative table kept for
+// one lambda: the smallest x with F(x) >= u, F accumulated from x = 0 upwards
+// with the strict `F(x) < u` continuation rule of the former R loop.
+//
+// Termination. In floating point the accumulated F can stay below u forever:
+// its increments round to zero once they fall below half an ulp of F, and for
+// large lambda the HMMpa recursion returns only denormals. The former loop
+// then never ended. When the next value F(x) is still < u:
+//  - if the increment vanished (F(x) == F(x - 1)) and 1 - F(x - 1) <=
+//    GP_INV_SAT_TOL, F has saturated: beyond the bulk the pmf decreases, so F
+//    keeps this value for all larger x, the remaining mass is at rounding
+//    level, and x is returned (the exact quantile is >= x and is needed only
+//    with probability <= 1 - F(x - 1));
+//  - if x exceeds the bound gp_inv_upper() = mean + 40 sd + 1000 and either
+//    the increment vanished or F(x - 1) < 1 - GP_INV_TAIL_BOUND, the inversion
+//    stops with an error. By Chebyshev's inequality the exact F exceeds
+//    1 - 1/1600 > 1 - GP_INV_TAIL_BOUND there, so this happens only if F
+//    cannot be evaluated accurately for these parameters.
+// Draws that the former loop returned are unchanged (up to the error case),
+// and no additional random numbers are used.
+const double GP_INV_SAT_TOL = 1e-8;
+const double GP_INV_TAIL_BOUND = 1e-3;
+const double GP_INV_MAX = 1e9;
+
+inline int gp_inv_upper(double lam, double eta) {
+  const double one_m = 1.0 - eta;
+  const double mean = lam / one_m;
+  const double sd = sqrt(lam / (one_m * one_m * one_m));
+  double up = ceil(mean + 40.0 * sd) + 1000.0;
+  if (!(up <= GP_INV_MAX)) up = GP_INV_MAX;  // also NaN (lam <= 0, eta >= 1)
+  return static_cast<int>(up);
+}
+
+struct GPInvCdf {
+  double lam, eta;
+  std::vector<double> cdf;
+  long long iter;
+  int upper;  // gp_inv_upper(lam, eta)
+  int sat;    // x returned once F saturated (-1: not saturated)
+
+  GPInvCdf() : lam(0.0), eta(0.0), iter(0), upper(0), sat(-1) {}
+
+  void reset(double lam_, double eta_) {
+    lam = lam_;
+    eta = eta_;
+    cdf.clear();
+    cdf.push_back(hmmpa_dgenpois(0, lam, eta));
+    upper = gp_inv_upper(lam, eta);
+    sat = -1;
+  }
+
+  int draw(double u) {
+    int idx = 0;
+    while (true) {
+      if (idx >= static_cast<int>(cdf.size())) {
+        if (sat >= 0) return sat;
+        const double prev = cdf.back();
+        const double next = prev + hmmpa_dgenpois(idx, lam, eta);
+        if (next < u) {  // false if next or u is NaN (error below)
+          const bool vanished = !(next > prev);
+          if (vanished && 1.0 - prev <= GP_INV_SAT_TOL) {
+            sat = idx;
+            return idx;
+          }
+          if (idx > upper && (vanished || prev < 1.0 - GP_INV_TAIL_BOUND))
+            stop("Generalized Poisson inversion did not converge: the cumulative "
+                 "probability stays at %g < 1 (lambda = %g, eta = %g)", prev, lam, eta);
+        }
+        cdf.push_back(next);
+      }
+      const double last = cdf[idx];
+      if (std::isnan(last) || std::isnan(u))
+        stop("missing value where TRUE/FALSE needed");
+      if (!(last < u)) return idx;
+      idx = idx + 1;
+      if ((++iter & 0xFFFFF) == 0) checkUserInterrupt();
+    }
+  }
+};
+
 } // namespace
 
 
 // Inversion sampler of the Generalized Poisson distribution: for each
 // uniform u[i], the smallest x with cumulative pmf (accumulated from x = 0
-// upwards, as in the former R loop) >= u[i], at lambda = lambdas[i].
+// upwards, as in the former R loop) >= u[i], at lambda = lambdas[i]
+// (GPInvCdf, which also documents the termination rule).
 // The cumulative table is reused while consecutive lambdas are equal.
 // [[Rcpp::export]]
 NumericVector rgenpoisInv(NumericVector u, NumericVector lambdas, double eta)
@@ -1484,34 +1581,16 @@ NumericVector rgenpoisInv(NumericVector u, NumericVector lambdas, double eta)
   const int n = u.size();
   if (lambdas.size() != n) stop("u and lambdas must have the same length");
   NumericVector out(n);
-  std::vector<double> cdf;
-  double cur = 0.0;
+  GPInvCdf inv;
   bool have = false;
-  long long iter = 0;
 
   for (int i = 0; i < n; ++i) {
     const double lam = lambdas[i];
-    if (!have || !(lam == cur)) {
-      cdf.clear();
-      cdf.push_back(hmmpa_dgenpois(0, lam, eta));
-      cur = lam;
+    if (!have || !(lam == inv.lam)) {
+      inv.reset(lam, eta);
       have = true;
     }
-    const double ui = u[i];
-    int idx = 0;
-    while (true) {
-      if (idx >= static_cast<int>(cdf.size())) {
-        const double next = cdf.back() + hmmpa_dgenpois(idx, cur, eta);
-        cdf.push_back(next);
-      }
-      const double last = cdf[idx];
-      if (std::isnan(last) || std::isnan(ui))
-        stop("missing value where TRUE/FALSE needed");
-      if (!(last < ui)) break;
-      idx = idx + 1;
-      if ((++iter & 0xFFFFF) == 0) checkUserInterrupt();
-    }
-    out[i] = idx;
+    out[i] = inv.draw(u[i]);
   }
   return out;
 }
@@ -1801,39 +1880,6 @@ inline int gp1cov_cdf_draw(LazyCdf& e, int y, double u, double alpha, double psi
   }
 }
 
-// Inversion of the Generalized Poisson CDF exactly as in rgenpoisInv, with
-// the cumulative table kept for one lambda.
-struct GPInvCdf {
-  double lam, eta;
-  std::vector<double> cdf;
-  long long iter;
-
-  GPInvCdf() : lam(0.0), eta(0.0), iter(0) {}
-
-  void reset(double lam_, double eta_) {
-    lam = lam_;
-    eta = eta_;
-    cdf.clear();
-    cdf.push_back(hmmpa_dgenpois(0, lam, eta));
-  }
-
-  int draw(double u) {
-    int idx = 0;
-    while (true) {
-      if (idx >= static_cast<int>(cdf.size())) {
-        const double next = cdf.back() + hmmpa_dgenpois(idx, lam, eta);
-        cdf.push_back(next);
-      }
-      const double last = cdf[idx];
-      if (std::isnan(last) || std::isnan(u))
-        stop("missing value where TRUE/FALSE needed");
-      if (!(last < u)) return idx;
-      idx = idx + 1;
-      if ((++iter & 0xFFFFF) == 0) checkUserInterrupt();
-    }
-  }
-};
-
 inline int count_from_double(double v) {
   if (!R_FINITE(v) || v < 0 || v > 2147483647.0)
     stop("Simulated innovation is not a finite non-negative count (invalid innovation mean?)");
@@ -1963,13 +2009,15 @@ NumericMatrix bootAcfBase(int order, bool gp, double lambda, double alpha1,
 
 
 // Bootstrap ACFs with covariates. Each replicate is the cocoSim_cov series
-// of length `size` without burn-in: initial values from init_lambdas,
-// innovations from lambdas (one per xreg row), n_unif thinning uniforms,
-// and the thinning at step t uses lambda from xreg row t - order - 1, the
-// innovation t - order - 1 and the uniform t - order - 1 (order 2) or
-// t - 1 (order 1), as in simGP2cov / simGP1cov. Replicates are drawn in
-// order (so the RNG stream is that of consecutive cocoSim calls) and then
-// simulated time-major in blocks, sharing per-t tables and caches.
+// of length `size` without burn-in: initial values from init_lambdas (the
+// innovation distribution at xreg rows 1..order, GP draws with eta for
+// type GP), innovations from lambdas (one per xreg row), n_unif thinning
+// uniforms; observation t (1-based) uses lambda_t from xreg row t and
+// innovation t, as in the likelihood, and the uniform t - order (order 2) or
+// t (order 1), as cocoSim_cov passes them to simGP2cov / simGP1cov.
+// Replicates are drawn in order (so the RNG stream is that of consecutive
+// cocoSim calls) and then simulated time-major in blocks, sharing per-t
+// tables and caches.
 // [[Rcpp::export]]
 NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
                          double alpha3, double eta, NumericVector betas,
@@ -1984,8 +2032,10 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
   if (size <= N || nlags < 1 || nB < 0) stop("invalid bootstrap dimensions");
   if (init_lambdas.size() != N) stop("init_lambdas must have one value per initial observation");
   if (betas.size() != xreg.ncol()) stop("betas and xreg do not match");
-  if (xreg.nrow() < size - N || n_innov < size - N) stop("xreg has too few rows");
+  if (xreg.nrow() < size || n_innov < size) stop("xreg has too few rows");
   if (n_unif < ((order == 2) ? size - N : size)) stop("too few thinning uniforms");
+  for (int i = 0; i < size; ++i) check_sim_lambda(lambdas[i]);
+  for (int i = 0; i < N; ++i) check_sim_lambda(init_lambdas[i]);
 
   NumericMatrix out(nlags, nB);
   const std::size_t per_rep = static_cast<std::size_t>(size) + n_innov + n_unif + 1;
@@ -2013,7 +2063,7 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
     for (int k = 0; k < nb; ++k) {
       int* d = &data[static_cast<std::size_t>(k) * size];
       for (int i = 0; i < N; ++i) {
-        if (order == 1 && gp) {
+        if (gp) {
           inv_init.reset(init_lambdas[i], eta);
           d[i] = inv_init.draw(R::runif(0.0, 1.0));
         } else {
@@ -2031,9 +2081,10 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
     }
 
     for (int t = N + 1; t <= size; ++t) {
-      const int row = t - N - 1;
+      const int row = t - 1;
       const int ui = (order == 2) ? (t - N - 1) : (t - 1);
       const double lam = applyLink(rowInnerProduct(xreg, row, betas), link);
+      check_sim_lambda(lam);
       const double psi = eta * (1 - alpha1) / lam;
       bool conv = false;
       if (order == 2) {
@@ -2195,14 +2246,16 @@ IntegerMatrix forecastPathsBase(int order, bool gp, double lambda, double alpha1
 }
 
 
-// With covariates (cocoSim_cov without burn-in, xreg = xcast): initial values
-// from init_lambdas (drawn, then replaced by init), innovations from lambdas
-// (one per xreg row), n_unif thinning uniforms; the thinning at step t uses
-// lambda from xreg row t - order - 1, the innovation t - order - 1 and the
-// uniform t - order - 1 (order 2) or t - 1 (order 1), as in simGP2cov /
-// simGP1cov. Paths are drawn in order (so the RNG stream is that of
-// consecutive cocoSim_cov calls) and then simulated time-major in blocks,
-// sharing per-t tables and caches, as in bootAcfCov.
+// With covariates (cocoSim_cov(init = <last observations>), xreg = xcast):
+// initial values from init_lambdas (drawn, GP draws with eta for type GP,
+// then replaced by init), innovations from lambdas (one per xreg row),
+// n_unif thinning uniforms; forecast step j = t - order (data position t,
+// 1-based, after the `order` observations of init) uses lambda_j from xcast
+// row j, innovation j and the uniform j (order 2) or t (order 1), as
+// cocoSim_cov(init = ...) passes them to simGP2cov / simGP1cov. Paths are
+// drawn in order (so the RNG stream is that of consecutive cocoSim_cov calls)
+// and then simulated time-major in blocks, sharing per-t tables and caches,
+// as in bootAcfCov.
 // [[Rcpp::export]]
 IntegerMatrix forecastPathsCov(int order, bool gp, double alpha1, double alpha2,
                                double alpha3, double eta, NumericVector betas,
@@ -2247,8 +2300,8 @@ IntegerMatrix forecastPathsCov(int order, bool gp, double alpha1, double alpha2,
     for (int k = 0; k < nb; ++k) {
       int* d = &data[static_cast<std::size_t>(k) * size];
       for (int i = 0; i < N; ++i) {
-        // order 1 GP: rgenpois(n = 1, ...) (one uniform); otherwise rpois
-        if (order == 1 && gp) {
+        // GP: rgenpois(n = 1, ...) (one uniform); Poisson: rpois
+        if (gp) {
           R::runif(0.0, 1.0);
         } else {
           R::rpois(init_lambdas[i]);
@@ -2266,9 +2319,10 @@ IntegerMatrix forecastPathsCov(int order, bool gp, double alpha1, double alpha2,
     }
 
     for (int t = N + 1; t <= size; ++t) {
-      const int row = t - N - 1;
+      const int row = t - N - 1;  // forecast step t - N uses xcast row t - N
       const int ui = (order == 2) ? (t - N - 1) : (t - 1);
       const double lam = applyLink(rowInnerProduct(xreg, row, betas), link);
+      check_sim_lambda(lam);
       const double psi = eta * (1 - alpha1) / lam;
       bool conv = false;
       if (order == 2) {
