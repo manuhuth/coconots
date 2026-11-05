@@ -278,6 +278,93 @@ void gp2_build_g(int y, int z, const GP2Params& p, const GP2Tables& tb, GVec& ou
   out.tail = 0.0 * pow(pyz, -1);
 }
 
+// Factored evaluation of gp2_zwerg (same math, summation reordered).
+//
+// Each term of the triple convolution is the product of six univariate GP
+// pmf values  q3[s] q1[v] q2[k] q1[w] qL[m - w] qZ[n - w]  with k = r-s-v,
+// m = z-s-k and n = y-s-v, where qX[i] = betaX * powX[i] / i! * expX[i]
+// (the same subchains as in gp2_zwerg). The w-sum depends on (m, n) only:
+//   W(m, n) = sum_{w=0}^{min(m,n)} q1[w] qL[m-w] qZ[n-w],
+// so it is tabulated once and zwerg(r) becomes a double sum. The feasible set
+// of gp2_zwerg is exactly s in [0, min(y,z)], v in [0, y-s], k in [0, z-s]
+// with r = s+v+k, which is enumerated directly. Only the association and
+// summation order of the (non-negative, for admissible parameters) terms
+// differ from gp2_zwerg, i.e. results agree up to floating-point rounding.
+struct GP2Conv {
+  std::vector<double> q1, q2, q3, qL, qZ, W, zw;
+  int mlo, mhi, nlo, nhi;
+  std::size_t stride;
+
+  // pmf tables for indices 0..n; tb must cover n.
+  void build_pmf(const GP2Params& p, const GP2Tables& tb, int n) {
+    q1.resize(n + 1); q2.resize(n + 1); q3.resize(n + 1);
+    qL.resize(n + 1); qZ.resize(n + 1);
+    for (int i = 0; i <= n; ++i) {
+      const double f = factorial(i);
+      q1[i] = p.beta1 * tb.powB1[i] / f * tb.expB1[i];
+      q2[i] = p.beta2 * tb.powB2[i] / f * tb.expB2[i];
+      q3[i] = p.beta3 * tb.powB3[i] / f * tb.expB3[i];
+      qL[i] = p.lambda * tb.powL[i] / f * tb.expL[i];
+      qZ[i] = p.zeta * tb.powZ[i] / f * tb.expZ[i];
+    }
+  }
+
+  // W(m, n) for m in [mlo_, mhi_], n in [nlo_, nhi_]; pmf tables must cover
+  // max(mhi_, nhi_).
+  void build_W(int mlo_, int mhi_, int nlo_, int nhi_) {
+    mlo = mlo_; mhi = mhi_; nlo = nlo_; nhi = nhi_;
+    stride = static_cast<std::size_t>(nhi - nlo + 1);
+    W.resize(static_cast<std::size_t>(mhi - mlo + 1) * stride);
+    for (int m = mlo; m <= mhi; ++m) {
+      double* row = &W[static_cast<std::size_t>(m - mlo) * stride];
+      for (int n = nlo; n <= nhi; ++n) {
+        const int wmax = std::min(m, n);
+        double acc = 0.0;
+        for (int w = 0; w <= wmax; ++w) acc = acc + q1[w] * qL[m - w] * qZ[n - w];
+        row[n - nlo] = acc;
+      }
+    }
+  }
+
+  inline double Wat(int m, int n) const {
+    return W[static_cast<std::size_t>(m - mlo) * stride + static_cast<std::size_t>(n - nlo)];
+  }
+
+  // out[r] = zwerg(r | y, z) for r = 0..rcap, with y, z >= 0, 0 <= rcap <= y+z.
+  // W must cover m in [max(0, z-rcap), z] and n in [max(0, y-rcap), y].
+  void zwerg_upto(int y, int z, int rcap, std::vector<double>& out) const {
+    out.assign(rcap + 1, 0.0);
+    const int smax = std::min(std::min(y, z), rcap);
+    for (int s = 0; s <= smax; ++s) {
+      const double a3 = q3[s];
+      const int vmax = std::min(y - s, rcap - s);
+      for (int v = 0; v <= vmax; ++v) {
+        const double a31 = a3 * q1[v];
+        const int n = y - s - v;
+        const int kmax = std::min(z - s, rcap - s - v);
+        double* o = &out[s + v];
+        for (int k = 0; k <= kmax; ++k) {
+          o[k] = o[k] + a31 * q2[k] * Wat(z - s - k, n);
+        }
+      }
+    }
+  }
+};
+
+// Upper bound on the number of W entries tabulated at once; beyond it the
+// direct gp2_zwerg evaluation is used.
+const double GP2_CONV_MAX_ENTRIES = 4e6;
+
+// gp2_build_g via GP2Conv; cv must hold pmf tables and W covering
+// m in [0, z], n in [0, y]. Safe to run concurrently (cv is read-only).
+void gp2_build_g_conv(int y, int z, const GP2Params& p, const GP2Conv& cv, GVec& out) {
+  const double pyz = gp2_pyz(y, z, p);
+  cv.zwerg_upto(y, z, y + z, out.g);
+  const double ipyz = pow(pyz, -1);
+  for (std::size_t r = 0; r < out.g.size(); ++r) out.g[r] = out.g[r] * ipyz;
+  out.tail = 0.0 * pow(pyz, -1);
+}
+
 typedef std::unordered_map<long long, GVec> GCache;
 
 inline long long g_key(int y, int z) {
@@ -338,17 +425,37 @@ double likelihoodGP2(double lambda, double alpha1, double alpha2,
   // so results are bit-identical to the single-threaded evaluation.
   struct Job { int y, z; GVec* gv; };
   std::vector<Job> jobs;
+  int maxy = 0, maxz = 0;
   for (int t = seas2 + 1; t <= T; ++t) {
     const int y = data[t - seas1 - 1];
     const int z = data[t - seas2 - 1];
     if (y >= 0 && z >= 0) {
       std::pair<GCache::iterator, bool> ins = cache.emplace(g_key(y, z), GVec());
-      if (ins.second) jobs.push_back(Job{y, z, &ins.first->second});
+      if (ins.second) {
+        jobs.push_back(Job{y, z, &ins.first->second});
+        maxy = std::max(maxy, y);
+        maxz = std::max(maxz, z);
+      }
     }
   }
+
+  // lambda is constant, so the pmf tables and W(m, n) are shared by all
+  // histories; build them once (serially) before the read-only g builds.
+  const bool use_conv = !jobs.empty() &&
+    static_cast<double>(maxz + 1) * (maxy + 1) <= GP2_CONV_MAX_ENTRIES;
+  GP2Conv cv;
+  if (use_conv) {
+    cv.build_pmf(p, tb, maxval);
+    cv.build_W(0, maxz, 0, maxy);
+  }
+
   const int nthreads = resolve_threads(static_cast<int>(jobs.size()), cores);
   parallel_for(static_cast<int>(jobs.size()), nthreads, [&](int, int i) {
-    gp2_build_g(jobs[i].y, jobs[i].z, p, tb, *jobs[i].gv);
+    if (use_conv) {
+      gp2_build_g_conv(jobs[i].y, jobs[i].z, p, cv, *jobs[i].gv);
+    } else {
+      gp2_build_g(jobs[i].y, jobs[i].z, p, tb, *jobs[i].gv);
+    }
   });
 
   double mlef = 0.0;
@@ -727,6 +834,7 @@ double likelihoodGP2cov(double alpha1, double alpha2, double alpha3,
   const int nthreads = resolve_threads(nterms, cores);
   std::vector<GP2Params> pv(nthreads);
   std::vector<GP2Tables> tbv(nthreads);
+  std::vector<GP2Conv> cvv(nthreads);
 
   parallel_for(nterms, nthreads, [&](int tid, int i) {
     const int t = seas2 + 1 + i;
@@ -745,9 +853,23 @@ double likelihoodGP2cov(double alpha1, double alpha2, double alpha3,
     const double pyz = gp2_pyz(y, z, p);
     const int minxyz = std::min(x, y + z);
     double nain = 0.0;
-    for (int r = 0; r <= minxyz; ++r) {
-      const double gryz = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
-      nain = nain + gryz * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
+    if (x >= 0 && y >= 0 && z >= 0 &&
+        static_cast<double>(y + 1) * (z + 1) <= GP2_CONV_MAX_ENTRIES) {
+      // only r <= minxyz is needed, so W is restricted to the (m, n) that
+      // these r reach
+      GP2Conv& cv = cvv[tid];
+      cv.build_pmf(p, tb, std::max(y, z));
+      cv.build_W(std::max(0, z - minxyz), z, std::max(0, y - minxyz), y);
+      cv.zwerg_upto(y, z, minxyz, cv.zw);
+      for (int r = 0; r <= minxyz; ++r) {
+        const double gryz = cv.zw[r] * pow(pyz, -1);
+        nain = nain + gryz * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
+      }
+    } else {
+      for (int r = 0; r <= minxyz; ++r) {
+        const double gryz = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
+        nain = nain + gryz * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
+      }
     }
 
     if (nain <= 0) {
