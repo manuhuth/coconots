@@ -665,3 +665,201 @@ test_that("too short series raise informative errors", {
   short$ts <- numeric(0)
   expect_error(predict(short), "predict: the time series has 0 observation")
 })
+
+#-----------------PIT time range (t = order + 1, ..., T)-----------------------
+# Reference PIT of an order-1 model computed directly from the transition
+# densities over t = 2, ..., T (T - 1 time points).
+pit_order1_reference <- function(data, lambda, alpha, eta, J) {
+  u <- seq(0, 1, length = J + 1)
+  rows <- t(vapply(2:length(data), function(t) {
+    dvec <- coconots:::dGP1h_vec(data[t], data[t - 1], lambda[t], alpha, eta)
+    Px <- sum(dvec[seq_len(data[t] + 1)])
+    Px1 <- if (data[t] >= 1) sum(dvec[seq_len(data[t])]) else 0
+    pmin(pmax((u - Px1) / (Px - Px1), 0), 1)
+  }, numeric(J + 1)))
+  diff(colMeans(rows))
+}
+
+test_that("cocoPit (R) of order-1 models uses t = 2, ..., T", {
+  set.seed(2611)
+  data <- cocoSim(order = 1, type = "GP", par = c(1, 0.3, 0.2), length = 80)
+  fit <- cocoReg(order = 1, type = "GP", data = data)
+  pit <- cocoPit(fit, J = 10)
+  expect_equal(pit$`PIT values`,
+               pit_order1_reference(data, rep(fit$par[1], length(data)),
+                                    fit$par[2], fit$par[3], 10),
+               tolerance = 1e-10)
+  expect_equal(sum(pit$`PIT values`), 1, tolerance = 1e-12)
+  # chi-square statistic on the bin counts of the T - 1 PIT time points
+  n_pit <- length(data) - 1
+  d <- pit$`PIT values`
+  expect_equal(pit$p_value,
+               stats::pchisq(sum((d * n_pit - n_pit / 10)^2 / (n_pit / 10)), 9,
+                             lower.tail = FALSE))
+
+  # covariate path (per-observation loop)
+  n <- 150
+  cov <- cbind(sin = sin(2 * pi / 50 * (1:n)), cos = cos(2 * pi / 50 * (1:n)))
+  set.seed(2612)
+  d1 <- suppressWarnings(
+    cocoSim(order = 1, type = "Poisson", par = c(0.4, 0.3, -0.2),
+            xreg = cov, length = n))
+  fit1 <- cocoReg(order = 1, type = "Poisson", data = d1, xreg = cov)
+  lambda1 <- coconots:::applyLinkFunctionVec(fit1$cov %*% fit1$par[-1],
+                                             fit1$link_function)
+  expect_equal(cocoPit(fit1, J = 10)$`PIT values`,
+               pit_order1_reference(d1, lambda1, fit1$par[1], 0, 10),
+               tolerance = 1e-10)
+
+  # order 2: the PIT values are the mean over t = 3, ..., T and sum to one
+  set.seed(2613)
+  data2 <- cocoSim(order = 2, type = "Poisson", par = c(0.5, 0.2, 0.05, 0.3),
+                   length = 100)
+  fit2 <- cocoReg(order = 2, type = "Poisson", data = data2)
+  expect_equal(sum(cocoPit(fit2)$`PIT values`), 1, tolerance = 1e-12)
+})
+
+test_that("cocoPit gives the same PIT and p-value with R and Julia", {
+  skip_on_cran()
+  skip_if_no_julia()
+  models <- list(
+    list(type = "Poisson", order = 1, par = c(0.8, 0.4)),
+    list(type = "GP", order = 1, par = c(0.8, 0.4, 0.2)),
+    list(type = "Poisson", order = 2, par = c(0.5, 0.2, 0.05, 0.3)),
+    list(type = "GP", order = 2, par = c(0.5, 0.2, 0.05, 0.3, 0.2))
+  )
+  for (i in seq_along(models)) {
+    m <- models[[i]]
+    set.seed(3100 + i)
+    data <- cocoSim(order = m$order, type = m$type, par = m$par, length = 120)
+    fit <- cocoReg(order = m$order, type = m$type, data = data,
+                   julia_installed = TRUE)
+    pit_r <- cocoPit(fit, J = 10)
+    pit_j <- cocoPit(fit, J = 10, julia = TRUE)
+    expect_equal(as.numeric(pit_r$`PIT values`), as.numeric(pit_j$`PIT values`),
+                 tolerance = 1e-8)
+    expect_equal(pit_r$p_value, pit_j$p_value, tolerance = 1e-6)
+    expect_equal(pit_r$confidence_bands, pit_j$confidence_bands)
+  }
+})
+
+#-----------------Default starting values (no covariates)------------------------
+# Default start of cocoReg_base.R at the cocoReg defaults (seasonality c(1, 2),
+# replace.start.val 1e-5, iteration.start.val 0.6; GP2 shrinks by 0.99), in the
+# R ordering (lambda first) and the Julia ordering (lambda last, order 2 on the
+# reparameterized alpha scale).
+default_start_reference <- function(type, order, data) {
+  rv <- 1e-5
+  acf <- forecast::Acf(data, plot = FALSE, lag.max = 3)$acf
+  m <- mean(data)
+  eta <- 0
+  if (type == "GP") {
+    eta <- 1 - (m / stats::var(data))^0.5
+    if (eta < 0) eta <- rv
+    if (eta > 1) eta <- 1 - rv
+  }
+  eta_par <- if (type == "GP") eta else NULL
+  if (order == 1) {
+    alpha <- acf[2]
+    if (alpha < 0) alpha <- rv
+    lambda <- m * (1 - eta) * (1 - alpha)
+    if (lambda < 0) lambda <- rv
+    return(list(r = c(lambda, alpha, eta_par), julia = c(alpha, eta_par, lambda)))
+  }
+  idx <- 3:length(data)
+  mu111 <- sum((data[idx] - m) * (data[idx - 1] - m) * (data[idx - 2] - m)) /
+    length(data)
+  a3 <- mu111 * (1 - eta)^4 / (m * (1 + 2 * eta))
+  if (a3 < 0) a3 <- rv
+  if (a3 > 1) a3 <- 1 - rv
+  a2 <- acf[3] - a3
+  if (a2 < 0) a2 <- rv
+  if (a2 > 1) a2 <- 1 - rv
+  a1 <- acf[2] - a3
+  if (a1 < 0) a1 <- rv
+  shrink <- if (type == "GP") 0.99 else 0.6
+  while (a1 + a2 + a3 > 1) {
+    a1 <- a1 * shrink
+    a2 <- a2 * shrink
+    a3 <- a3 * shrink
+  }
+  while (2 * a1 + a3 > 1) {
+    a1 <- a1 * shrink
+    a3 <- a3 * shrink
+  }
+  lambda <- m * (1 - eta) * (1 - a1 - a2 - a3)
+  if (lambda < 0) lambda <- rv
+  list(r = c(lambda, a1, a2, a3, eta_par),
+       julia = c(2 * a1 + a3, a3 / (2 * a1 + a3), a2 / (1 - a1 - a3), eta_par,
+                 lambda))
+}
+
+start_test_models <- list(
+  list(type = "Poisson", order = 1, par = c(0.8, 0.4)),
+  list(type = "GP", order = 1, par = c(0.8, 0.4, 0.2)),
+  list(type = "Poisson", order = 2, par = c(0.5, 0.2, 0.05, 0.3)),
+  list(type = "GP", order = 2, par = c(0.5, 0.2, 0.05, 0.3, 0.2)),
+  # strong dependence (alpha1 + alpha2 + alpha3 = 0.9, 2 alpha1 + alpha3 = 0.85)
+  list(type = "Poisson", order = 2, par = c(0.2, 0.3, 0.35, 0.25)),
+  list(type = "GP", order = 2, par = c(0.2, 0.3, 0.35, 0.25, 0.2))
+)
+
+test_that("default_start_reference reproduces the default start of cocoReg (R)", {
+  # the same start gives the same deterministic fit
+  for (i in seq_along(start_test_models)) {
+    m <- start_test_models[[i]]
+    set.seed(4200 + i)
+    data <- cocoSim(order = m$order, type = m$type, par = m$par, length = 150)
+    fit_default <- suppressWarnings(cocoReg(order = m$order, type = m$type,
+                                            data = data))
+    fit_start <- cocoReg(order = m$order, type = m$type, data = data,
+                         start = default_start_reference(m$type, m$order, data)$r)
+    expect_equal(fit_start$par, fit_default$par, tolerance = 1e-8)
+  }
+})
+
+test_that("Coconots.jl computes the same default start as cocoReg (R)", {
+  skip_on_cran()
+  skip_if_no_julia()
+  coconots:::addJuliaFunctions()
+  for (i in seq_along(start_test_models)) {
+    m <- start_test_models[[i]]
+    set.seed(4200 + i)
+    data <- cocoSim(order = m$order, type = m$type, par = m$par, length = 150)
+    start_julia <- as.numeric(JuliaConnectoR::juliaLet(
+      'convert(Vector{Float64}, Coconots.get_starting_values!(type, Int(order), data, nothing, nothing, 0, -Inf))',
+      type = m$type, order = m$order, data = data))
+    expect_equal(start_julia, default_start_reference(m$type, m$order, data)$julia,
+                 tolerance = 1e-10)
+  }
+})
+
+test_that("PIT chi-square p-value is the upper tail", {
+  # a perfectly uniform histogram has statistic 0 and p-value 1
+  expect_equal(coconots:::pitChisqPValue(rep(0.1, 10), 99, 10), 1)
+  # all mass in one bin: statistic (n - n/J)^2/(n/J) + (J - 1) n/J = n (J - 1)
+  d <- c(1, rep(0, 9))
+  expect_equal(coconots:::pitChisqPValue(d, 99, 10),
+               stats::pchisq(99 * 9, 9, lower.tail = FALSE))
+  expect_lt(coconots:::pitChisqPValue(d, 99, 10), 1e-10)
+})
+
+test_that("cocoResid uses t = order + 1, ..., T for both orders", {
+  set.seed(2711)
+  data <- cocoSim(order = 1, type = "GP", par = c(1, 0.3, 0.2), length = 60)
+  fit <- cocoReg(order = 1, type = "GP", data = data)
+  res <- cocoResid(fit)
+  expect_length(res$residuals, length(data) - 1)
+  lambda <- fit$par[[1]]; alpha <- fit$par[[2]]; eta <- fit$par[[3]]
+  fitted_ref <- alpha * data[1:59] + lambda / (1 - eta)
+  expect_equal(unname(res$fitted), fitted_ref, tolerance = 1e-12)
+  expect_equal(unname(res$residuals), data[2:60] - fitted_ref, tolerance = 1e-12)
+
+  set.seed(2712)
+  data2 <- cocoSim(order = 2, type = "Poisson", par = c(0.5, 0.2, 0.05, 0.3),
+                   length = 60)
+  fit2 <- cocoReg(order = 2, type = "Poisson", data = data2)
+  res2 <- cocoResid(fit2)
+  expect_length(res2$residuals, length(data2) - 2)
+  expect_equal(unname(res2$residuals), unname(data2[3:60] - res2$fitted))
+})

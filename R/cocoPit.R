@@ -204,11 +204,14 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
     temp
   }
 
-  if (is.null(coco$cov) && T > seasonality[2]) {
+  # Every observation with a full history enters the PIT: t = order + 1, ..., T
+  # (t = 2 for order 1, t = 3 for order 2), as in Coconots.jl's cocoPit
+  first_t <- seasonality[coco$order] + 1
+  if (is.null(coco$cov) && T >= first_t) {
     # Without covariates (lambda[t] constant) row t depends on t only through
     # the integer counts (x_t, x_{t-1}[, x_{t-2}]): one evaluation per
     # distinct triple, copied to all t where it occurs
-    tt <- (seasonality[2] + 1):T
+    tt <- first_t:T
     key <- if (coco$order == 1) {
       paste(data[tt], data[tt - seasonality[1]])
     } else {
@@ -218,18 +221,23 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
     rows_u <- vapply(tt[first], pit_row, numeric(J))
     meanPIT[tt, ] <- t(rows_u[, match(key, key[first]), drop = FALSE])
   } else {
-    for (t in (seasonality[2] + 1):T) {
+    tt <- if (T >= first_t) first_t:T else integer(0)
+    for (t in tt) {
       meanPIT[t, ] <- pit_row(t)
     } # end t
   }
 
-  PIT <- colMeans(meanPIT)
+  # mean over the time points used (rows t < first_t are not part of the PIT)
+  PIT <- colMeans(meanPIT[tt, , drop = FALSE])
   d <- diff(PIT)
   u <- u[-c(1)]
   } #end julia
   
-  pval <- stats::pchisq(sum((d * length(data) - length(data) / J_test)^2 / (length(data) / J_test)), J_test-1)
-  diff <- (sqrt(stats::qchisq(1-alpha, J_test-1)/J_test^2*length(data)) ) / length(data)
+  # number of PIT time points (t = order + 1, ..., T); d sums to one, so
+  # d * n_pit are the bin counts of the non-randomized PIT histogram
+  n_pit <- length(data) - coco$order
+  pval <- pitChisqPValue(d, n_pit, J_test)
+  diff <- (sqrt(stats::qchisq(1-alpha, J_test-1)/J_test^2*n_pit) ) / n_pit
   confidence_band_values <- 1 / J_test + c(-1, 1) * diff 
   
   end.time <- Sys.time()
@@ -243,6 +251,15 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   
   class(list_out) <- "cocoPit"
   return(list_out)
+}
+
+# p-value of the chi-square goodness-of-fit test of uniformity of the J bins
+# of a PIT histogram d (bin masses summing to one) over n_pit time points:
+# upper tail P(chi^2_{J-1} >= stat) with stat = sum((n d - n/J)^2 / (n/J)).
+# Used for the R and the Julia PIT alike.
+pitChisqPValue <- function(d, n_pit, J) {
+  stat <- sum((d * n_pit - n_pit / J)^2 / (n_pit / J))
+  stats::pchisq(stat, J - 1, lower.tail = FALSE)
 }
 
 #' @importFrom ggplot2 autoplot
