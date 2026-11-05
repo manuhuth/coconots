@@ -44,7 +44,8 @@
 
 cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   start.time <- Sys.time()
-  alpha <- conf.alpha
+  # conf.alpha is used directly below: the R branch assigns the model
+  # parameter alpha (order 1), which must not replace the confidence level
 
   if ((J != round(J)) | (J < 1)) {
     stop("The value of J must be a positive integer")
@@ -57,6 +58,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   
   if (!is.null(coco$julia_reg) & julia){
     data <- coco$ts
+    par <- coco$par
     addJuliaFunctions()
     coco_pit <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPit", coco$julia_reg, J))
     J_test <- J
@@ -237,14 +239,14 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   # d * n_pit are the bin counts of the non-randomized PIT histogram
   n_pit <- length(data) - coco$order
   pval <- pitChisqPValue(d, n_pit, J_test)
-  diff <- (sqrt(stats::qchisq(1-alpha, J_test-1)/J_test^2*n_pit) ) / n_pit
+  diff <- (sqrt(stats::qchisq(1-conf.alpha, J_test-1)/J_test^2*n_pit) ) / n_pit
   confidence_band_values <- 1 / J_test + c(-1, 1) * diff 
   
   end.time <- Sys.time()
 
   time <- end.time - start.time
   list_out <- list(
-    "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "alpha" = alpha,
+    "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "alpha" = conf.alpha,
     "par" = par, "PIT values" = d, "duration" = time, "p_value" = pval,
     "confidence_bands" = confidence_band_values, "J" = J
   )

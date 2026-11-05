@@ -743,6 +743,19 @@ test_that("cocoPit gives the same PIT and p-value with R and Julia", {
   }
 })
 
+test_that("cocoPit confidence bands use conf.alpha, not the model alpha", {
+  set.seed(3201)
+  data <- cocoSim(order = 1, type = "Poisson", par = c(0.8, 0.4), length = 120)
+  fit <- cocoReg(order = 1, type = "Poisson", data = data)
+  n_pit <- length(data) - 1
+  for (conf in c(0.05, 0.1)) {
+    pit <- cocoPit(fit, J = 10, conf.alpha = conf)
+    half <- sqrt(stats::qchisq(1 - conf, 9) / 100 * n_pit) / n_pit
+    expect_equal(pit$confidence_bands, 0.1 + c(-1, 1) * half)
+    expect_equal(pit$alpha, conf)
+  }
+})
+
 #-----------------Default starting values (no covariates)------------------------
 # Default start of cocoReg_base.R at the cocoReg defaults (seasonality c(1, 2),
 # replace.start.val 1e-5, iteration.start.val 0.6; GP2 shrinks by 0.99), in the
