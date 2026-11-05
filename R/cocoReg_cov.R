@@ -70,13 +70,6 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
     optim_control <- list()
   }
   se_boundary <- 0.00001
-  # Order-2 alpha starts are shrunk until both stationarity constraints hold
-  # with this slack. The covariate rate starts come from a regression on the
-  # counts and are not scaled by 1 - alpha1 - alpha2 - alpha3, so a start with
-  # alpha1 + alpha2 + alpha3 close to 1 (U = 1/(1 - sum) huge) gives rates
-  # lambda_t * U * alpha_i of several hundreds, where exp() underflows in the
-  # bivariate normalizer and the likelihood is NaN at the start.
-  alpha.start.margin <- 0.05
   ncov <- ncol(xreg)
   lag.max <- max(seasonality) + 1
   unconstrained.optim.lower <- -Inf
@@ -457,8 +450,8 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             warning(paste("The initial value of alpha1 is not in the feasible region and was set to", replace.start.val, ""))
           }
 
-          if (alpha1_s + alpha2_s + alpha3_s > 1 - alpha.start.margin) {
-            while (alpha1_s + alpha2_s + alpha3_s > 1 - alpha.start.margin) {
+          if (alpha1_s + alpha2_s + alpha3_s > 1) {
+            while (alpha1_s + alpha2_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
               alpha2_s <- alpha2_s * iteration.start.val
               alpha3_s <- alpha3_s * iteration.start.val
@@ -467,8 +460,8 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           }
 
 
-          if (2 * alpha1_s + alpha3_s > 1 - alpha.start.margin) {
-            while (2 * alpha1_s + alpha3_s > 1 - alpha.start.margin) {
+          if (2 * alpha1_s + alpha3_s > 1) {
+            while (2 * alpha1_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
               alpha3_s <- alpha3_s * iteration.start.val
             }
@@ -676,8 +669,8 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             warning(paste("The initial value of alpha1 is not in the feasible region and was set to", replace.start.val, ""))
           }
 
-          if (alpha1_s + alpha2_s + alpha3_s > 1 - alpha.start.margin) {
-            while (alpha1_s + alpha2_s + alpha3_s > 1 - alpha.start.margin) {
+          if (alpha1_s + alpha2_s + alpha3_s > 1) {
+            while (alpha1_s + alpha2_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
               alpha2_s <- alpha2_s * iteration.start.val
               alpha3_s <- alpha3_s * iteration.start.val
@@ -686,8 +679,8 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           }
 
 
-          if (2 * alpha1_s + alpha3_s > 1 - alpha.start.margin) {
-            while (2 * alpha1_s + alpha3_s > 1 - alpha.start.margin) {
+          if (2 * alpha1_s + alpha3_s > 1) {
+            while (2 * alpha1_s + alpha3_s > 1) {
               alpha1_s <- alpha1_s * iteration.start.val
               alpha3_s <- alpha3_s * iteration.start.val
             }
