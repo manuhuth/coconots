@@ -188,9 +188,16 @@ coco_constr_nm_fit <- function(sta, f, gr, ui, ci, mu, outer.it, outer.eps,
 #' accepted only if it is feasible and lowers the objective `f` (the negative
 #' log-likelihood); otherwise, and on any error, `fit` is returned unchanged.
 #' `gr` (called like `f`) is the gradient of `f`; without it L-BFGS-B falls
-#' back to finite differences.
+#' back to finite differences. `fg` (optional, called like `f`) returns
+#' `list(value, gradient)` of `f` from one evaluation (the C++ AD value and
+#' gradient); if given, L-BFGS-B uses it for both its objective and its
+#' gradient: optim() always requests the gradient at the point where it has
+#' just evaluated the objective, so the gradient is taken from that one AD
+#' evaluation instead of a separate likelihood evaluation for the value.
+#' The final acceptance test uses `f`.
 #' @noRd
-coco_polish_fit <- function(fit, f, ui, ci, gr = NULL, ..., margin = 1e-8) {
+coco_polish_fit <- function(fit, f, ui, ci, gr = NULL, ..., fg = NULL,
+                            margin = 1e-8) {
   dots <- list(...)
   f_eval <- function(p) {
     v <- tryCatch(do.call(f, c(list(p), dots)), error = function(e) NA_real_)
@@ -242,6 +249,34 @@ coco_polish_fit <- function(fit, f, ui, ci, gr = NULL, ..., margin = 1e-8) {
     }
     g <- tryCatch(as.numeric(do.call(gr, c(list(p), dots))), error = function(e) NULL)
     if (length(g) != n_par || any(!is.finite(g))) zero else g
+  }
+  if (!is.null(fg)) {
+    # value and gradient from one AD evaluation; obj() stores the gradient
+    # of the last point it evaluated, obj_gr() returns it for that point
+    cache_p <- NULL
+    cache_g <- NULL
+    obj <- function(p) {
+      cache_p <<- p
+      cache_g <<- rep(0, n_par)
+      if (!feasible(p)) {
+        return(penalty)
+      }
+      r <- tryCatch(do.call(fg, c(list(p), dots)), error = function(e) NULL)
+      v <- if (is.null(r) || length(r$value) != 1) NA_real_ else as.numeric(r$value)
+      if (!is.finite(v)) {
+        return(penalty)
+      }
+      g <- as.numeric(r$gradient)
+      if (length(g) == n_par && all(is.finite(g))) cache_g <<- g
+      v
+    }
+    obj_gr <- function(p) {
+      if (!is.null(cache_p) && identical(p, cache_p)) {
+        return(cache_g)
+      }
+      obj(p)
+      cache_g
+    }
   }
 
   start <- pmin(pmax(par0, lower), upper)
@@ -301,12 +336,14 @@ coco_polish_fit <- function(fit, f, ui, ci, gr = NULL, ..., margin = 1e-8) {
 #' box, kept only if feasible and decreasing `f`) are taken to meet the
 #' decrement bound. If the check fails, `fallback()` (the constrOptim() fit
 #' followed by coco_polish_fit(), i.e. the former default) is run and the
-#' better of the two fits is returned. Returns list(fit, derivs); `derivs` is
+#' better of the two fits is returned. `fg` (optional) is passed to
+#' coco_polish_fit() (value and gradient of `f` from one AD evaluation for the
+#' L-BFGS-B stage). Returns list(fit, derivs); `derivs` is
 #' `fgh` at fit$par if the check passed (so the caller can reuse the Hessian
 #' for the standard errors), else NULL. `...` is passed to `f` and `gr`.
 #' @noRd
 coco_fit_lbfgsb_checked <- function(sta, f, gr, fgh, ui, ci, fallback, ...,
-                                    margin = 1e-8, tol_dec = 1e-6,
+                                    fg = NULL, margin = 1e-8, tol_dec = 1e-6,
                                     tol_bound = 1e-7, tol_slack = 1e-6,
                                     newton_steps = 2L) {
   dots <- list(...)
@@ -364,7 +401,7 @@ coco_fit_lbfgsb_checked <- function(sta, f, gr, fgh, ui, ci, fallback, ...,
   }
 
   fit <- coco_polish_fit(list(par = sta, value = val_sta), f, ui, ci, gr = gr,
-                         ..., margin = margin)
+                         ..., fg = fg, margin = margin)
   p <- as.numeric(unlist(fit$par, use.names = FALSE))
   fp <- f_eval(p)
   if (length(p) != n_par || any(!is.finite(p)) || !feasible(p) || !is.finite(fp)) {

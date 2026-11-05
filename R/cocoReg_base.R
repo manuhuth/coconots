@@ -141,7 +141,8 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           # after an AD optimality check; else the constrOptim fit above
           opt <- coco_fit_lbfgsb_checked(
             sta, mlf, gradient, function(p) mlf_derivs(p, data, 2L), ui, ci,
-            fallback = constr_fit, data = data
+            fallback = constr_fit, fg = function(p, data) mlf_derivs(p, data, 1L),
+            data = data
           )
           fit <- opt$fit
           derivs_opt <- opt$derivs
@@ -308,7 +309,8 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           # after an AD optimality check; else the constrOptim fit above
           opt <- coco_fit_lbfgsb_checked(
             sta, mlf, gradient, function(p) mlf_derivs(p, data, 2L), ui, ci,
-            fallback = constr_fit, data = data
+            fallback = constr_fit, fg = function(p, data) mlf_derivs(p, data, 1L),
+            data = data
           )
           fit <- opt$fit
           derivs_opt <- opt$derivs
@@ -519,7 +521,8 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           # after an AD optimality check; else the constrOptim fit above
           opt <- coco_fit_lbfgsb_checked(
             sta, mlf, gradient, function(p) mlf_derivs(p, data, 2L), ui, ci,
-            fallback = constr_fit, data = data
+            fallback = constr_fit, fg = function(p, data) mlf_derivs(p, data, 1L),
+            data = data
           )
           fit <- opt$fit
           derivs_opt <- opt$derivs
@@ -746,7 +749,8 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
           # after an AD optimality check; else the constrOptim fit above
           opt <- coco_fit_lbfgsb_checked(
             sta, mlf, gradient, function(p) mlf_derivs(p, data, 2L), ui, ci,
-            fallback = constr_fit, data = data
+            fallback = constr_fit, fg = function(p, data) mlf_derivs(p, data, 1L),
+            data = data
           )
           fit <- opt$fit
           derivs_opt <- opt$derivs
