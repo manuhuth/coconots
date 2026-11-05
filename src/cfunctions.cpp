@@ -198,6 +198,25 @@ struct GP2ParamsT {
     lu13 = lambda * U * (1 - alpha1 - alpha3);
     lu13a = lambda * U * (alpha1 + alpha3);
   }
+
+  // Same fields as init(), with the parameter-only factors passed in:
+  // U_ = 1 / (1 - alpha1 - alpha2 - alpha3), fz = 1 - 2 * alpha1 - alpha3,
+  // f13 = 1 - alpha1 - alpha3, f13a = alpha1 + alpha3. Since lambda * U * a is
+  // evaluated left to right as (lambda * U) * a, every field is bitwise equal
+  // to the one init() computes.
+  void init_hoisted(const S& lambda_, const S& alpha1_, const S& alpha2_,
+                    const S& alpha3_, const S& eta_, const S& U_, const S& fz,
+                    const S& f13, const S& f13a) {
+    lambda = lambda_; alpha1 = alpha1_; alpha2 = alpha2_; alpha3 = alpha3_; eta = eta_;
+    U = U_;
+    const S lU = lambda * U;
+    beta1 = lU * alpha1;
+    beta2 = lU * alpha2;
+    beta3 = lU * alpha3;
+    zeta = lU * fz;
+    lu13 = lU * f13;
+    lu13a = lU * f13a;
+  }
 };
 typedef GP2ParamsT<double> GP2Params;
 
@@ -319,7 +338,7 @@ void gp2_build_g(int y, int z, const GP2ParamsT<S>& p, const GP2TablesT<S>& tb, 
 // differ from gp2_zwerg, i.e. results agree up to floating-point rounding.
 template <class S>
 struct GP2ConvT {
-  std::vector<S> q1, q2, q3, qL, qZ, W, zw;
+  std::vector<S> q1, q2, q3, qL, qZ, W, zw, A, H;
   int mlo, mhi, nlo, nhi;
   std::size_t stride;
 
@@ -350,6 +369,28 @@ struct GP2ConvT {
         S acc = 0.0;
         for (int w = 0; w <= wmax; ++w) acc = acc + q1[w] * qL[m - w] * qZ[n - w];
         row[n - nlo] = acc;
+      }
+    }
+  }
+
+  // Same W(m, n) as build_W, with the products q1[w] * qZ[n - w] formed once
+  // per n (array A) instead of once per (m, n): one multiplication per term
+  // instead of two. Only the association of the three factors differs from
+  // build_W (rounding-level differences). Pmf tables must cover q1 and qZ up
+  // to nhi_ and qL up to mhi_.
+  void build_W_factored(int mlo_, int mhi_, int nlo_, int nhi_) {
+    mlo = mlo_; mhi = mhi_; nlo = nlo_; nhi = nhi_;
+    stride = static_cast<std::size_t>(nhi - nlo + 1);
+    W.resize(static_cast<std::size_t>(mhi - mlo + 1) * stride);
+    A.resize(static_cast<std::size_t>(std::min(mhi, nhi) + 1));
+    for (int n = nlo; n <= nhi; ++n) {
+      const int wtop = std::min(mhi, n);
+      for (int w = 0; w <= wtop; ++w) A[w] = q1[w] * qZ[n - w];
+      for (int m = mlo; m <= mhi; ++m) {
+        const int wmax = std::min(m, n);
+        S acc = 0.0;
+        for (int w = 0; w <= wmax; ++w) acc = acc + A[w] * qL[m - w];
+        W[static_cast<std::size_t>(m - mlo) * stride + static_cast<std::size_t>(n - nlo)] = acc;
       }
     }
   }
@@ -400,6 +441,109 @@ void gp2_build_g_conv(int y, int z, const GP2ParamsT<S>& p, const GP2ConvT<S>& c
   const S ipyz = pow(pyz, -1);
   for (std::size_t r = 0; r < out.g.size(); ++r) out.g[r] = out.g[r] * ipyz;
   out.tail = 0.0 * pow(pyz, -1);
+}
+
+// ---------------------------------------------- per-t tables (covariates)
+//
+// With covariates every rate depends on lambda_t, so the pmf tables are
+// rebuilt for every t. The helpers below build them with fewer
+// transcendental calls (same math; values agree up to rounding).
+
+// Largest index for which the recurrences below are used; beyond it the
+// factorials overflow and the former per-entry formula is kept unchanged.
+const int GP_REC_MAX = 170;
+
+// True iff x and (for dual numbers) all its partials are exactly zero; for
+// eta this identifies the Poisson model in every AD instantiation.
+inline bool is_exact_zero(double x) { return x == 0.0; }
+
+template <class T, int N>
+inline bool is_exact_zero(const coco_ad::Dual<T, N>& x) {
+  if (!is_exact_zero(x.v)) return false;
+  for (int i = 0; i < N; ++i) {
+    if (!is_exact_zero(x.d[i])) return false;
+  }
+  return true;
+}
+
+// q[i] = rate * pow(rate + i*eta, i-1) / i! * exp(-rate - i*eta), i = 0..n
+// (the GP2ConvT::build_pmf entries). For 1 <= i <= GP_REC_MAX the exponential
+// is exp(-rate) * eneg[i] with eneg[i] = exp(-i*eta) tabulated once per
+// likelihood call (one exp per table instead of one per entry); for the
+// Poisson model (eta exactly zero) q[i] = q[i-1] * rate / i (no powers).
+// q[0] keeps the former formula (rate / rate == rate * pow(rate, -1) up to
+// rounding, NaN at rate = 0 as before). eneg must cover min(n, GP_REC_MAX).
+template <class S>
+inline void gp_pmf_fill(std::vector<S>& q, int n, const S& rate, const S& eta,
+                        bool poisson, const std::vector<S>& eneg) {
+  q.resize(static_cast<std::size_t>(n) + 1);
+  const S e0 = exp(-rate);
+  q[0] = rate / rate * e0;
+  const int nrec = std::min(n, GP_REC_MAX);
+  if (poisson) {
+    for (int i = 1; i <= nrec; ++i) q[i] = q[i - 1] * rate / static_cast<double>(i);
+  } else {
+    for (int i = 1; i <= nrec; ++i) {
+      q[i] = rate * pow(rate + i * eta, i - 1) / factorial(i) * (e0 * eneg[i]);
+    }
+  }
+  for (int i = nrec + 1; i <= n; ++i) {
+    q[i] = rate * pow(rate + i * eta, i - 1) / factorial(i) * exp(-rate - i * eta);
+  }
+}
+
+// gp2_pyz for 0 <= y, z <= GP_REC_MAX with exp(j*eta) read from
+// epos[j] = exp(j*eta) (bitwise the value gp2_pyz computes). The factor
+// pow(lu13 + eta*i, i-1) is shared by the y- and z-parts when their index
+// ranges overlap (tabulated once in hbuf; same arguments, same values). For
+// the Poisson model the summands follow the ratio
+//   term(j+1) / term(j) = lu13a (y-j)(z-j) / (lu13^2 (j+1))
+// starting from the j = 0 summand of gp2_pyz; this path is used only when
+// term(0) is a normal number well above underflow (the summands are
+// log-concave in j, so later underflowing terms are below rounding relative
+// to the sum) and the sum is finite, otherwise the generic loop runs.
+template <class S>
+inline S gp2_pyz_cov(int y, int z, const GP2ParamsT<S>& p, bool poisson,
+                     const std::vector<S>& epos, std::vector<S>& hbuf) {
+  const S help = (p.beta1 + p.beta3) * pow(p.lu13, 2) *
+    exp(-(p.beta1 + p.beta3) - 2 * p.lu13 - y * p.eta - z * p.eta);
+  const int minyz = std::min(y, z);
+  if (poisson && coco_ad::value_of(p.lu13) > 0 && coco_ad::value_of(p.lu13a) > 0) {
+    S term = pow(p.lu13 + p.eta * y, y - 1) / factorial(y) *
+      pow(p.lu13 + p.eta * z, z - 1) / factorial(z) *
+      pow(p.lu13a, -1) / factorial(0) * epos[0];
+    const double t0 = coco_ad::value_of(term);
+    if (std::isfinite(t0) && t0 >= 1e-290) {
+      const S ratio = p.lu13a / (p.lu13 * p.lu13);
+      S dwarf = term;
+      for (int j = 0; j < minyz; ++j) {
+        term = term * ratio *
+          (static_cast<double>(y - j) * static_cast<double>(z - j) / static_cast<double>(j + 1));
+        dwarf = dwarf + term;
+      }
+      if (std::isfinite(coco_ad::value_of(dwarf))) return dwarf * help;
+    }
+  }
+  S dwarf = 0.0;
+  const int dyz = (y > z) ? (y - z) : (z - y);
+  if (dyz <= minyz) {
+    // {y-j} and {z-j} (j = 0..minyz) together cover 0..max(y, z)
+    const int top = std::max(y, z);
+    hbuf.resize(static_cast<std::size_t>(top) + 1);
+    for (int i = 0; i <= top; ++i) hbuf[i] = pow(p.lu13 + p.eta * i, i - 1);
+    for (int j = 0; j <= minyz; ++j) {
+      dwarf = dwarf + hbuf[y - j] / factorial(y - j) *
+        hbuf[z - j] / factorial(z - j) *
+        pow(p.lu13a + p.eta * j, j - 1) / factorial(j) * epos[j];
+    }
+  } else {
+    for (int j = 0; j <= minyz; ++j) {
+      dwarf = dwarf + pow(p.lu13 + p.eta * (y - j), y - j - 1) / factorial(y - j) *
+        pow(p.lu13 + p.eta * (z - j), z - j - 1) / factorial(z - j) *
+        pow(p.lu13a + p.eta * j, j - 1) / factorial(j) * epos[j];
+    }
+  }
+  return dwarf * help;
 }
 
 template <class S>
@@ -570,6 +714,21 @@ S likelihoodGP2cov_impl(const S& alpha1, const S& alpha2, const S& alpha3,
   if (nterms <= 0) return S(0.0);
   std::vector<S> logn(nterms);
 
+  // parameter-only quantities, once per call (bitwise the values that
+  // GP2ParamsT::init and gp2_pyz compute per t)
+  const S U = 1 / (1 - alpha1 - alpha2 - alpha3);
+  const S fz = 1 - 2 * alpha1 - alpha3;
+  const S f13 = 1 - alpha1 - alpha3;
+  const S f13a = alpha1 + alpha3;
+  const bool poisson = is_exact_zero(eta);
+  const int nrec = std::max(0, std::min(maxval, GP_REC_MAX));
+  std::vector<S> eneg(static_cast<std::size_t>(nrec) + 1);
+  std::vector<S> epos(static_cast<std::size_t>(nrec) + 1);
+  for (int i = 0; i <= nrec; ++i) {
+    eneg[i] = exp(-(i * eta));
+    epos[i] = exp(i * eta);
+  }
+
   const int nthreads = resolve_threads(nterms, cores);
   std::vector<GP2ParamsT<S> > pv(nthreads);
   std::vector<GP2TablesT<S> > tbv(nthreads);
@@ -584,27 +743,36 @@ S likelihoodGP2cov_impl(const S& alpha1, const S& alpha2, const S& alpha3,
     const S mathelp = rowInnerProductT<S>(xreg, t - 1, lambdas);
     const S lambda = applyLink(mathelp, link);
     GP2ParamsT<S>& p = pv[tid];
-    GP2TablesT<S>& tb = tbv[tid];
-    p.init(lambda, alpha1, alpha2, alpha3, eta);
-    tb.init(p);
-    tb.ensure(std::max(std::max(std::max(x, y), z), 0));
+    p.init_hoisted(lambda, alpha1, alpha2, alpha3, eta, U, fz, f13, f13a);
 
-    const S pyz = gp2_pyz(y, z, p);
     const int minxyz = std::min(x, y + z);
     S nain = 0.0;
     if (x >= 0 && y >= 0 && z >= 0 &&
         static_cast<double>(y + 1) * (z + 1) <= entries_limit<S>(GP2_CONV_MAX_ENTRIES)) {
-      // only r <= minxyz is needed, so W is restricted to the (m, n) that
-      // these r reach
+      // Every pmf table is built only over the indices it is read at for
+      // this (x, y, z), r <= minxyz: q1, qZ on 0..y; q2 on 0..min(z, minxyz);
+      // q3 on 0..min(y, z, minxyz); qL on 0..max(x, z) (W and the final
+      // r-sum). W is restricted to the (m, n) that these r reach.
       GP2ConvT<S>& cv = cvv[tid];
-      cv.build_pmf(p, tb, std::max(y, z));
-      cv.build_W(std::max(0, z - minxyz), z, std::max(0, y - minxyz), y);
+      gp_pmf_fill(cv.q1, y, p.beta1, eta, poisson, eneg);
+      gp_pmf_fill(cv.qZ, y, p.zeta, eta, poisson, eneg);
+      gp_pmf_fill(cv.q2, std::min(z, minxyz), p.beta2, eta, poisson, eneg);
+      gp_pmf_fill(cv.q3, std::min(std::min(y, z), minxyz), p.beta3, eta, poisson, eneg);
+      gp_pmf_fill(cv.qL, std::max(x, z), lambda, eta, poisson, eneg);
+      const S pyz = (std::max(y, z) <= GP_REC_MAX) ?
+        gp2_pyz_cov(y, z, p, poisson, epos, cv.H) : gp2_pyz(y, z, p);
+      cv.build_W_factored(std::max(0, z - minxyz), z, std::max(0, y - minxyz), y);
       cv.zwerg_upto(y, z, minxyz, cv.zw);
+      const S ipyz = pow(pyz, -1);
       for (int r = 0; r <= minxyz; ++r) {
-        const S gryz = cv.zw[r] * pow(pyz, -1);
-        nain = nain + gryz * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
+        const S gryz = cv.zw[r] * ipyz;
+        nain = nain + gryz * cv.qL[x - r];
       }
     } else {
+      GP2TablesT<S>& tb = tbv[tid];
+      tb.init(p);
+      tb.ensure(std::max(std::max(std::max(x, y), z), 0));
+      const S pyz = gp2_pyz(y, z, p);
       for (int r = 0; r <= minxyz; ++r) {
         const S gryz = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
         nain = nain + gryz * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
