@@ -273,7 +273,11 @@ coco_polish_fit <- function(fit, f, ui, ci, gr = NULL, ..., margin = 1e-8) {
   fit
 }
 
-#' Default (Nelder-Mead) constrained fit of cocoReg_base
+#' Default (Nelder-Mead) constrained fit of cocoReg_base and cocoReg_cov
+#'
+#' In cocoReg_cov, `fallback` is coco_constr_nm_fit() followed by
+#' coco_polish_fit(); the beta rows of `ui` (beta_j >= b.beta) are box
+#' lower bounds without upper bound, which the box extraction below handles.
 #'
 #' constrOptim() with Nelder-Mead spends most of the time of a no-covariate
 #' fit (and of cocoSoc(), which runs four such fits): every outer barrier
