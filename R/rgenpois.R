@@ -13,6 +13,7 @@ rgenpois <- function(n, lambda, eta){
   # former R implementation, so the drawn values are unchanged; for a constant
   # lambda the CDF table is built once and shared by all draws. If the
   # accumulated CDF saturates below u (rounding), the inversion returns the
-  # count at saturation or stops with an error (see GPInvCdf in cfunctions.cpp).
+  # count at saturation; a draw above 170 stops with the count-limit error
+  # (see GPInvCdf in cfunctions.cpp).
   rgenpoisInv(u, rep_len(as.numeric(lambda), length(u)), as.numeric(eta))
 }

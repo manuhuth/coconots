@@ -1525,47 +1525,33 @@ inline double hmmpa_dgenpois(int x, double l1, double l2) {
 // Termination. In floating point the accumulated F can stay below u forever:
 // its increments round to zero once they fall below half an ulp of F, and for
 // large lambda the HMMpa recursion returns only denormals. The former loop
-// then never ended. When the next value F(x) is still < u:
-//  - if the increment vanished (F(x) == F(x - 1)) and 1 - F(x - 1) <=
-//    GP_INV_SAT_TOL, F has saturated: beyond the bulk the pmf decreases, so F
-//    keeps this value for all larger x, the remaining mass is at rounding
-//    level, and x is returned (the exact quantile is >= x and is needed only
-//    with probability <= 1 - F(x - 1));
-//  - if x exceeds the bound gp_inv_upper() = mean + 40 sd + 1000 and either
-//    the increment vanished or F(x - 1) < 1 - GP_INV_TAIL_BOUND, the inversion
-//    stops with an error. By Chebyshev's inequality the exact F exceeds
-//    1 - 1/1600 > 1 - GP_INV_TAIL_BOUND there, so this happens only if F
-//    cannot be evaluated accurately for these parameters.
-// Draws that the former loop returned are unchanged (up to the error case),
-// and no additional random numbers are used.
+// then never ended. Two rules bound the inversion:
+//  - when the next value F(x) is still < u, the increment vanished
+//    (F(x) == F(x - 1)) and 1 - F(x - 1) <= GP_INV_SAT_TOL, F has saturated:
+//    beyond the bulk the pmf decreases, so F keeps this value for all larger
+//    x, the remaining mass is at rounding level, and x is returned (the exact
+//    quantile is >= x and is needed only with probability <= 1 - F(x - 1));
+//  - a draw above MAX_COUNT = 170 is outside the supported range of counts
+//    (factorials overflow at 171, see factorial()): once F(170) < u the
+//    inversion stops with the count-limit error. This also ends the loop
+//    when F cannot be evaluated accurately (large lambda, denormal pmf).
+// Draws <= 170 that the former loop returned are unchanged, and no
+// additional random numbers are used.
 const double GP_INV_SAT_TOL = 1e-8;
-const double GP_INV_TAIL_BOUND = 1e-3;
-const double GP_INV_MAX = 1e9;
-
-inline int gp_inv_upper(double lam, double eta) {
-  const double one_m = 1.0 - eta;
-  const double mean = lam / one_m;
-  const double sd = sqrt(lam / (one_m * one_m * one_m));
-  double up = ceil(mean + 40.0 * sd) + 1000.0;
-  if (!(up <= GP_INV_MAX)) up = GP_INV_MAX;  // also NaN (lam <= 0, eta >= 1)
-  return static_cast<int>(up);
-}
 
 struct GPInvCdf {
   double lam, eta;
   std::vector<double> cdf;
   long long iter;
-  int upper;  // gp_inv_upper(lam, eta)
   int sat;    // x returned once F saturated (-1: not saturated)
 
-  GPInvCdf() : lam(0.0), eta(0.0), iter(0), upper(0), sat(-1) {}
+  GPInvCdf() : lam(0.0), eta(0.0), iter(0), sat(-1) {}
 
   void reset(double lam_, double eta_) {
     lam = lam_;
     eta = eta_;
     cdf.clear();
     cdf.push_back(hmmpa_dgenpois(0, lam, eta));
-    upper = gp_inv_upper(lam, eta);
     sat = -1;
   }
 
@@ -1574,17 +1560,17 @@ struct GPInvCdf {
     while (true) {
       if (idx >= static_cast<int>(cdf.size())) {
         if (sat >= 0) return sat;
+        // here F(idx - 1) < u, so the draw is >= idx
+        if (idx > MAX_COUNT)
+          stop("coconots: counts above %d are not supported (factorial overflow in "
+               "the C++ backend); a simulated Generalized Poisson innovation exceeds %d "
+               "(lambda = %g, eta = %g)", MAX_COUNT, MAX_COUNT, lam, eta);
         const double prev = cdf.back();
         const double next = prev + hmmpa_dgenpois(idx, lam, eta);
-        if (next < u) {  // false if next or u is NaN (error below)
-          const bool vanished = !(next > prev);
-          if (vanished && 1.0 - prev <= GP_INV_SAT_TOL) {
-            sat = idx;
-            return idx;
-          }
-          if (idx > upper && (vanished || prev < 1.0 - GP_INV_TAIL_BOUND))
-            stop("Generalized Poisson inversion did not converge: the cumulative "
-                 "probability stays at %g < 1 (lambda = %g, eta = %g)", prev, lam, eta);
+        if (next < u && !(next > prev) && 1.0 - prev <= GP_INV_SAT_TOL) {
+          // saturated (false if next or u is NaN: error below)
+          sat = idx;
+          return idx;
         }
         cdf.push_back(next);
       }

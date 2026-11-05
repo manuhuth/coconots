@@ -12,13 +12,14 @@ ref_rgenpois_inv <- function(u, lambda, eta) {
   x
 }
 
-# Covariates with intercept 0.1 and lambda_t = 200 at row t0 (log link).
+# Covariates with intercept 0.1 and lambda_t = 80 at row t0 (log link); the
+# spike stays below the count limit 170.
 spike_xreg <- function(n, t0) {
   spike <- numeric(n)
   spike[t0] <- 1
   cbind(1, spike)
 }
-spike_beta <- c(log(0.1), log(2000))
+spike_beta <- c(log(0.1), log(800))
 
 test_that("cocoSim with covariates drives observation t by covariate row t", {
   n <- 20
@@ -37,7 +38,7 @@ test_that("cocoSim with covariates drives observation t by covariate row t", {
                                     xreg = xreg))
       expect_length(x, n)
       expect_equal(which.max(x), t0, info = paste(cs$type, cs$order, t0))
-      expect_gt(x[t0], 100)
+      expect_gt(x[t0], 40)
 
       # with init the output observation t is driven by row t as well
       set.seed(200 + t0)
@@ -86,8 +87,19 @@ test_that("the GP inversion terminates when the cumulative probability saturates
     expect_gt(x[1], 10)
   }
   # the cumulative probability of the HMMpa recursion stays near 0 at a large
-  # lambda (denormal pmf values): informative error instead of an endless loop
-  expect_error(coconots:::rgenpoisInv(0.5, 1000, 0), "did not converge")
+  # lambda (denormal pmf values): the inversion stops at the count limit 170
+  # with the informative count-limit error instead of an endless loop
+  expect_error(coconots:::rgenpoisInv(0.5, 1000, 0),
+               "counts above 170 are not supported .*innovation exceeds 170")
+  # a draw above 170 (GP mean 200) raises the same error
+  expect_error(coconots:::rgenpoisInv(0.999, 160, 0.2),
+               "counts above 170 are not supported")
+  # cocoSim: an innovation above 170 raises the count-limit error (GP: in the
+  # inversion; Poisson: in the thinning step of the next observation)
+  expect_error(cocoSim(order = 1, type = "GP", par = c(300, 0.2, 0.2), length = 20),
+               "counts above 170 are not supported")
+  expect_error(cocoSim(order = 1, type = "Poisson", par = c(300, 0.2), length = 20),
+               "counts above 170 are not supported")
 })
 
 test_that("the thinning inversion terminates at the support maximum", {
@@ -155,7 +167,7 @@ test_that("bootAcfCov replicates are the cocoSim series", {
 
 test_that("k-step forecast paths with covariates use xcast row j at step j", {
   k <- 4
-  xcast <- cbind(1, c(0, 0, 1, 0))  # lambda = 200 at step 3
+  xcast <- cbind(1, c(0, 0, 1, 0))  # lambda = 80 at step 3
   for (type in c("Poisson", "GP")) {
     for (order in 1:2) {
       dyn <- if (order == 1) 0.01 else c(0.01, 0.01, 0.01)
