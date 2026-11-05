@@ -156,12 +156,10 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             #outer.iterations = outer.it, outer.eps = outer.eps,
             hessian = FALSE)          
         }else{
-        fit <- stats::constrOptim(
-          theta = sta, f = mlf, ui = ui, ci = ci, data = data, mu = mu,
-          method = "Nelder-Mead", control = optim_control,
-          outer.iterations = outer.it, outer.eps = outer.eps,
-          hessian = FALSE
-        )
+          fit <- coco_constr_nm_fit(
+            sta, mlf, gradient, ui, ci, mu = mu, outer.it = outer.it,
+            outer.eps = outer.eps, control = optim_control, data = data
+          )
         }
         fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
       } # end constrained.optim True
@@ -309,11 +307,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             #outer.iterations = outer.it, outer.eps = outer.eps,
             hessian = FALSE)          
         }else{
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, ui = ui, ci = ci, data = data, mu = mu,
-            method = "Nelder-Mead", control = optim_control,
-            outer.iterations = outer.it, outer.eps = outer.eps,
-            hessian = FALSE
+          fit <- coco_constr_nm_fit(
+            sta, mlf, gradient, ui, ci, mu = mu, outer.it = outer.it,
+            outer.eps = outer.eps, control = optim_control, data = data
           )
         }
         fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
@@ -500,11 +496,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             #outer.iterations = outer.it, outer.eps = outer.eps,
             hessian = FALSE)          
         }else{
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, ui = ui, ci = ci, data = data, mu = mu,
-            method = "Nelder-Mead", control = optim_control,
-            outer.iterations = outer.it, outer.eps = outer.eps,
-            hessian = FALSE
+          fit <- coco_constr_nm_fit(
+            sta, mlf, gradient, ui, ci, mu = mu, outer.it = outer.it,
+            outer.eps = outer.eps, control = optim_control, data = data
           )
         }
         fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
@@ -723,11 +717,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             #outer.iterations = outer.it, outer.eps = outer.eps,
             hessian = FALSE)          
         }else{
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, ui = ui, ci = ci, data = data, #mu = mu,
-            method = "Nelder-Mead", control = optim_control,
-            outer.iterations = outer.it, outer.eps = outer.eps,
-            hessian = FALSE
+          fit <- coco_constr_nm_fit(
+            sta, mlf, gradient, ui, ci, mu = mu, outer.it = outer.it,
+            outer.eps = outer.eps, control = optim_control, data = data
           )
         }
         fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)

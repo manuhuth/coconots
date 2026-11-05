@@ -135,6 +135,43 @@ coco_default_cores <- function() {
   cores
 }
 
+#' Default (Nelder-Mead) constrained fit of cocoReg_cov
+#'
+#' Nelder-Mead inside constrOptim() with the strict outer loop of cocoReg_cov
+#' (`outer.it` = 500, `outer.eps` = 1e-10) spends most of its likelihood
+#' evaluations on slow final convergence. Here the Nelder-Mead run uses the
+#' constrOptim() default outer loop (at most 100 iterations, outer.eps 1e-5),
+#' which locates the optimum, and constrOptim() with BFGS and the exact
+#' gradient `gr` (C++ AD) then converges from that point with the requested
+#' `outer.it`/`outer.eps`; its log-barrier handles all linear constraints
+#' `ui %*% par - ci >= 0`. The BFGS result is kept only if its objective is
+#' finite and not larger. If BFGS fails, the Nelder-Mead run is continued
+#' with the requested outer loop instead. `...` is passed to `f` and `gr`.
+#' @noRd
+coco_constr_nm_fit <- function(sta, f, gr, ui, ci, mu, outer.it, outer.eps,
+                               control = list(), ...) {
+  nm_fit <- function(theta, it, eps, ...) {
+    stats::constrOptim(
+      theta = theta, f = f, ui = ui, ci = ci, mu = mu, method = "Nelder-Mead",
+      control = control, outer.iterations = it, outer.eps = eps,
+      hessian = FALSE, ...
+    )
+  }
+  fit <- nm_fit(sta, min(outer.it, 100), max(outer.eps, 1e-5), ...)
+  fin <- tryCatch(
+    stats::constrOptim(
+      theta = fit$par, f = f, grad = gr, ui = ui, ci = ci, mu = mu,
+      method = "BFGS", control = control, outer.iterations = outer.it,
+      outer.eps = outer.eps, hessian = FALSE, ...
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(fin) || !is.finite(fin$value) || any(!is.finite(fin$par))) {
+    return(tryCatch(nm_fit(fit$par, outer.it, outer.eps, ...), error = function(e) fit))
+  }
+  if (isTRUE(fit$value < fin$value)) fit else fin
+}
+
 #' Polish a constrOptim() fit with box-constrained L-BFGS-B
 #'
 #' Nelder-Mead inside constrOptim() stalls when the optimum lies on (or close
