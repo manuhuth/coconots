@@ -77,6 +77,14 @@ bootAcfCov <- function(order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lamb
     .Call(`_coconots_bootAcfCov`, order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, size, n_unif, nlags, nB, link_function)
 }
 
+forecastPathsBase <- function(order, gp, lambda, alpha1, alpha2, alpha3, eta, init, nsteps, nsim) {
+    .Call(`_coconots_forecastPathsBase`, order, gp, lambda, alpha1, alpha2, alpha3, eta, init, nsteps, nsim)
+}
+
+forecastPathsCov <- function(order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, init, nsteps, n_unif, nsim, link_function) {
+    .Call(`_coconots_forecastPathsCov`, order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, init, nsteps, n_unif, nsim, link_function)
+}
+
 likelihoodGP2cov <- function(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores = 1L) {
     .Call(`_coconots_likelihoodGP2cov`, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores)
 }

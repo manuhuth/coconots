@@ -1867,6 +1867,240 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
 
 
 
+// ------------------------------------------------------------ k-step forecast
+//
+// Simulated forecast paths of predict(k > 1) (cocoForecastKStepsRCPP) in one
+// C++ call, instead of number_simulations R-level cocoSim_base /
+// cocoSim_cov(size = k + order, init = <last observations>) calls.
+//
+// Per path the random numbers are drawn in the same order and with the same
+// R generators as there: the `order` initial values (drawn and then replaced
+// by init, as cocoSim does), the innovations, the thinning uniforms. The
+// thinning draws use the memoized cumulative distributions of cocoBoot
+// (gp1_cdf_draw, gp2_cdf_draw, gp1cov_cdf_draw, gp2cov_cdf_draw: same
+// arithmetic as simGP1/simGP2/simGP1cov/simGP2cov up to rounding), so each
+// path is the series the former call returned for the same RNG state.
+// Returns an nsim x nsteps integer matrix (row = path, column = step).
+
+// Without covariates (cocoSim_base): innovations and uniforms at t = 1..size,
+// the thinning at step t uses uniform t - 1 and innovation t - 1.
+// [[Rcpp::export]]
+IntegerMatrix forecastPathsBase(int order, bool gp, double lambda, double alpha1,
+                                double alpha2, double alpha3, double eta,
+                                IntegerVector init, int nsteps, int nsim)
+{
+  if (order != 1 && order != 2) stop("order must be 1 or 2");
+  const int N = order;
+  if (init.size() != N) stop("init must hold one value per lag");
+  if (nsteps < 1 || nsim < 0) stop("invalid forecast dimensions");
+  const int size = N + nsteps;
+
+  IntegerMatrix out(nsim, nsteps);
+  std::vector<int> data(size), innov(size);
+  std::vector<double> unif(size);
+
+  GPInvCdf inv;
+  if (gp) inv.reset(lambda, eta);
+
+  GP1Tables tb1;
+  GP2Params p2;
+  GP2Tables tb2;
+  if (order == 1) {
+    tb1.init(lambda, alpha1, eta, eta * (1 - alpha1) / lambda);
+  } else {
+    p2.init(lambda, alpha1, alpha2, alpha3, eta);
+    tb2.init(p2);
+  }
+  CdfStore store;
+
+  for (int s = 0; s < nsim; ++s) {
+    // initial values as drawn by cocoSim_base, then replaced by init
+    for (int i = 0; i < N; ++i) {
+      if (gp) {
+        R::runif(0.0, 1.0);
+      } else {
+        R::rpois(lambda);
+      }
+      data[i] = init[i];
+    }
+    if (gp) {
+      for (int i = 0; i < size; ++i) innov[i] = inv.draw(R::runif(0.0, 1.0));
+    } else {
+      for (int i = 0; i < size; ++i) innov[i] = count_from_double(R::rpois(lambda));
+    }
+    for (int i = 0; i < size; ++i) unif[i] = R::runif(0.0, 1.0);
+
+    for (int t = N + 1; t <= size; ++t) {
+      const double u = unif[t - 1];
+      int r;
+      if (order == 1) {
+        const int y = data[t - 2];
+        tb1.ensure(y);
+        LazyCdf* e = store.get(g_key(y, 0));
+        const std::size_t before = e->c.size();
+        r = gp1_cdf_draw(*e, y, u, tb1);
+        store.account(e, before);
+      } else {
+        const int y = data[t - 2];
+        const int z = data[t - 3];
+        tb2.ensure(std::max(y, z));
+        LazyCdf* e = store.get(g_key(y, z));
+        const std::size_t before = e->c.size();
+        r = gp2_cdf_draw(*e, y, z, u, p2, tb2);
+        store.account(e, before);
+      }
+      data[t - 1] = r + innov[t - 1];
+    }
+
+    for (int j = 0; j < nsteps; ++j) out(s, j) = data[N + j];
+    if ((s & 255) == 255) checkUserInterrupt();
+  }
+  return out;
+}
+
+
+// With covariates (cocoSim_cov without burn-in, xreg = xcast): initial values
+// from init_lambdas (drawn, then replaced by init), innovations from lambdas
+// (one per xreg row), n_unif thinning uniforms; the thinning at step t uses
+// lambda from xreg row t - order - 1, the innovation t - order - 1 and the
+// uniform t - order - 1 (order 2) or t - 1 (order 1), as in simGP2cov /
+// simGP1cov. Paths are drawn in order (so the RNG stream is that of
+// consecutive cocoSim_cov calls) and then simulated time-major in blocks,
+// sharing per-t tables and caches, as in bootAcfCov.
+// [[Rcpp::export]]
+IntegerMatrix forecastPathsCov(int order, bool gp, double alpha1, double alpha2,
+                               double alpha3, double eta, NumericVector betas,
+                               NumericMatrix xreg, NumericVector lambdas,
+                               NumericVector init_lambdas, IntegerVector init,
+                               int nsteps, int n_unif, int nsim,
+                               std::string link_function)
+{
+  const LinkFunction link = parseLinkFunction(link_function);
+  if (order != 1 && order != 2) stop("order must be 1 or 2");
+  const int N = order;
+  const int n_innov = lambdas.size();
+  if (nsteps < 1 || nsim < 0) stop("invalid forecast dimensions");
+  const int size = N + nsteps;
+  if (init.size() != N) stop("init must hold one value per lag");
+  if (init_lambdas.size() != N) stop("init_lambdas must have one value per initial observation");
+  if (betas.size() != xreg.ncol()) stop("betas and xreg do not match");
+  if (xreg.nrow() < nsteps || n_innov < nsteps) stop("xreg has too few rows");
+  if (n_unif < ((order == 2) ? nsteps : size)) stop("too few thinning uniforms");
+
+  IntegerMatrix out(nsim, nsteps);
+  const std::size_t per_rep = static_cast<std::size_t>(size) + n_innov + n_unif + 1;
+  const std::size_t blk_cap = std::max<std::size_t>(1, 4000000 / per_rep);
+  const int blk = static_cast<int>(std::min<std::size_t>(static_cast<std::size_t>(std::max(nsim, 1)), blk_cap));
+
+  std::vector<int> data(static_cast<std::size_t>(blk) * size);
+  std::vector<double> innov(static_cast<std::size_t>(blk) * n_innov);  // Poisson: count, GP: uniform
+  std::vector<double> unif(static_cast<std::size_t>(blk) * n_unif);
+
+  GP2Params p2;
+  GP2Tables tb2;
+  GP2BootTabs bt2;
+  bt2.init_eta(eta);
+  std::vector<int> mz;
+  CdfStore store;
+  GPInvCdf inv;
+
+  for (int b0 = 0; b0 < nsim; b0 += blk) {
+    const int nb = std::min(blk, nsim - b0);
+
+    // random numbers per path, in the order of cocoSim_cov
+    for (int k = 0; k < nb; ++k) {
+      int* d = &data[static_cast<std::size_t>(k) * size];
+      for (int i = 0; i < N; ++i) {
+        // order 1 GP: rgenpois(n = 1, ...) (one uniform); otherwise rpois
+        if (order == 1 && gp) {
+          R::runif(0.0, 1.0);
+        } else {
+          R::rpois(init_lambdas[i]);
+        }
+        d[i] = init[i];
+      }
+      double* iv = &innov[static_cast<std::size_t>(k) * n_innov];
+      if (gp) {
+        for (int i = 0; i < n_innov; ++i) iv[i] = R::runif(0.0, 1.0);
+      } else {
+        for (int i = 0; i < n_innov; ++i) iv[i] = R::rpois(lambdas[i]);
+      }
+      double* uv = &unif[static_cast<std::size_t>(k) * n_unif];
+      for (int i = 0; i < n_unif; ++i) uv[i] = R::runif(0.0, 1.0);
+    }
+
+    for (int t = N + 1; t <= size; ++t) {
+      const int row = t - N - 1;
+      const int ui = (order == 2) ? (t - N - 1) : (t - 1);
+      const double lam = applyLink(rowInnerProduct(xreg, row, betas), link);
+      const double psi = eta * (1 - alpha1) / lam;
+      bool conv = false;
+      if (order == 2) {
+        p2.init(lam, alpha1, alpha2, alpha3, eta);
+        // histories (y, z) = (d[t-2], d[t-3]) of the block at this t
+        int maxy = 0, maxz = 0;
+        for (int k = 0; k < nb; ++k) {
+          const int* d = &data[static_cast<std::size_t>(k) * size];
+          maxy = std::max(maxy, d[t - 2]);
+          maxz = std::max(maxz, d[t - 3]);
+        }
+        conv = static_cast<double>(maxy + 1) * (maxz + 1) <= GP2_CONV_MAX_ENTRIES;
+        if (conv) {
+          check_table_index(std::max(maxy, maxz));
+          mz.assign(static_cast<std::size_t>(maxy) + 1, -1);
+          for (int k = 0; k < nb; ++k) {
+            const int* d = &data[static_cast<std::size_t>(k) * size];
+            if (d[t - 3] > mz[d[t - 2]]) mz[d[t - 2]] = d[t - 3];
+          }
+          for (int n = maxy - 1; n >= 0; --n) mz[n] = std::max(mz[n], mz[n + 1]);
+          bt2.build(p2, maxy, maxz, mz);
+        } else {
+          tb2.init(p2);
+        }
+      }
+      store.clear();
+      if (gp) inv.reset(lambdas[row], eta);
+
+      for (int k = 0; k < nb; ++k) {
+        int* d = &data[static_cast<std::size_t>(k) * size];
+        const double u = unif[static_cast<std::size_t>(k) * n_unif + ui];
+        int r;
+        if (order == 1) {
+          const int y = d[t - 2];
+          LazyCdf* e = store.get(g_key(y, 0));
+          const std::size_t before = e->c.size();
+          r = gp1cov_cdf_draw(*e, y, u, alpha1, psi);
+          store.account(e, before);
+        } else {
+          const int y = d[t - 2];
+          const int z = d[t - 3];
+          LazyCdf* e = store.get(g_key(y, z));
+          const std::size_t before = e->c.size();
+          if (conv) {
+            r = gp2cov_cdf_draw(*e, y, z, u, bt2);
+          } else {
+            tb2.ensure(std::max(y, z));
+            r = gp2_cdf_draw(*e, y, z, u, p2, tb2);
+          }
+          store.account(e, before);
+        }
+        const double iv = innov[static_cast<std::size_t>(k) * n_innov + row];
+        const int x = gp ? inv.draw(iv) : count_from_double(iv);
+        d[t - 1] = r + x;
+      }
+    }
+
+    for (int k = 0; k < nb; ++k) {
+      const int* d = &data[static_cast<std::size_t>(k) * size];
+      for (int j = 0; j < nsteps; ++j) out(b0 + k, j) = d[N + j];
+    }
+    checkUserInterrupt();
+  }
+  return out;
+}
+
+
+
 // [[Rcpp::export]]
 double likelihoodGP2cov(double alpha1, double alpha2, double alpha3,
                         double eta, NumericVector lambdas, int T, int seas1, int seas2,
