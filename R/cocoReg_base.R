@@ -7,6 +7,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
                          start.val.adjust = TRUE, replace.start.val = 1e-5,
                          iteration.start.val = 0.99, method.hessian = NULL, julia_installed=FALSE, link_function="log", cores = 1, ...) {
   start_time <- Sys.time()
+  has_dots <- ...length() > 0L
 
   if (replace.start.val <= 0) {
     stop("Option 'replace.start.val' must be a non-negative real number")
@@ -112,26 +113,41 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       }
       gradient <- function(par, data) mlf_derivs(par, data, 1L)$gradient
 
+      derivs_opt <- NULL
       if (constrained.optim == TRUE) {
         # constrained.optimaints
         ui <- rbind(c(1, 0), c(0, 1), c(0, -1))
         ci <- c(0, 0, -1)
 
         # constrained.optimained optimization process
-        if (method_optim == "BFGS") {
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, #mu = mu,
-            method = method_optim, control = optim_control,
-            #outer.iterations = outer.it, outer.eps = outer.eps,
-            hessian = FALSE, ...)          
-        }else{
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, ui = ui, ci = ci, data = data,
-            method = method_optim, control = optim_control,
-            hessian = FALSE, ...
-          )
+        constr_fit <- function() {
+          if (method_optim == "BFGS") {
+            fit <- stats::constrOptim(
+              theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, #mu = mu,
+              method = method_optim, control = optim_control,
+              #outer.iterations = outer.it, outer.eps = outer.eps,
+              hessian = FALSE, ...)          
+          }else{
+            fit <- stats::constrOptim(
+              theta = sta, f = mlf, ui = ui, ci = ci, data = data,
+              method = method_optim, control = optim_control,
+              hessian = FALSE, ...
+            )
+          }
+          coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
         }
-        fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
+        if (method_optim == "Nelder-Mead" && !has_dots) {
+          # L-BFGS-B with AD gradient from the starting values, accepted
+          # after an AD optimality check; else the constrOptim fit above
+          opt <- coco_fit_lbfgsb_checked(
+            sta, mlf, gradient, function(p) mlf_derivs(p, data, 2L), ui, ci,
+            fallback = constr_fit, data = data
+          )
+          fit <- opt$fit
+          derivs_opt <- opt$derivs
+        } else {
+          fit <- constr_fit()
+        }
       } # end constrained.optim True
 
       if (constrained.optim == FALSE) {
@@ -155,7 +171,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       T <- length(data)
       likelihood <- -likelihoodGP1(pars[1], pars[2], 0, T, seasonality[1], data)
 
-      derivs <- mlf_derivs(pars, data, 2L)
+      derivs <- if (!is.null(derivs_opt)) derivs_opt else mlf_derivs(pars, data, 2L)
       gra <- derivs$gradient
       hes <- derivs$hessian
       inv_hes <- solve(hes)
@@ -264,26 +280,41 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       }
       gradient <- function(par, data) mlf_derivs(par, data, 1L)$gradient
 
+      derivs_opt <- NULL
       if (constrained.optim == TRUE) {
         # constrained.optimaints
         ui <- rbind(c(1, 0, 0), c(0, 1, 0), c(0, -1, 0), c(0, 0, 1), c(0, 0, -1))
         ci <- c(0, 0, -1, 0, -1)
 
         # constrained.optimained optimization process
-        if (method_optim == "BFGS") {
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data,
-            method = method_optim, control = optim_control,
-            hessian = FALSE, ...)          
-        }else{
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, ui = ui, ci = ci, data = data,
-            method = method_optim, control = optim_control,
+        constr_fit <- function() {
+          if (method_optim == "BFGS") {
+            fit <- stats::constrOptim(
+              theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data,
+              method = method_optim, control = optim_control,
+              hessian = FALSE, ...)          
+          }else{
+            fit <- stats::constrOptim(
+              theta = sta, f = mlf, ui = ui, ci = ci, data = data,
+              method = method_optim, control = optim_control,
 
-            hessian = FALSE, ...
-          )
+              hessian = FALSE, ...
+            )
+          }
+          coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
         }
-        fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
+        if (method_optim == "Nelder-Mead" && !has_dots) {
+          # L-BFGS-B with AD gradient from the starting values, accepted
+          # after an AD optimality check; else the constrOptim fit above
+          opt <- coco_fit_lbfgsb_checked(
+            sta, mlf, gradient, function(p) mlf_derivs(p, data, 2L), ui, ci,
+            fallback = constr_fit, data = data
+          )
+          fit <- opt$fit
+          derivs_opt <- opt$derivs
+        } else {
+          fit <- constr_fit()
+        }
       } # end constrained.optim TRUE
 
       if (constrained.optim == FALSE) {
@@ -310,7 +341,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       likelihood <- -likelihoodGP1(pars[1], pars[2], pars[3], T, seasonality[1], data)
 
 
-      derivs <- mlf_derivs(pars, data, 2L)
+      derivs <- if (!is.null(derivs_opt)) derivs_opt else mlf_derivs(pars, data, 2L)
       gra <- derivs$gradient
       hes <- derivs$hessian
       inv_hes <- solve(hes)
@@ -461,25 +492,40 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       }
       gradient <- function(par, data) mlf_derivs(par, data, 1L)$gradient
 
+      derivs_opt <- NULL
       if (constrained.optim == TRUE) {
         ui <- rbind(c(0, -1, -1, -1), c(0, -2, 0, -1), c(0, 1, 0, 0), c(0, 0, 1, 0), c(0, 0, 0, 1), c(1, 0, 0, 0))
 
         ci <- c(-1, -1, 0, 0, 0, 0)
 
         # constrained.optimained optimization process
-        if (method_optim == "BFGS") {
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, 
-            method = method_optim, control = optim_control,
-            hessian = FALSE, ...)          
-        }else{
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, ui = ui, ci = ci, data = data,
-            method = method_optim, control = optim_control,
-            hessian = FALSE, ...
-          )
+        constr_fit <- function() {
+          if (method_optim == "BFGS") {
+            fit <- stats::constrOptim(
+              theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, 
+              method = method_optim, control = optim_control,
+              hessian = FALSE, ...)          
+          }else{
+            fit <- stats::constrOptim(
+              theta = sta, f = mlf, ui = ui, ci = ci, data = data,
+              method = method_optim, control = optim_control,
+              hessian = FALSE, ...
+            )
+          }
+          coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
         }
-        fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
+        if (method_optim == "Nelder-Mead" && !has_dots) {
+          # L-BFGS-B with AD gradient from the starting values, accepted
+          # after an AD optimality check; else the constrOptim fit above
+          opt <- coco_fit_lbfgsb_checked(
+            sta, mlf, gradient, function(p) mlf_derivs(p, data, 2L), ui, ci,
+            fallback = constr_fit, data = data
+          )
+          fit <- opt$fit
+          derivs_opt <- opt$derivs
+        } else {
+          fit <- constr_fit()
+        }
       } # end constrained.optim True
 
       if (constrained.optim == FALSE) {
@@ -504,7 +550,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       likelihood <- -likelihoodGP2(pars[1], pars[2], pars[3], pars[4], 0, T, seasonality[1], seasonality[2], data)
 
 
-      derivs <- mlf_derivs(pars, data, 2L)
+      derivs <- if (!is.null(derivs_opt)) derivs_opt else mlf_derivs(pars, data, 2L)
       gra <- derivs$gradient
       hes <- derivs$hessian
       inv_hes <- solve(hes)
@@ -670,6 +716,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       }
       gradient <- function(par, data) mlf_derivs(par, data, 1L)$gradient
 
+      derivs_opt <- NULL
       if (constrained.optim == TRUE) {
         # constrained.optimaints
         ui <- rbind(
@@ -679,19 +726,33 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
         ci <- c(-1, -1, 0, 0, 0, 0, 0, -1)
 
         # constrained.optimained optimization process
-        if (method_optim == "BFGS") {
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, 
-            method = method_optim, control = optim_control,
-            hessian = FALSE, ...)          
-        }else{
-          fit <- stats::constrOptim(
-            theta = sta, f = mlf, ui = ui, ci = ci, data = data,
-            method = method_optim, control = optim_control,
-            hessian = FALSE, ...
-          )
+        constr_fit <- function() {
+          if (method_optim == "BFGS") {
+            fit <- stats::constrOptim(
+              theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, 
+              method = method_optim, control = optim_control,
+              hessian = FALSE, ...)          
+          }else{
+            fit <- stats::constrOptim(
+              theta = sta, f = mlf, ui = ui, ci = ci, data = data,
+              method = method_optim, control = optim_control,
+              hessian = FALSE, ...
+            )
+          }
+          coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
         }
-        fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
+        if (method_optim == "Nelder-Mead" && !has_dots) {
+          # L-BFGS-B with AD gradient from the starting values, accepted
+          # after an AD optimality check; else the constrOptim fit above
+          opt <- coco_fit_lbfgsb_checked(
+            sta, mlf, gradient, function(p) mlf_derivs(p, data, 2L), ui, ci,
+            fallback = constr_fit, data = data
+          )
+          fit <- opt$fit
+          derivs_opt <- opt$derivs
+        } else {
+          fit <- constr_fit()
+        }
       } # end constrained.optim True
 
       if (constrained.optim == FALSE) {
@@ -717,7 +778,7 @@ cocoReg_base <- function(type, order, data, seasonality = c(1, 2), #mu = 1e-4, o
       likelihood <- -likelihoodGP2(pars[1], pars[2], pars[3], pars[4], pars[5], T, seasonality[1], seasonality[2], data)
 
 
-      derivs <- mlf_derivs(pars, data, 2L)
+      derivs <- if (!is.null(derivs_opt)) derivs_opt else mlf_derivs(pars, data, 2L)
       gra <- derivs$gradient
       hes <- derivs$hessian
       inv_hes <- solve(hes)

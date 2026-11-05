@@ -273,6 +273,137 @@ coco_polish_fit <- function(fit, f, ui, ci, gr = NULL, ..., margin = 1e-8) {
   fit
 }
 
+#' Default (Nelder-Mead) constrained fit of cocoReg_base
+#'
+#' constrOptim() with Nelder-Mead spends most of the time of a no-covariate
+#' fit (and of cocoSoc(), which runs four such fits): every outer barrier
+#' iteration restarts the simplex, and near a bound (eta = 0, alpha_i = 0 in
+#' misspecified models) the simplex runs to its iteration limit before the
+#' L-BFGS-B polish finds the bound. Here the L-BFGS-B stage of
+#' coco_polish_fit() (exact AD gradient `gr`) is started at the starting
+#' values `sta` directly, and its solution `p` is accepted if it passes a
+#' local optimality check with the AD gradient g and Hessian H at `p`
+#' (`fgh(p)`, a list with `value`, `gradient`, `hessian` of `f`, as
+#' coco_ad_derivs(deriv = 2) returns it):
+#'
+#' * `p` is feasible and every general (non-box) row of `ui`/`ci` has slack
+#'   above `tol_slack` (L-BFGS-B handles these rows only by a penalty);
+#' * coordinates within `tol_bound` of a box bound with g pointing out of
+#'   the box are fixed; on the remaining (free) coordinates H is positive
+#'   definite and the Newton decrement 0.5 g' H^{-1} g (the decrease of `f`
+#'   predicted by the local quadratic model) is at most `tol_dec`.
+#'
+#' Up to `newton_steps` Newton steps on the free coordinates (clipped to the
+#' box, kept only if feasible and decreasing `f`) are taken to meet the
+#' decrement bound. If the check fails, `fallback()` (the constrOptim() fit
+#' followed by coco_polish_fit(), i.e. the former default) is run and the
+#' better of the two fits is returned. Returns list(fit, derivs); `derivs` is
+#' `fgh` at fit$par if the check passed (so the caller can reuse the Hessian
+#' for the standard errors), else NULL. `...` is passed to `f` and `gr`.
+#' @noRd
+coco_fit_lbfgsb_checked <- function(sta, f, gr, fgh, ui, ci, fallback, ...,
+                                    margin = 1e-8, tol_dec = 1e-6,
+                                    tol_bound = 1e-7, tol_slack = 1e-6,
+                                    newton_steps = 2L) {
+  dots <- list(...)
+  f_eval <- function(p) {
+    v <- tryCatch(do.call(f, c(list(p), dots)), error = function(e) NA_real_)
+    if (length(v) != 1) NA_real_ else as.numeric(v)
+  }
+  # former default fit; the candidate `cand` (list(par, value)) is kept if it
+  # is strictly better
+  run_fallback <- function(cand = NULL) {
+    fb <- fallback()
+    fb_val <- f_eval(as.numeric(unlist(fb$par, use.names = FALSE)))
+    if (!is.null(cand) && is.finite(cand$value) &&
+        (!is.finite(fb_val) || cand$value < fb_val)) {
+      return(list(fit = cand, derivs = NULL))
+    }
+    list(fit = fb, derivs = NULL)
+  }
+
+  sta <- as.numeric(sta)
+  ui <- as.matrix(ui)
+  n_par <- length(sta)
+  if (ncol(ui) != n_par) {
+    return(run_fallback())
+  }
+  feasible <- function(p) all(ui %*% p - ci >= 0)
+  if (!feasible(sta)) {
+    return(run_fallback())
+  }
+  val_sta <- f_eval(sta)
+  if (!is.finite(val_sta)) {
+    return(run_fallback())
+  }
+
+  # box bounds as in coco_polish_fit(); rows with several non-zero entries
+  # are the general constraints
+  lower <- rep(-Inf, n_par)
+  upper <- rep(Inf, n_par)
+  general <- logical(nrow(ui))
+  for (j in seq_len(nrow(ui))) {
+    nz <- which(ui[j, ] != 0)
+    if (length(nz) == 1) {
+      bound <- ci[j] / ui[j, nz]
+      if (ui[j, nz] > 0) {
+        lower[nz] <- max(lower[nz], bound + margin)
+      } else {
+        upper[nz] <- min(upper[nz], bound - margin)
+      }
+    } else {
+      general[j] <- TRUE
+    }
+  }
+  if (any(lower > upper)) {
+    return(run_fallback())
+  }
+
+  fit <- coco_polish_fit(list(par = sta, value = val_sta), f, ui, ci, gr = gr,
+                         ..., margin = margin)
+  p <- as.numeric(unlist(fit$par, use.names = FALSE))
+  fp <- f_eval(p)
+  if (length(p) != n_par || any(!is.finite(p)) || !feasible(p) || !is.finite(fp)) {
+    return(run_fallback())
+  }
+
+  for (step in 0:newton_steps) {
+    d <- tryCatch(fgh(p), error = function(e) NULL)
+    if (is.null(d)) break
+    g <- as.numeric(d$gradient)
+    H <- as.matrix(d$hessian)
+    if (length(g) != n_par || any(!is.finite(g)) || any(dim(H) != n_par) ||
+        any(!is.finite(H))) break
+    if (any(general) &&
+        any(ui[general, , drop = FALSE] %*% p - ci[general] <= tol_slack)) break
+
+    fixed <- ((p - lower <= tol_bound) & (g > 0)) |
+      ((upper - p <= tol_bound) & (g < 0))
+    free <- which(!fixed)
+    if (length(free) == 0) {
+      return(list(fit = list(par = p, value = fp), derivs = d))
+    }
+    R <- tryCatch(chol(H[free, free, drop = FALSE]), error = function(e) NULL)
+    if (is.null(R)) break
+    dir <- backsolve(R, forwardsolve(t(R), g[free]))  # H_free^{-1} g_free
+    dec <- 0.5 * sum(g[free] * dir)
+    if (is.finite(dec) && dec <= tol_dec) {
+      return(list(fit = list(par = p, value = fp), derivs = d))
+    }
+    if (step == newton_steps || !is.finite(dec)) break
+
+    q <- p
+    q[free] <- p[free] - dir
+    q <- pmin(pmax(q, lower), upper)
+    if (!feasible(q)) break
+    fq <- f_eval(q)
+    if (!is.finite(fq) || fq >= fp) break
+    p <- q
+    fp <- fq
+  }
+  run_fallback(list(par = p, value = fp))
+}
+
 #' Negative log-likelihood with derivatives by automatic differentiation
 #'
 #' Evaluates the objective `mlf` of cocoReg (the negative log-likelihood of
