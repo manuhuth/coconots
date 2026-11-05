@@ -178,7 +178,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
     stop("y must be a non-negative integer")
   }
 
-  for (t in (seasonality[2] + 1):T) {
+  pit_row <- function(t) {
     # Px = P(X_t <= x_t), Px1 = P(X_t <= x_t - 1): both are prefixes of the
     # same cumulative sum of transition densities, computed in one C++ call
     if (coco$order == 1) {
@@ -195,8 +195,27 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
     temp[is.na(temp)] <- 1
     temp[temp < 0] <- 0
     temp[temp > 1] <- 1
-    meanPIT[t, ] <- temp
-  } # end t
+    temp
+  }
+
+  if (is.null(coco$cov) && T > seasonality[2]) {
+    # Without covariates (lambda[t] constant) row t depends on t only through
+    # the integer counts (x_t, x_{t-1}[, x_{t-2}]): one evaluation per
+    # distinct triple, copied to all t where it occurs
+    tt <- (seasonality[2] + 1):T
+    key <- if (coco$order == 1) {
+      paste(data[tt], data[tt - seasonality[1]])
+    } else {
+      paste(data[tt], data[tt - seasonality[1]], data[tt - seasonality[2]])
+    }
+    first <- which(!duplicated(key))
+    rows_u <- vapply(tt[first], pit_row, numeric(J))
+    meanPIT[tt, ] <- t(rows_u[, match(key, key[first]), drop = FALSE])
+  } else {
+    for (t in (seasonality[2] + 1):T) {
+      meanPIT[t, ] <- pit_row(t)
+    } # end t
+  }
 
   PIT <- colMeans(meanPIT)
   d <- diff(PIT)

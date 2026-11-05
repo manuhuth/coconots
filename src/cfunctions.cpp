@@ -1401,6 +1401,43 @@ struct CdfStore {
   }
 };
 
+// Direct-indexed pointer cache in front of CdfStore::get for histories with
+// 0 <= y, z < DIM (order 1: z = 0), which avoids the hash lookup per
+// thinning draw. Elements of std::unordered_map keep their address until
+// they are erased, so a cached pointer stays the LazyCdf that
+// store.get(g_key(y, z)) returns until store.clear(); reset() must be called
+// together with every store.clear(). The scratch entry (returned once the
+// store is full) is never cached, and store.get is called exactly when the
+// key has not been looked up since the last reset, so the store's size
+// accounting is unchanged.
+struct CdfIndex {
+  static const int DIM = 64;
+  std::vector<LazyCdf*> ptr;
+  std::vector<unsigned int> stamp;
+  unsigned int gen;
+
+  CdfIndex() : ptr(DIM * DIM, static_cast<LazyCdf*>(0)), stamp(DIM * DIM, 0u), gen(1u) {}
+
+  void reset() {
+    if (++gen == 0u) {
+      std::fill(stamp.begin(), stamp.end(), 0u);
+      gen = 1u;
+    }
+  }
+
+  LazyCdf* get(CdfStore& store, int y, int z) {
+    const bool in_range = y >= 0 && z >= 0 && y < DIM && z < DIM;
+    const int idx = in_range ? y * DIM + z : 0;
+    if (in_range && stamp[idx] == gen) return ptr[idx];
+    LazyCdf* e = store.get(g_key(y, z));
+    if (in_range && e != &store.scratch) {
+      ptr[idx] = e;
+      stamp[idx] = gen;
+    }
+    return e;
+  }
+};
+
 // Thinning draw of order 2 for uniform u: the index r returned by the
 // simGP2 / simGP2cov while-loop, i.e. the first r with !(c[r] <= u).
 // The loops add zwerg(r) * pow(pyz, -1) also beyond r = y + z (where zwerg
@@ -1636,7 +1673,7 @@ void sample_acf(const int* x, int n, int nlags, std::vector<double>& xd, double*
   for (int i = 0; i < n; ++i) s += x[i];
   s /= n;
   const double mean = static_cast<double>(s);
-  xd.resize(n);
+  xd.resize(static_cast<std::size_t>(n) + nlags + 1);  // [n, n + nlags] holds the lag sums
   for (int i = 0; i < n; ++i) xd[i] = static_cast<double>(x[i]) - mean;
   double acov0 = 0.0;
   for (int i = 0; i < n; ++i) acov0 += xd[i] * xd[i];
@@ -1644,10 +1681,27 @@ void sample_acf(const int* x, int n, int nlags, std::vector<double>& xd, double*
   const double se = sqrt(acov0);
   const double den = se * se;
   const int lagmax = std::min(nlags, n - 1);
+  // sum[lag] = sum_{i = 0}^{n - 1 - lag} xd[i + lag] * xd[i], accumulated for
+  // all lags in one pass over i: each sum[lag] receives the same terms in the
+  // same (increasing i) order as a separate loop per lag, but the lagmax
+  // accumulators are independent, so the loop is not bound by the latency
+  // of one serial addition chain and the inner loop vectorizes.
+  double* __restrict__ sum = &xd[n];
+  std::fill(sum, sum + lagmax + 1, 0.0);
+  const double* __restrict__ xp = xd.data();
+  const int nfull = n - lagmax;  // i < nfull: all lags 1..lagmax have a term
+  for (int i = 0; i < nfull; ++i) {
+    const double xi = xp[i];
+    const double* __restrict__ xl = xp + i;
+    for (int lag = 1; lag <= lagmax; ++lag) sum[lag] += xl[lag] * xi;
+  }
+  for (int i = std::max(nfull, 0); i < n - 1; ++i) {
+    const double xi = xp[i];
+    const int lm = n - 1 - i;
+    for (int lag = 1; lag <= lm; ++lag) sum[lag] += xp[i + lag] * xi;
+  }
   for (int lag = 1; lag <= lagmax; ++lag) {
-    double sum = 0.0;
-    for (int i = 0; i < n - lag; ++i) sum += xd[i + lag] * xd[i];
-    const double a = (sum / n) / den;
+    const double a = (sum[lag] / n) / den;
     out[lag - 1] = (a > 1.) ? 1. : ((a < -1.) ? -1. : a);
   }
 }
@@ -1686,6 +1740,7 @@ NumericMatrix bootAcfBase(int order, bool gp, double lambda, double alpha1,
     tb2.init(p2);
   }
   CdfStore store;
+  CdfIndex cdf_index;
 
   for (int b = 0; b < nB; ++b) {
     // same draw order as cocoSim_base: initial values, innovations, uniforms
@@ -1704,7 +1759,7 @@ NumericMatrix bootAcfBase(int order, bool gp, double lambda, double alpha1,
       if (order == 1) {
         const int y = data[t - 2];
         tb1.ensure(y);
-        LazyCdf* e = store.get(g_key(y, 0));
+        LazyCdf* e = cdf_index.get(store, y, 0);
         const std::size_t before = e->c.size();
         r = gp1_cdf_draw(*e, y, u, tb1);
         store.account(e, before);
@@ -1712,7 +1767,7 @@ NumericMatrix bootAcfBase(int order, bool gp, double lambda, double alpha1,
         const int y = data[t - 2];
         const int z = data[t - 3];
         tb2.ensure(std::max(y, z));
-        LazyCdf* e = store.get(g_key(y, z));
+        LazyCdf* e = cdf_index.get(store, y, z);
         const std::size_t before = e->c.size();
         r = gp2_cdf_draw(*e, y, z, u, p2, tb2);
         store.account(e, before);
@@ -1769,6 +1824,7 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
   bt2.init_eta(eta);
   std::vector<int> mz;
   CdfStore store;
+  CdfIndex cdf_index;
   GPInvCdf inv, inv_init;
 
   for (int b0 = 0; b0 < nB; b0 += blk) {
@@ -1825,6 +1881,7 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
         }
       }
       store.clear();
+      cdf_index.reset();
       if (gp) inv.reset(lambdas[row], eta);
 
       for (int k = 0; k < nb; ++k) {
@@ -1833,14 +1890,14 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
         int r;
         if (order == 1) {
           const int y = d[t - 2];
-          LazyCdf* e = store.get(g_key(y, 0));
+          LazyCdf* e = cdf_index.get(store, y, 0);
           const std::size_t before = e->c.size();
           r = gp1cov_cdf_draw(*e, y, u, alpha1, psi);
           store.account(e, before);
         } else {
           const int y = d[t - 2];
           const int z = d[t - 3];
-          LazyCdf* e = store.get(g_key(y, z));
+          LazyCdf* e = cdf_index.get(store, y, z);
           const std::size_t before = e->c.size();
           if (conv) {
             r = gp2cov_cdf_draw(*e, y, z, u, bt2);
