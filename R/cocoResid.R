@@ -19,6 +19,11 @@ cocoResid <- function(coco, val.num = 1e-10) {
     stop("Option val.num must be a non-negative real number")
   }
 
+  coco_check_count_limit(coco$ts)
+  coco_check_length(length(coco$ts), coco$order + 1, "cocoResid",
+                    sprintf("an order-%d model has residuals for the observations after the first %d",
+                            coco$order, coco$order))
+
   seasonality <- c(1, 2) #will be used as argument in future versions coco$seasonality
   bool_covariates <- !is.null(coco$cov)
   par <- coco$par
@@ -46,21 +51,19 @@ cocoResid <- function(coco, val.num = 1e-10) {
       eta <- par[3-bool_covariates]
     }
       
-    # Fitted Values
-    fitted <- c(rep(mean(data), seasonality[1])) 
-    varX <- c(rep(stats::var(data), seasonality[1])) 
-      
-    fitted_varX <- lapply((seasonality[1] + 1):(length(data)), function(j) {
-      if (bool_covariates){
-        lambda <- lambdas[j]
-      }
-      fitted_value <- alpha * data[j - seasonality[1]] + lambda / (1-eta)
-      varX_value <- alpha * (1 - alpha) * data[j - seasonality[1]] + lambda / (1-eta)^3
-      return(list(fitted = fitted_value, varX = varX_value))
-    })
-      
-    fitted <- unlist(lapply(fitted_varX, function(x) x$fitted))
-    varX <- unlist(lapply(fitted_varX, function(x) x$varX))
+    # Vectorised form of the former per-j loop
+    #   fitted[j] <- alpha * data[j - 1] + lambda / (1-eta)
+    #   varX[j]   <- alpha * (1 - alpha) * data[j - 1] + lambda / (1-eta)^3
+    # with the same operations per element. The scalar operands are
+    # replicated with rep() (which keeps their names), so every element also
+    # gets the names the scalar expression gave it (names of the first
+    # operand if it has any, else of the second).
+    idx <- (seasonality[1] + 1):(length(data))
+    n_idx <- length(idx)
+    data_lag <- data[idx - seasonality[1]]
+    lambda_t <- if (bool_covariates) lambdas[idx] else rep(lambda, n_idx)
+    fitted <- rep(alpha, n_idx) * data_lag + lambda_t / rep(1 - eta, n_idx)
+    varX <- rep(alpha * (1 - alpha), n_idx) * data_lag + lambda_t / rep((1 - eta)^3, n_idx)
       
   } # end if GP/PAR1
 
@@ -72,43 +75,49 @@ cocoResid <- function(coco, val.num = 1e-10) {
     alpha2 <- par[3-bool_covariates]
     alpha3 <- par[4-bool_covariates]
       
-    U <- 1 / (1 - alpha1 - alpha2 - alpha3)
-      
     if (coco$type == "Poisson"){
       eta <- 0
     } else {
       eta <- par[5-bool_covariates]
     }
       
-    # Fitted Values
-    fitted <- c(rep(mean(data), seasonality[2])) 
-    varX <- c(rep(stats::var(data), seasonality[2])) 
-      
-    fitted_varX <- lapply((seasonality[2] + 1):(length(data)), function(j) {
-      if (bool_covariates){
-        lambda <- lambdas[j]
-      }
-        
-      y <- data[j - seasonality[1]]
-      z <- data[j - seasonality[2]]
+    idx <- (seasonality[2] + 1):(length(data))
+    n_idx <- length(idx)
+    y_t <- data[idx - seasonality[1]]
+    z_t <- data[idx - seasonality[2]]
+    lambda_t <- if (bool_covariates) lambdas[idx] else rep(lambda, n_idx)
 
+    # conditional mean and variance of the thinning part R given (y, z)
+    momentsR <- function(y, z, lambda) {
       # P(R = r | y, z) for r = 0, 1, ... until 1 - val.num is covered,
       # computed in a single C++ call
       probabilities <- dR2_vec(y, z, lambda, alpha1, alpha2, alpha3, eta, val.num)
+      coco_check_finite_pmf(probabilities, "conditional pmf of the thinning part R given (y, z)")
       relevant_counts <- 0:(length(probabilities) - 1)
 
       #compute conditional mean and conditional variance
       meanR <- sum(probabilities * relevant_counts)
       varR <-  sum(probabilities * ((relevant_counts - meanR)^2))
-        
-      fitted_value <- meanR + lambda / (1 - eta)
-      varX_value <- varR + lambda / (1 - eta)^3
+      c(meanR, varR)
+    }
 
-      return(list(fitted = fitted_value, varX = varX_value))
-    })
-      
-    fitted <- unlist(lapply(fitted_varX, function(x) x$fitted))
-    varX <- unlist(lapply(fitted_varX, function(x) x$varX))
+    if (bool_covariates) {
+      mom <- vapply(seq_len(n_idx), function(i) momentsR(y_t[i], z_t[i], lambda_t[i]),
+                    numeric(2))
+    } else {
+      # without covariates the moments depend on t only through (y, z), which
+      # dR2_vec() receives as integers: one evaluation per distinct history
+      key <- paste(as.integer(y_t), as.integer(z_t))
+      first <- which(!duplicated(key))
+      mom_u <- vapply(first, function(i) momentsR(y_t[i], z_t[i], lambda),
+                      numeric(2))
+      mom <- mom_u[, match(key, key[first]), drop = FALSE]
+    }
+
+    # former per-j values meanR + lambda / (1 - eta) and
+    # varR + lambda / (1 - eta)^3 (with their names, as in the order-1 case)
+    fitted <- mom[1, ] + lambda_t / rep(1 - eta, n_idx)
+    varX <- mom[2, ] + lambda_t / rep((1 - eta)^3, n_idx)
       
   } # end if GP/PAR2
 

@@ -65,11 +65,35 @@ simGP1cov <- function(alpha, eta, lambdas, T, N, seas, data, xreg, uniform, inno
     .Call(`_coconots_simGP1cov`, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations, link_function)
 }
 
+rgenpoisInv <- function(u, lambdas, eta) {
+    .Call(`_coconots_rgenpoisInv`, u, lambdas, eta)
+}
+
+bootAcfBase <- function(order, gp, lambda, alpha1, alpha2, alpha3, eta, size, n_keep, nlags, nB) {
+    .Call(`_coconots_bootAcfBase`, order, gp, lambda, alpha1, alpha2, alpha3, eta, size, n_keep, nlags, nB)
+}
+
+bootAcfCov <- function(order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, size, n_unif, nlags, nB, link_function) {
+    .Call(`_coconots_bootAcfCov`, order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, size, n_unif, nlags, nB, link_function)
+}
+
+forecastPathsBase <- function(order, gp, lambda, alpha1, alpha2, alpha3, eta, init, nsteps, nsim) {
+    .Call(`_coconots_forecastPathsBase`, order, gp, lambda, alpha1, alpha2, alpha3, eta, init, nsteps, nsim)
+}
+
+forecastPathsCov <- function(order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, init, nsteps, n_unif, nsim, link_function) {
+    .Call(`_coconots_forecastPathsCov`, order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, init, nsteps, n_unif, nsim, link_function)
+}
+
 likelihoodGP2cov <- function(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores = 1L) {
     .Call(`_coconots_likelihoodGP2cov`, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores)
 }
 
 likelihoodGP1cov <- function(alpha, eta, lambdas, T, seas, data, xreg, link_function) {
     .Call(`_coconots_likelihoodGP1cov`, alpha, eta, lambdas, T, seas, data, xreg, link_function)
+}
+
+likelihoodAD <- function(par, order, gp, data, seas1, seas2, xreg = NULL, link_function = "log", deriv = 2L) {
+    .Call(`_coconots_likelihoodAD`, par, order, gp, data, seas1, seas2, xreg, link_function, deriv)
 }
 

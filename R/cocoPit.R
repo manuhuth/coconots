@@ -44,14 +44,21 @@
 
 cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   start.time <- Sys.time()
-  alpha <- conf.alpha
+  # conf.alpha is used directly below: the R branch assigns the model
+  # parameter alpha (order 1), which must not replace the confidence level
 
   if ((J != round(J)) | (J < 1)) {
     stop("The value of J must be a positive integer")
   }
+
+  coco_check_count_limit(coco$ts)
+  coco_check_length(length(coco$ts), coco$order + 1, "cocoPit",
+                    sprintf("an order-%d model transforms the observations after the first %d",
+                            coco$order, coco$order))
   
   if (!is.null(coco$julia_reg) & julia){
     data <- coco$ts
+    par <- coco$par
     addJuliaFunctions()
     coco_pit <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoPit", coco$julia_reg, J))
     J_test <- J
@@ -178,7 +185,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
     stop("y must be a non-negative integer")
   }
 
-  for (t in (seasonality[2] + 1):T) {
+  pit_row <- function(t) {
     # Px = P(X_t <= x_t), Px1 = P(X_t <= x_t - 1): both are prefixes of the
     # same cumulative sum of transition densities, computed in one C++ call
     if (coco$order == 1) {
@@ -187,6 +194,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
       dvec <- dGP2h_vec(data[t], data[t - seasonality[1]], data[t - seasonality[2]],
                         lambda[t], alpha1, alpha2, alpha3, eta)
     }
+    coco_check_finite_pmf(dvec, "predictive pmf")
     cdf <- cumsum(dvec)
     Px <- cdf[data[t] + 1]
     Px1 <- if (data[t] >= 1) cdf[data[t]] else 0
@@ -195,29 +203,65 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
     temp[is.na(temp)] <- 1
     temp[temp < 0] <- 0
     temp[temp > 1] <- 1
-    meanPIT[t, ] <- temp
-  } # end t
+    temp
+  }
 
-  PIT <- colMeans(meanPIT)
+  # Every observation with a full history enters the PIT: t = order + 1, ..., T
+  # (t = 2 for order 1, t = 3 for order 2), as in Coconots.jl's cocoPit
+  first_t <- seasonality[coco$order] + 1
+  if (is.null(coco$cov) && T >= first_t) {
+    # Without covariates (lambda[t] constant) row t depends on t only through
+    # the integer counts (x_t, x_{t-1}[, x_{t-2}]): one evaluation per
+    # distinct triple, copied to all t where it occurs
+    tt <- first_t:T
+    key <- if (coco$order == 1) {
+      paste(data[tt], data[tt - seasonality[1]])
+    } else {
+      paste(data[tt], data[tt - seasonality[1]], data[tt - seasonality[2]])
+    }
+    first <- which(!duplicated(key))
+    rows_u <- vapply(tt[first], pit_row, numeric(J))
+    meanPIT[tt, ] <- t(rows_u[, match(key, key[first]), drop = FALSE])
+  } else {
+    tt <- if (T >= first_t) first_t:T else integer(0)
+    for (t in tt) {
+      meanPIT[t, ] <- pit_row(t)
+    } # end t
+  }
+
+  # mean over the time points used (rows t < first_t are not part of the PIT)
+  PIT <- colMeans(meanPIT[tt, , drop = FALSE])
   d <- diff(PIT)
   u <- u[-c(1)]
   } #end julia
   
-  pval <- stats::pchisq(sum((d * length(data) - length(data) / J_test)^2 / (length(data) / J_test)), J_test-1)
-  diff <- (sqrt(stats::qchisq(1-alpha, J_test-1)/J_test^2*length(data)) ) / length(data)
+  # number of PIT time points (t = order + 1, ..., T); d sums to one, so
+  # d * n_pit are the bin counts of the non-randomized PIT histogram
+  n_pit <- length(data) - coco$order
+  pval <- pitChisqPValue(d, n_pit, J_test)
+  diff <- (sqrt(stats::qchisq(1-conf.alpha, J_test-1)/J_test^2*n_pit) ) / n_pit
   confidence_band_values <- 1 / J_test + c(-1, 1) * diff 
   
   end.time <- Sys.time()
 
   time <- end.time - start.time
   list_out <- list(
-    "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "alpha" = alpha,
+    "type" = coco$type, "order" = coco$order, "ts" = coco$ts, "alpha" = conf.alpha,
     "par" = par, "PIT values" = d, "duration" = time, "p_value" = pval,
     "confidence_bands" = confidence_band_values, "J" = J
   )
   
   class(list_out) <- "cocoPit"
   return(list_out)
+}
+
+# p-value of the chi-square goodness-of-fit test of uniformity of the J bins
+# of a PIT histogram d (bin masses summing to one) over n_pit time points:
+# upper tail P(chi^2_{J-1} >= stat) with stat = sum((n d - n/J)^2 / (n/J)).
+# Used for the R and the Julia PIT alike.
+pitChisqPValue <- function(d, n_pit, J) {
+  stat <- sum((d * n_pit - n_pit / J)^2 / (n_pit / J))
+  stats::pchisq(stat, J - 1, lower.tail = FALSE)
 }
 
 #' @importFrom ggplot2 autoplot

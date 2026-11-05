@@ -8,5 +8,7 @@ cocoSimJulia <- function(type, order, par, length, xreg, link_function){
     par_use <- par
   }
   
-  return(JuliaConnectoR::juliaCall("cocoSim", type, order, par_use, length, xreg, link_function))
+  # With covariates no burn-in, as on the RCPP backend (see ?cocoSim).
+  n_burn_in <- if (is.null(xreg)) 200L else 0L
+  return(JuliaConnectoR::juliaCall("cocoSim", type, order, par_use, length, xreg, link_function, n_burn_in))
 }

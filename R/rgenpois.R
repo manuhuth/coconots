@@ -6,21 +6,14 @@ rgenpois <- function(n, lambda, eta){
     return(numeric(0))
   }
 
-  # lambda and eta are constant across draws, so the CDF table is built once
-  # (up to the largest uniform) and all draws are inverted against it. The
-  # accumulation order matches the former per-draw while-loop, so the
-  # inversion indices are identical.
-  maxu <- max(u)
-  cdf <- HMMpa::dgenpois(0, lambda1 = lambda, lambda2 = eta)
-  last <- cdf
-  index <- 0
-  while (last < maxu) {
-    index <- index + 1
-    last <- last + HMMpa::dgenpois(index, lambda1 = lambda, lambda2 = eta)
-    cdf[index + 1] <- last
-  }
-
-  # smallest index j with cdf[j + 1] >= u; left.open reproduces the strict
-  # `while (nain < unif)` stopping rule (ties stop the loop)
-  as.numeric(findInterval(u, cdf, left.open = TRUE))
+  # Inversion of the Generalized Poisson CDF in C++ (rgenpoisInv), one
+  # uniform per draw. lambda may be a scalar or a vector of per-draw means
+  # (recycled to length(u)). The pmf reproduces HMMpa::dgenpois and the CDF is
+  # accumulated from 0 upwards with the strict `last < u` stopping rule of the
+  # former R implementation, so the drawn values are unchanged; for a constant
+  # lambda the CDF table is built once and shared by all draws. If the
+  # accumulated CDF saturates below u (rounding), the inversion returns the
+  # count at saturation; a draw above 170 stops with the count-limit error
+  # (see GPInvCdf in cfunctions.cpp).
+  rgenpoisInv(u, rep_len(as.numeric(lambda), length(u)), as.numeric(eta))
 }
