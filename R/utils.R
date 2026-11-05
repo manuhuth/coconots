@@ -134,3 +134,92 @@ coco_default_cores <- function() {
   }
   cores
 }
+
+#' Polish a constrOptim() fit with box-constrained L-BFGS-B
+#'
+#' Nelder-Mead inside constrOptim() stalls when the optimum lies on (or close
+#' to) a bound such as eta = 0 or alpha_i = 0: the simplex collapses against
+#' the infeasible region and the outer barrier loop stops early. This happens
+#' e.g. for a GP model fitted to equidispersed counts, or an order-2 model
+#' fitted to order-1 data. L-BFGS-B handles such bounds through its active
+#' set, so a short L-BFGS-B run started at the constrOptim() solution reaches
+#' the constrained optimum.
+#'
+#' Rows of `ui` with a single non-zero entry define the box bounds (moved
+#' inward by `margin`); all rows of `ui`/`ci` are enforced by returning a
+#' large finite value outside the feasible region. The polished point is
+#' accepted only if it is feasible and lowers the objective `f` (the negative
+#' log-likelihood); otherwise, and on any error, `fit` is returned unchanged.
+#' @noRd
+coco_polish_fit <- function(fit, f, ui, ci, ..., margin = 1e-8) {
+  dots <- list(...)
+  f_eval <- function(p) {
+    v <- tryCatch(do.call(f, c(list(p), dots)), error = function(e) NA_real_)
+    if (length(v) != 1) NA_real_ else as.numeric(v)
+  }
+  par0 <- as.numeric(unlist(fit$par, use.names = FALSE))
+  ui <- as.matrix(ui)
+  n_par <- length(par0)
+  if (ncol(ui) != n_par) {
+    return(fit)
+  }
+  val0 <- f_eval(par0)
+  if (!is.finite(val0)) {
+    return(fit)
+  }
+
+  lower <- rep(-Inf, n_par)
+  upper <- rep(Inf, n_par)
+  for (j in seq_len(nrow(ui))) {
+    nz <- which(ui[j, ] != 0)
+    if (length(nz) == 1) {
+      bound <- ci[j] / ui[j, nz]
+      if (ui[j, nz] > 0) {
+        lower[nz] <- max(lower[nz], bound + margin)
+      } else {
+        upper[nz] <- min(upper[nz], bound - margin)
+      }
+    }
+  }
+  if (any(lower > upper)) {
+    return(fit)
+  }
+
+  feasible <- function(p) all(ui %*% p - ci >= 0)
+  penalty <- abs(val0) * 1e3 + 1e6
+  obj <- function(p) {
+    if (!feasible(p)) {
+      return(penalty)
+    }
+    v <- f_eval(p)
+    if (is.finite(v)) v else penalty
+  }
+
+  start <- pmin(pmax(par0, lower), upper)
+  if (!feasible(start)) {
+    return(fit)
+  }
+
+  res <- tryCatch(
+    stats::optim(
+      par = start, fn = obj, method = "L-BFGS-B",
+      lower = lower, upper = upper,
+      control = list(maxit = 1000, factr = 1e5, ndeps = rep(1e-6, n_par))
+    ),
+    error = function(e) NULL
+  )
+  if (is.null(res)) {
+    return(fit)
+  }
+
+  p <- as.numeric(res$par)
+  if (any(!is.finite(p)) || !feasible(p)) {
+    return(fit)
+  }
+  v <- f_eval(p)
+  if (is.finite(v) && v < val0) {
+    fit$par <- p
+    fit$value <- v
+  }
+  fit
+}

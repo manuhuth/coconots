@@ -158,6 +158,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           hessian = FALSE
         )
         }
+        fit <- coco_polish_fit(fit, mlf, ui, ci, data = data)
       } # end constrained.optim True
 
       if (constrained.optim == FALSE) {
@@ -313,6 +314,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             hessian = FALSE
           )
         }
+        fit <- coco_polish_fit(fit, mlf, ui, ci, data = data)
       } # constrained.optim True
 
       if (constrained.optim == FALSE) {
@@ -507,6 +509,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             hessian = FALSE
           )
         }
+        fit <- coco_polish_fit(fit, mlf, ui, ci, data = data)
       } # end constrained.optim
 
       if (constrained.optim == FALSE) {
@@ -732,6 +735,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             hessian = FALSE
           )
         }
+        fit <- coco_polish_fit(fit, mlf, ui, ci, data = data)
       } # end constrained.optim True
 
       if (constrained.optim == FALSE) {
