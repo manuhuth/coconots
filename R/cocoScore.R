@@ -44,6 +44,13 @@
 
 cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   
+  # the pmf is evaluated on 0..max(max_x, x_t), so max_x is bounded by the
+  # largest supported count; at least one transition must be scored
+  coco_check_support_limit(max_x, "max_x")
+  coco_check_count_limit(coco$ts)
+  coco_check_length(length(coco$ts), coco$order + 1, "cocoScore",
+                    sprintf("an order-%d model scores the observations after the first %d",
+                            coco$order, coco$order))
   
   if (!is.null(coco$julia_reg) & julia){
     addJuliaFunctions()
@@ -127,6 +134,7 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
       # x = 0..max_x (plus data[t] if beyond), computed in one C++ call
       dvec <- dGP1h_vec(max(max_x, data[t]), data[t - seas[1]], par[1], par[2], par[3])
       density_obs <- dvec[data[t] + 1]
+      coco_check_finite_pmf(c(dvec[1:(max_x + 1)], density_obs), "predictive pmf")
 
       # log score
       log_score <- -log(density_obs)
@@ -162,6 +170,7 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
       dvec <- dGP2h_vec(max(max_x, data[t]), data[t - seas[1]], data[t - seas[2]],
                         par[1], par[2], par[3], par[4], par[5])
       density_obs <- dvec[data[t] + 1]
+      coco_check_finite_pmf(c(dvec[1:(max_x + 1)], density_obs), "predictive pmf")
 
       # log score
       log_score <- -log(density_obs)
@@ -219,6 +228,7 @@ coco_scores_by_history <- function(x, key, dens, max_x) {
     xs <- x[ix]
     dvec <- dens(max(max_x, xs), ix[1])
     d_obs <- dvec[xs + 1]
+    coco_check_finite_pmf(c(dvec[1:(max_x + 1)], d_obs), "predictive pmf")
 
     log_s[ix] <- -log(d_obs)
 

@@ -111,7 +111,23 @@ cocoReg <- function(type, order, data, xreg = NULL,
   if ((type != "GP") & (type != "Poisson")) {
     stop("Option 'type' must be either Poisson or GP")
   }
-  
+
+  if ((order != 1) & (order != 2)) {
+    stop("Option 'order' must be 1 or 2")
+  }
+
+  # Input checks shared by both backends: the starting values need the sample
+  # variance and the autocorrelation at lag `order`, and the likelihood at
+  # least two transitions; counts above COCO_MAX_COUNT overflow the
+  # factorials; a rank-deficient xreg leaves the model unidentified.
+  coco_check_length(length(coco_count_values(data)), order + 2, "cocoReg",
+                    sprintf("order-%d model: starting values from the lag-%d autocorrelation, at least two transitions in the likelihood",
+                            order, order))
+  coco_check_count_limit(data)
+  if (!is.null(xreg)) {
+    coco_check_xreg_rank(xreg)
+  }
+
   if (julia){
     start_time <- Sys.time()
     fit_julia <- cocoRegJulia(type, order, data, xreg, start, link_function, b.beta)

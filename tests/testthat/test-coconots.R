@@ -556,3 +556,112 @@ test_that("Poisson covariate models store the log-likelihood of their own betas"
                                  fit2$par[-(1:3)], length(d2), 1, 2, d2, cov,
                                  fit2$link_function))
 })
+
+#-----------------Input validation (counts, short series, xreg rank)--------
+test_that("counts above 170 are rejected with an informative error", {
+  data <- c(rep(3, 20), 171, rep(4, 20))
+  expect_error(cocoReg(type = "Poisson", order = 1, data = data),
+               "counts above 170 are not supported .*observed count = 171")
+  expect_error(cocoReg(type = "GP", order = 2, data = data, julia = TRUE),
+               "counts above 170 are not supported")
+  expect_error(cocoSoc(data, print.progress = FALSE), "counts above 170")
+
+  # C++: a factorial above 170 raises the same error instead of returning Inf
+  expect_equal(coconots:::fact(170), factorial(170))
+  expect_error(coconots:::fact(171), "counts above 170 are not supported")
+  expect_error(coconots:::dGP1h_vec(171L, 2L, 1, 0.3, 0.1), "required count = 171")
+  expect_error(coconots:::likelihoodGP1(1, 0.3, 0.1, length(data), 1L, as.integer(data)),
+               "counts above 170 are not supported")
+  expect_error(coconots:::likelihoodGP2(1, 0.2, 0.1, 0.1, 0.1, length(data), 1L, 2L,
+                                        as.integer(data), 2L),
+               "counts above 170 are not supported")
+
+  set.seed(20261105)
+  sim <- cocoSim(order = 1, type = "Poisson", par = c(1, 0.4), length = 100)
+  fit <- cocoReg(order = 1, type = "Poisson", data = sim)
+  expect_error(cocoScore(fit, max_x = 171), "'max_x' = 171 exceeds the largest supported count 170")
+  expect_error(predict(fit, max = 200), "'max' = 200 exceeds the largest supported count 170")
+  expect_error(cocoSoc(sim, print.progress = FALSE, max_x_score = 171), "'max_x_score' = 171")
+  expect_error(cocoSim(order = 1, type = "Poisson", par = c(1, 0.4), length = 10, init = 171),
+               "initial count = 171")
+  bad <- fit
+  bad$ts[10] <- 200
+  expect_error(cocoResid(bad), "observed count = 200")
+  expect_error(cocoPit(bad), "observed count = 200")
+  expect_error(cocoScore(bad), "observed count = 200")
+  expect_error(cocoBoot(bad, rep.Bootstrap = 2), "observed count = 200")
+  expect_error(predict(bad), "observed count = 200")
+
+  # the automatic forecast support ends at 170
+  fc <- predict(fit)
+  expect_lte(max(fc[[1]]$x), 170)
+})
+
+test_that("non-finite predictive pmf values raise an error instead of NaN/Inf scores", {
+  # GP innovation pmf at x = 170 with eta = 0.95: pow(lambda + 170 eta, 169)
+  # overflows in double precision
+  coco <- list(ts = c(0, 170, 0, 3), par = c(1, 0.5, 0.95), type = "GP", order = 1,
+               cov = NULL, likelihood = -100, link_function = "log")
+  class(coco) <- "coco"
+  expect_error(cocoScore(coco), "predictive pmf is not finite")
+})
+
+test_that("dR2_vec terminates on the finite support of R given (y, z)", {
+  # 1 - 1e-17 rounds to 1, which the cumulative mass need not reach exactly;
+  # the former loop never terminated then
+  for (val in c(1e-14, 1e-17)) {
+    p <- coconots:::dR2_vec(5L, 3L, 1, 0.2, 0.1, 0.1, 0.2, val)
+    expect_lte(length(p), 5 + 3 + 1)
+    expect_equal(sum(p), 1, tolerance = 1e-10)
+    expect_true(all(is.finite(p)))
+  }
+  set.seed(20261106)
+  sim <- cocoSim(order = 2, type = "Poisson", par = c(1, 0.2, 0.1, 0.1), length = 100)
+  fit <- cocoReg(order = 2, type = "Poisson", data = sim)
+  res <- cocoResid(fit, val.num = 1e-17)
+  expect_true(all(is.finite(res$fitted)))
+  expect_length(res$fitted, 98)
+})
+
+test_that("a rank-deficient xreg is rejected naming the aliased columns", {
+  n <- 100
+  x1 <- sin(2 * pi * (1:n) / 12)
+  x2 <- cos(2 * pi * (1:n) / 12)
+  set.seed(20261107)
+  data <- rpois(n, 2)
+  xreg <- cbind(x1 = x1, x2 = x2, x3 = x1 + x2)
+  expect_error(cocoReg(type = "Poisson", order = 1, data = data, xreg = xreg),
+               "xreg is rank deficient: column\\(s\\) x3 are linear combinations of others")
+  expect_error(cocoReg(type = "GP", order = 2, data = data, xreg = cbind(a = x1, b = x1),
+                       julia = TRUE),
+               "xreg is rank deficient: column\\(s\\) b")
+  expect_error(cocoReg(type = "Poisson", order = 1, data = data, xreg = cbind(x1, 0 * x1)),
+               "xreg is rank deficient")
+  # full rank passes the check
+  expect_null(coconots:::coco_check_xreg_rank(cbind(x1, x2)))
+})
+
+test_that("too short series raise informative errors", {
+  expect_error(cocoReg(type = "Poisson", order = 1, data = c(1, 2)),
+               "cocoReg: the time series has 2 observation\\(s\\), but at least 3 are required")
+  expect_error(cocoReg(type = "GP", order = 2, data = c(1, 2, 3)),
+               "cocoReg: the time series has 3 observation\\(s\\), but at least 4 are required")
+  expect_error(cocoReg(type = "GP", order = 2, data = c(1, 2, 3), julia = TRUE),
+               "at least 4 are required")
+  expect_error(cocoSoc(c(1, 2, 3), print.progress = FALSE),
+               "cocoSoc: the time series has 3 observation\\(s\\), but at least 4 are required")
+
+  set.seed(20261108)
+  sim <- cocoSim(order = 1, type = "Poisson", par = c(1, 0.4), length = 50)
+  fit <- cocoReg(order = 1, type = "Poisson", data = sim)
+  expect_error(cocoBoot(fit, numb.lags = 50, rep.Bootstrap = 2),
+               "numb.lags = 50 must be smaller than the length of the time series \\(50\\)")
+  short <- fit
+  short$ts <- short$ts[1]
+  expect_error(cocoScore(short), "cocoScore: the time series has 1 observation")
+  expect_error(cocoPit(short), "cocoPit: the time series has 1 observation")
+  expect_error(cocoResid(short), "cocoResid: the time series has 1 observation")
+  expect_error(cocoBoot(short, rep.Bootstrap = 2), "cocoBoot: the time series has 1 observation")
+  short$ts <- numeric(0)
+  expect_error(predict(short), "predict: the time series has 0 observation")
+})

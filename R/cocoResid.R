@@ -19,6 +19,11 @@ cocoResid <- function(coco, val.num = 1e-10) {
     stop("Option val.num must be a non-negative real number")
   }
 
+  coco_check_count_limit(coco$ts)
+  coco_check_length(length(coco$ts), coco$order + 1, "cocoResid",
+                    sprintf("an order-%d model has residuals for the observations after the first %d",
+                            coco$order, coco$order))
+
   seasonality <- c(1, 2) #will be used as argument in future versions coco$seasonality
   bool_covariates <- !is.null(coco$cov)
   par <- coco$par
@@ -87,6 +92,7 @@ cocoResid <- function(coco, val.num = 1e-10) {
       # P(R = r | y, z) for r = 0, 1, ... until 1 - val.num is covered,
       # computed in a single C++ call
       probabilities <- dR2_vec(y, z, lambda, alpha1, alpha2, alpha3, eta, val.num)
+      coco_check_finite_pmf(probabilities, "conditional pmf of the thinning part R given (y, z)")
       relevant_counts <- 0:(length(probabilities) - 1)
 
       #compute conditional mean and conditional variance

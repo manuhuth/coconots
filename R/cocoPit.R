@@ -49,6 +49,11 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
   if ((J != round(J)) | (J < 1)) {
     stop("The value of J must be a positive integer")
   }
+
+  coco_check_count_limit(coco$ts)
+  coco_check_length(length(coco$ts), coco$order + 1, "cocoPit",
+                    sprintf("an order-%d model transforms the observations after the first %d",
+                            coco$order, coco$order))
   
   if (!is.null(coco$julia_reg) & julia){
     data <- coco$ts
@@ -187,6 +192,7 @@ cocoPit <- function(coco, J = 10, conf.alpha = 0.05, julia=FALSE) {
       dvec <- dGP2h_vec(data[t], data[t - seasonality[1]], data[t - seasonality[2]],
                         lambda[t], alpha1, alpha2, alpha3, eta)
     }
+    coco_check_finite_pmf(dvec, "predictive pmf")
     cdf <- cumsum(dvec)
     Px <- cdf[data[t] + 1]
     Px1 <- if (data[t] >= 1) cdf[data[t]] else 0

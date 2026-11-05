@@ -55,7 +55,9 @@ cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL,
                     julia=FALSE, julia_seed = NULL, link_function="log") {
   seasonality <- c(1, 2) #will be used as argument in future versions
   
-  
+  if (!is.null(init)) {
+    coco_check_count_limit(init, "initial")
+  }
   
   if (is.null(init)) {
     length_burn_in <- 200
@@ -95,7 +97,7 @@ cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL,
       if (!is.null(julia_seed)){
         setJuliaSeed(julia_seed)
       }
-      return(cocoSimJulia(type, order, par, length, xreg, link_function))
+      return(coco_check_simulated(cocoSimJulia(type, order, par, length, xreg, link_function)))
     }
     
     size <- length + length_burn_in + init_add
@@ -128,7 +130,7 @@ cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL,
     
     if (julia){
       setJuliaSeed(julia_seed)
-      return(cocoSimJulia(type, order, par, length, xreg, link_function))
+      return(coco_check_simulated(cocoSimJulia(type, order, par, length, xreg, link_function)))
     }
     size <- length + init_add
     output <- cocoSim_cov(
@@ -138,5 +140,14 @@ cocoSim <- function(type, order, par, length, xreg = NULL, init = NULL,
     
   }
 
-  return(output$data)
+  return(coco_check_simulated(output$data))
+}
+
+#' Simulated counts above COCO_MAX_COUNT are outside the supported range
+#' (the C++ simulation already stops when such a count enters the thinning
+#' step; this also covers the last value and the Julia backend).
+#' @noRd
+coco_check_simulated <- function(x) {
+  coco_check_count_limit(x, "simulated")
+  x
 }
