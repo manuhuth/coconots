@@ -50,7 +50,10 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
       setJuliaSeed(julia_seed)
     }
     addJuliaFunctions()
-    coco_boot <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoBoot", coco$julia_reg, 1:numb.lags, rep.Bootstrap, 1-confidence))
+    # As on the RCPP path below: with covariates the replicates are simulated
+    # without burn-in (cocoSim's documented default), without covariates with one.
+    n_burn_in <- if (is.null(coco$cov)) 200L else 0L
+    coco_boot <- JuliaConnectoR::juliaGet( JuliaConnectoR::juliaCall("cocoBoot", coco$julia_reg, 1:numb.lags, rep.Bootstrap, 1-confidence, n_burn_in))
     #acfdata <- coco_boot$values[[2]]
     ac <- t(getJuliaValue(coco_boot, "pacfs"))
     #confidence_bands <- data.frame(cbind(coco_boot$values[[3]], coco_boot$values[[4]]))
