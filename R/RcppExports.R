@@ -85,3 +85,7 @@ likelihoodGP1cov <- function(alpha, eta, lambdas, T, seas, data, xreg, link_func
     .Call(`_coconots_likelihoodGP1cov`, alpha, eta, lambdas, T, seas, data, xreg, link_function)
 }
 
+likelihoodAD <- function(par, order, gp, data, seas1, seas2, xreg = NULL, link_function = "log", deriv = 2L) {
+    .Call(`_coconots_likelihoodAD`, par, order, gp, data, seas1, seas2, xreg, link_function, deriv)
+}
+

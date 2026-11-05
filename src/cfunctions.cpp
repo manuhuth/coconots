@@ -6,6 +6,7 @@
 # include <atomic>
 # include <thread>
 # include <Rcpp.h>
+# include "coco_ad.h"
 
 // [[Rcpp::depends(Rcpp)]]
 
@@ -44,25 +45,37 @@ LinkFunction parseLinkFunction(const std::string& link_function) {
   if (link_function == "softplus") return LINK_SOFTPLUS;
   stop("Unknown link function");
 }
+// The likelihood building blocks below are templates on the scalar type S:
+// S = double is the plain evaluation (the same expressions as before the
+// templating, hence the same arithmetic), S = coco_ad::Dual<...> evaluates
+// derivatives by forward-mode automatic differentiation (see coco_ad.h).
+// Branches on S compare values; the derivative is that of the branch taken.
 
-inline double applyLink(double mathelp, LinkFunction link) {
+template <class S>
+inline S applyLink(const S& mathelp, LinkFunction link) {
   switch (link) {
   case LINK_LOG:      return exp(mathelp);
   case LINK_IDENTITY: return mathelp;
-  case LINK_RELU:     return (mathelp > 0) ? mathelp : 1e-10;
-  default:            return (mathelp > 0) ? mathelp + log(1.0 + exp(-mathelp))
-                                           : log(1.0 + exp(mathelp));
+  case LINK_RELU:     if (mathelp > 0) return mathelp;
+                      return S(1e-10);
+  default:            if (mathelp > 0) return mathelp + log(1.0 + exp(-mathelp));
+                      return log(1.0 + exp(mathelp));
   }
 }
 
 // Accumulates in the same order as std::inner_product over a copied row,
 // but without allocating the row.
-inline double rowInnerProduct(const NumericMatrix& xreg, int row,
-                              const NumericVector& lambdas) {
-  double acc = 0.0;
+template <class S, class V>
+inline S rowInnerProductT(const NumericMatrix& xreg, int row, const V& lambdas) {
+  S acc = 0.0;
   const int n = xreg.ncol();
   for (int j = 0; j < n; ++j) acc = acc + xreg(row, j) * lambdas[j];
   return acc;
+}
+
+inline double rowInnerProduct(const NumericMatrix& xreg, int row,
+                              const NumericVector& lambdas) {
+  return rowInnerProductT<double>(xreg, row, lambdas);
 }
 
 // Largest admissible lookup-table index. Count data anywhere near this bound
@@ -118,12 +131,13 @@ void parallel_for(int n, int nthreads, F f) {
 // pow(1+psi*y, y-1) and the GP innovation terms are tabulated once per
 // parameter value; each table entry equals the pow()/exp() call it replaces.
 
-struct GP1Tables {
-  double lambda, alpha, eta, psi;
-  std::vector<double> powA, powB, denom, powL, expL;
+template <class S>
+struct GP1TablesT {
+  S lambda, alpha, eta, psi;
+  std::vector<S> powA, powB, denom, powL, expL;
   int cap;
 
-  void init(double lambda_, double alpha_, double eta_, double psi_) {
+  void init(const S& lambda_, const S& alpha_, const S& eta_, const S& psi_) {
     lambda = lambda_; alpha = alpha_; eta = eta_; psi = psi_;
     powA.clear(); powB.clear(); denom.clear(); powL.clear(); expL.clear();
     cap = -1;
@@ -144,13 +158,16 @@ struct GP1Tables {
     cap = n;
   }
 };
+typedef GP1TablesT<double> GP1Tables;
 
 // Transition density P(x | y); term order and operation chain match the
 // original inline expression exactly.
-inline double gp1_density(int x, int y, const GP1Tables& tb) {
-  const double alpha = tb.alpha, lambda = tb.lambda;
+template <class S>
+inline S gp1_density(int x, int y, const GP1TablesT<S>& tb) {
+  const S& alpha = tb.alpha;
+  const S& lambda = tb.lambda;
   const int minxy = std::min(x, y);
-  double nain = 0.0;
+  S nain = 0.0;
   for (int r = 0; r <= minxy; ++r) {
     nain = nain + factorial(y) / factorial(y - r) / factorial(r) * alpha * (1 - alpha) *
       tb.powA[r] * tb.powB[y - r] / tb.denom[y] *
@@ -165,11 +182,13 @@ inline double gp1_density(int x, int y, const GP1Tables& tb) {
 // g(r | y, z) = zwerg(r) / pyz, where zwerg is a triple convolution over
 // (s, v, w) and pyz the bivariate GP normalizer. pyz does not depend on r.
 
-struct GP2Params {
-  double lambda, alpha1, alpha2, alpha3, eta;
-  double U, beta1, beta2, beta3, zeta, lu13, lu13a;
+template <class S>
+struct GP2ParamsT {
+  S lambda, alpha1, alpha2, alpha3, eta;
+  S U, beta1, beta2, beta3, zeta, lu13, lu13a;
 
-  void init(double lambda_, double alpha1_, double alpha2_, double alpha3_, double eta_) {
+  void init(const S& lambda_, const S& alpha1_, const S& alpha2_, const S& alpha3_,
+            const S& eta_) {
     lambda = lambda_; alpha1 = alpha1_; alpha2 = alpha2_; alpha3 = alpha3_; eta = eta_;
     U = 1 / (1 - alpha1 - alpha2 - alpha3);
     beta1 = lambda * U * alpha1;
@@ -180,13 +199,15 @@ struct GP2Params {
     lu13a = lambda * U * (alpha1 + alpha3);
   }
 };
+typedef GP2ParamsT<double> GP2Params;
 
-struct GP2Tables {
-  GP2Params p;
-  std::vector<double> powB1, expB1, powB2, expB2, powB3, expB3, powL, expL, powZ, expZ;
+template <class S>
+struct GP2TablesT {
+  GP2ParamsT<S> p;
+  std::vector<S> powB1, expB1, powB2, expB2, powB3, expB3, powL, expL, powZ, expZ;
   int cap;
 
-  void init(const GP2Params& p_) {
+  void init(const GP2ParamsT<S>& p_) {
     p = p_;
     cap = -1;
   }
@@ -214,13 +235,15 @@ struct GP2Tables {
     cap = n;
   }
 };
+typedef GP2TablesT<double> GP2Tables;
 
 // Bivariate GP normalizer P(y, z); r-invariant.
-inline double gp2_pyz(int y, int z, const GP2Params& p) {
-  const double help = (p.beta1 + p.beta3) * pow(p.lu13, 2) *
+template <class S>
+inline S gp2_pyz(int y, int z, const GP2ParamsT<S>& p) {
+  const S help = (p.beta1 + p.beta3) * pow(p.lu13, 2) *
     exp(-(p.beta1 + p.beta3) - 2 * p.lu13 - y * p.eta - z * p.eta);
   const int minyz = std::min(y, z);
-  double dwarf = 0.0;
+  S dwarf = 0.0;
   for (int j = 0; j <= minyz; ++j) {
     dwarf = dwarf + pow(p.lu13 + p.eta * (y - j), y - j - 1) / factorial(y - j) *
       pow(p.lu13 + p.eta * (z - j), z - j - 1) / factorial(z - j) *
@@ -234,8 +257,9 @@ inline double gp2_pyz(int y, int z, const GP2Params& p) {
 // the same lexicographic order the former full 0..y cube visited them.
 // Tables must cover indices up to max(y, z) (all six factor indices are
 // bounded by y or z on the feasible set).
-inline double gp2_zwerg(int r, int y, int z, const GP2Params& p, const GP2Tables& tb) {
-  double zwerg = 0.0;
+template <class S>
+inline S gp2_zwerg(int r, int y, int z, const GP2ParamsT<S>& p, const GP2TablesT<S>& tb) {
+  S zwerg = 0.0;
   const int smax = std::min(y, r);
   for (int s = 0; s <= smax; ++s) {
     const int vlo = std::max(0, r - z);
@@ -245,7 +269,7 @@ inline double gp2_zwerg(int r, int y, int z, const GP2Params& p, const GP2Tables
       const int wmax = std::min(z - r + v, y - s - v);
       // leading subchain of the product; hoisting a prefix of a
       // left-associative chain does not change the arithmetic
-      const double pre = p.beta3 * tb.powB3[s] / factorial(s) * tb.expB3[s] *
+      const S pre = p.beta3 * tb.powB3[s] / factorial(s) * tb.expB3[s] *
         p.beta1 * tb.powB1[v] / factorial(v) * tb.expB1[v] * p.beta1;
       for (int w = 0; w <= wmax; ++w) {
         zwerg = zwerg + pre * tb.powB1[w] / factorial(w) * tb.expB1[w] *
@@ -261,15 +285,18 @@ inline double gp2_zwerg(int r, int y, int z, const GP2Params& p, const GP2Tables
 // g(r | y, z) for r = 0..y+z plus the value used beyond the support
 // (0 * pow(pyz, -1), which is NaN when pyz underflows to 0 -- kept for
 // exact behavioural equivalence of the simulation while-loops).
-struct GVec {
-  std::vector<double> g;
-  double tail;
+template <class S>
+struct GVecT {
+  std::vector<S> g;
+  S tail;
 };
+typedef GVecT<double> GVec;
 
 // Tables must already cover max(y, z, 0); with const tables this is safe to
 // run concurrently for distinct `out` targets.
-void gp2_build_g(int y, int z, const GP2Params& p, const GP2Tables& tb, GVec& out) {
-  const double pyz = gp2_pyz(y, z, p);
+template <class S>
+void gp2_build_g(int y, int z, const GP2ParamsT<S>& p, const GP2TablesT<S>& tb, GVecT<S>& out) {
+  const S pyz = gp2_pyz(y, z, p);
   const int rmax = y + z;
   out.g.resize(rmax + 1);
   for (int r = 0; r <= rmax; ++r) {
@@ -290,13 +317,14 @@ void gp2_build_g(int y, int z, const GP2Params& p, const GP2Tables& tb, GVec& ou
 // with r = s+v+k, which is enumerated directly. Only the association and
 // summation order of the (non-negative, for admissible parameters) terms
 // differ from gp2_zwerg, i.e. results agree up to floating-point rounding.
-struct GP2Conv {
-  std::vector<double> q1, q2, q3, qL, qZ, W, zw;
+template <class S>
+struct GP2ConvT {
+  std::vector<S> q1, q2, q3, qL, qZ, W, zw;
   int mlo, mhi, nlo, nhi;
   std::size_t stride;
 
   // pmf tables for indices 0..n; tb must cover n.
-  void build_pmf(const GP2Params& p, const GP2Tables& tb, int n) {
+  void build_pmf(const GP2ParamsT<S>& p, const GP2TablesT<S>& tb, int n) {
     q1.resize(n + 1); q2.resize(n + 1); q3.resize(n + 1);
     qL.resize(n + 1); qZ.resize(n + 1);
     for (int i = 0; i <= n; ++i) {
@@ -316,33 +344,33 @@ struct GP2Conv {
     stride = static_cast<std::size_t>(nhi - nlo + 1);
     W.resize(static_cast<std::size_t>(mhi - mlo + 1) * stride);
     for (int m = mlo; m <= mhi; ++m) {
-      double* row = &W[static_cast<std::size_t>(m - mlo) * stride];
+      S* row = &W[static_cast<std::size_t>(m - mlo) * stride];
       for (int n = nlo; n <= nhi; ++n) {
         const int wmax = std::min(m, n);
-        double acc = 0.0;
+        S acc = 0.0;
         for (int w = 0; w <= wmax; ++w) acc = acc + q1[w] * qL[m - w] * qZ[n - w];
         row[n - nlo] = acc;
       }
     }
   }
 
-  inline double Wat(int m, int n) const {
+  inline const S& Wat(int m, int n) const {
     return W[static_cast<std::size_t>(m - mlo) * stride + static_cast<std::size_t>(n - nlo)];
   }
 
   // out[r] = zwerg(r | y, z) for r = 0..rcap, with y, z >= 0, 0 <= rcap <= y+z.
   // W must cover m in [max(0, z-rcap), z] and n in [max(0, y-rcap), y].
-  void zwerg_upto(int y, int z, int rcap, std::vector<double>& out) const {
-    out.assign(rcap + 1, 0.0);
+  void zwerg_upto(int y, int z, int rcap, std::vector<S>& out) const {
+    out.assign(rcap + 1, S(0.0));
     const int smax = std::min(std::min(y, z), rcap);
     for (int s = 0; s <= smax; ++s) {
-      const double a3 = q3[s];
+      const S a3 = q3[s];
       const int vmax = std::min(y - s, rcap - s);
       for (int v = 0; v <= vmax; ++v) {
-        const double a31 = a3 * q1[v];
+        const S a31 = a3 * q1[v];
         const int n = y - s - v;
         const int kmax = std::min(z - s, rcap - s - v);
-        double* o = &out[s + v];
+        S* o = &out[s + v];
         for (int k = 0; k <= kmax; ++k) {
           o[k] = o[k] + a31 * q2[k] * Wat(z - s - k, n);
         }
@@ -350,34 +378,406 @@ struct GP2Conv {
     }
   }
 };
+typedef GP2ConvT<double> GP2Conv;
 
 // Upper bound on the number of W entries tabulated at once; beyond it the
 // direct gp2_zwerg evaluation is used.
 const double GP2_CONV_MAX_ENTRIES = 4e6;
 
+// Table-size limits are stated in double entries; for the wider dual-number
+// scalars they are scaled down to the same number of bytes.
+template <class S>
+inline double entries_limit(double n_double) {
+  return n_double * sizeof(double) / sizeof(S);
+}
+
 // gp2_build_g via GP2Conv; cv must hold pmf tables and W covering
 // m in [0, z], n in [0, y]. Safe to run concurrently (cv is read-only).
-void gp2_build_g_conv(int y, int z, const GP2Params& p, const GP2Conv& cv, GVec& out) {
-  const double pyz = gp2_pyz(y, z, p);
+template <class S>
+void gp2_build_g_conv(int y, int z, const GP2ParamsT<S>& p, const GP2ConvT<S>& cv, GVecT<S>& out) {
+  const S pyz = gp2_pyz(y, z, p);
   cv.zwerg_upto(y, z, y + z, out.g);
-  const double ipyz = pow(pyz, -1);
+  const S ipyz = pow(pyz, -1);
   for (std::size_t r = 0; r < out.g.size(); ++r) out.g[r] = out.g[r] * ipyz;
   out.tail = 0.0 * pow(pyz, -1);
 }
 
-typedef std::unordered_map<long long, GVec> GCache;
+template <class S>
+using GCacheT = std::unordered_map<long long, GVecT<S> >;
+typedef GCacheT<double> GCache;
 
 inline long long g_key(int y, int z) {
   return (static_cast<long long>(y) << 32) | static_cast<unsigned int>(z);
 }
 
-inline GVec& g_lookup(GCache& cache, int y, int z, const GP2Params& p, GP2Tables& tb) {
-  GVec& gv = cache[g_key(y, z)];
+template <class S>
+inline GVecT<S>& g_lookup(GCacheT<S>& cache, int y, int z, const GP2ParamsT<S>& p,
+                          GP2TablesT<S>& tb) {
+  GVecT<S>& gv = cache[g_key(y, z)];
   if (gv.g.empty()) {
     tb.ensure(std::max(std::max(y, z), 0));
     gp2_build_g(y, z, p, tb, gv);
   }
   return gv;
+}
+
+// ------------------------------------------------------- log-likelihoods
+//
+// Negative log-likelihoods; the exported double entry points below and the
+// automatic-differentiation entry point likelihoodAD() share these bodies.
+
+template <class S>
+S likelihoodGP2_impl(const S& lambda, const S& alpha1, const S& alpha2,
+                     const S& alpha3, const S& eta, int T, int seas1, int seas2,
+                     const std::vector<int>& data, int cores)
+{
+  GP2ParamsT<S> p;
+  p.init(lambda, alpha1, alpha2, alpha3, eta);
+  GP2TablesT<S> tb;
+  tb.init(p);
+
+  int maxval = -1;
+  for (std::size_t i = 0; i < data.size(); ++i) maxval = std::max(maxval, data[i]);
+  if (maxval >= 0) tb.ensure(maxval);
+
+  GCacheT<S> cache;
+
+  // Register the distinct (y, z) histories first, then build their g-vectors
+  // concurrently: each build is independent and the tables are read-only once
+  // ensured up to maxval. Pointers into the node-based unordered_map stay
+  // valid across later insertions. The serial accumulation below is unchanged,
+  // so results are bit-identical to the single-threaded evaluation.
+  struct Job { int y, z; GVecT<S>* gv; };
+  std::vector<Job> jobs;
+  int maxy = 0, maxz = 0;
+  for (int t = seas2 + 1; t <= T; ++t) {
+    const int y = data[t - seas1 - 1];
+    const int z = data[t - seas2 - 1];
+    if (y >= 0 && z >= 0) {
+      auto ins = cache.emplace(g_key(y, z), GVecT<S>());
+      if (ins.second) {
+        jobs.push_back(Job{y, z, &ins.first->second});
+        maxy = std::max(maxy, y);
+        maxz = std::max(maxz, z);
+      }
+    }
+  }
+
+  // lambda is constant, so the pmf tables and W(m, n) are shared by all
+  // histories; build them once (serially) before the read-only g builds.
+  const bool use_conv = !jobs.empty() &&
+    static_cast<double>(maxz + 1) * (maxy + 1) <= entries_limit<S>(GP2_CONV_MAX_ENTRIES);
+  GP2ConvT<S> cv;
+  if (use_conv) {
+    cv.build_pmf(p, tb, maxval);
+    cv.build_W(0, maxz, 0, maxy);
+  }
+
+  const int nthreads = resolve_threads(static_cast<int>(jobs.size()), cores);
+  parallel_for(static_cast<int>(jobs.size()), nthreads, [&](int, int i) {
+    if (use_conv) {
+      gp2_build_g_conv(jobs[i].y, jobs[i].z, p, cv, *jobs[i].gv);
+    } else {
+      gp2_build_g(jobs[i].y, jobs[i].z, p, tb, *jobs[i].gv);
+    }
+  });
+
+  S mlef = 0.0;
+  for (int t = seas2 + 1; t <= T; ++t) {
+    const int x = data[t - 1];
+    const int y = data[t - seas1 - 1];
+    const int z = data[t - seas2 - 1];
+
+    S nain = 0.0;
+    if (y >= 0 && z >= 0) {
+      const GVecT<S>& gv = g_lookup(cache, y, z, p, tb);
+      const int minxyz = std::min(x, y + z);
+      for (int r = 0; r <= minxyz; ++r) {
+        nain = nain + gv.g[r] * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
+      }
+    } else {
+      // degenerate inputs (e.g. NA counts): zwerg/pyz vanish just like in the
+      // guarded cube loops, propagating the same 0 * Inf arithmetic
+      const S pyz = gp2_pyz(y, z, p);
+      const int minxyz = std::min(x, y + z);
+      for (int r = 0; r <= minxyz; ++r) {
+        const S gryz = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
+        nain = nain + gryz * lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
+      }
+    }
+    mlef = mlef + log(nain);
+  }
+
+  return (-mlef);
+}
+
+template <class S>
+S likelihoodGP1_impl(const S& lambda, const S& alpha, const S& eta, int T, int seas,
+                     const std::vector<int>& data)
+{
+  const S psi = eta * (1 - alpha) / lambda;
+  GP1TablesT<S> tb;
+  tb.init(lambda, alpha, eta, psi);
+
+  int maxval = -1;
+  for (std::size_t i = 0; i < data.size(); ++i) maxval = std::max(maxval, data[i]);
+  if (maxval >= 0) tb.ensure(maxval);
+
+  // conditional densities depend on t only through (x, y); cache them
+  const bool use_memo = maxval >= 0 &&
+    static_cast<double>(maxval + 1) * (maxval + 1) <= entries_limit<S>(4e6);
+  std::vector<S> memo;
+  if (use_memo) memo.assign(static_cast<std::size_t>(maxval + 1) * (maxval + 1), S(-1.0));
+
+  S mlef = 0.0;
+  for (int t = seas + 1; t <= T; ++t) {
+    const int x = data[t - 1];
+    const int y = data[t - seas - 1];
+
+    S p;
+    if (use_memo && x >= 0 && y >= 0) {
+      const std::size_t key = static_cast<std::size_t>(x) * (maxval + 1) + y;
+      p = memo[key];
+      if (p < 0.0) {
+        p = gp1_density(x, y, tb);
+        memo[key] = p;
+      }
+    } else {
+      p = gp1_density(x, y, tb);
+    }
+    mlef = mlef + log(p);
+  }
+
+  return (-mlef);
+}
+
+template <class S, class V>
+S likelihoodGP2cov_impl(const S& alpha1, const S& alpha2, const S& alpha3,
+                        const S& eta, const V& lambdas, int T, int seas1, int seas2,
+                        const std::vector<int>& data, const NumericMatrix& xreg,
+                        LinkFunction link, int cores)
+{
+  // lambda_t varies with t, so nothing can be cached across observations --
+  // but each observation's contribution is independent. Compute them
+  // concurrently with thread-private tables and accumulate serially in t
+  // order afterwards, keeping results bit-identical to the serial loop.
+  // Bound the table sizes once here so workers never raise an R error.
+  int maxval = -1;
+  for (std::size_t i = 0; i < data.size(); ++i) maxval = std::max(maxval, data[i]);
+  check_table_index(maxval);
+
+  const int nterms = T - seas2;
+  if (nterms <= 0) return S(0.0);
+  std::vector<S> logn(nterms);
+
+  const int nthreads = resolve_threads(nterms, cores);
+  std::vector<GP2ParamsT<S> > pv(nthreads);
+  std::vector<GP2TablesT<S> > tbv(nthreads);
+  std::vector<GP2ConvT<S> > cvv(nthreads);
+
+  parallel_for(nterms, nthreads, [&](int tid, int i) {
+    const int t = seas2 + 1 + i;
+    const int x = data[t - 1];
+    const int y = data[t - seas1 - 1];
+    const int z = data[t - seas2 - 1];
+
+    const S mathelp = rowInnerProductT<S>(xreg, t - 1, lambdas);
+    const S lambda = applyLink(mathelp, link);
+    GP2ParamsT<S>& p = pv[tid];
+    GP2TablesT<S>& tb = tbv[tid];
+    p.init(lambda, alpha1, alpha2, alpha3, eta);
+    tb.init(p);
+    tb.ensure(std::max(std::max(std::max(x, y), z), 0));
+
+    const S pyz = gp2_pyz(y, z, p);
+    const int minxyz = std::min(x, y + z);
+    S nain = 0.0;
+    if (x >= 0 && y >= 0 && z >= 0 &&
+        static_cast<double>(y + 1) * (z + 1) <= entries_limit<S>(GP2_CONV_MAX_ENTRIES)) {
+      // only r <= minxyz is needed, so W is restricted to the (m, n) that
+      // these r reach
+      GP2ConvT<S>& cv = cvv[tid];
+      cv.build_pmf(p, tb, std::max(y, z));
+      cv.build_W(std::max(0, z - minxyz), z, std::max(0, y - minxyz), y);
+      cv.zwerg_upto(y, z, minxyz, cv.zw);
+      for (int r = 0; r <= minxyz; ++r) {
+        const S gryz = cv.zw[r] * pow(pyz, -1);
+        nain = nain + gryz * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
+      }
+    } else {
+      for (int r = 0; r <= minxyz; ++r) {
+        const S gryz = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
+        nain = nain + gryz * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
+      }
+    }
+
+    // guard branch: constant, i.e. zero derivative
+    if (nain <= 0) {
+      nain = 1e-12;
+    }
+    logn[i] = log(nain);
+  });
+
+  S mlef = 0.0;
+  for (int i = 0; i < nterms; ++i) mlef = mlef + logn[i];
+
+  return (-mlef);
+}
+
+template <class S, class V>
+S likelihoodGP1cov_impl(const S& alpha, const S& eta, const V& lambdas, int T, int seas,
+                        const std::vector<int>& data, const NumericMatrix& xreg,
+                        LinkFunction link)
+{
+  S mlef = 0.0;
+  for (int t = seas + 1; t <= T; ++t) {
+    const int x = data[t - 1];
+    const int y = data[t - seas - 1];
+
+    const S mathelp = rowInnerProductT<S>(xreg, t - 1, lambdas);
+    const S lambda = applyLink(mathelp, link);
+    const S psi = eta * (1 - alpha) / lambda;
+    const S denom = (y >= 0) ? pow(1 + psi * y, y - 1) : S(0.0);
+
+    const int minxy = std::min(x, y);
+    S nain = 0.0;
+    for (int r = 0; r <= minxy; ++r) {
+      nain = nain + factorial(y) / factorial(y - r) / factorial(r) * alpha * (1 - alpha) *
+        pow(alpha + psi * r, r - 1) * pow(1 - alpha + psi * (y - r), y - r - 1) / denom *
+        lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
+    }
+    mlef = mlef + log(nain);
+  }
+
+  return (-mlef);
+}
+
+// ------------------------------------------------ automatic differentiation
+//
+// Model of the R objective `mlf`: the free parameters `th` in the layout of
+// coco$par (lambda first without covariates; alpha(s)[, eta], betas with
+// covariates); eta = 0 for Poisson innovations.
+struct ADModel {
+  int order;
+  bool gp;
+  bool cov;
+  int seas1, seas2;
+  const std::vector<int>& data;
+  const NumericMatrix& xreg;
+  LinkFunction link;
+
+  int n_dynamic() const { return (order == 1 ? 1 : 3) + (gp ? 1 : 0); }
+
+  template <class S>
+  S operator()(const std::vector<S>& th) const {
+    const int T = static_cast<int>(data.size());
+    const S zero = 0.0;
+    if (!cov) {
+      if (order == 1) {
+        return likelihoodGP1_impl<S>(th[0], th[1], gp ? th[2] : zero, T, seas1, data);
+      }
+      return likelihoodGP2_impl<S>(th[0], th[1], th[2], th[3], gp ? th[4] : zero,
+                                   T, seas1, seas2, data, 1);
+    }
+    const int k = n_dynamic();
+    const std::vector<S> beta(th.begin() + k, th.end());
+    if (order == 1) {
+      return likelihoodGP1cov_impl<S>(th[0], gp ? th[1] : zero, beta, T, seas1,
+                                      data, xreg, link);
+    }
+    return likelihoodGP2cov_impl<S>(th[0], th[1], th[2], gp ? th[3] : zero, beta,
+                                    T, seas1, seas2, data, xreg, link, 1);
+  }
+};
+
+// Value and gradient, C directions per evaluation (ForwardDiff "chunks").
+template <int C, class F>
+void ad_value_grad(const F& f, const std::vector<double>& th, double& val,
+                   std::vector<double>& g) {
+  typedef coco_ad::Dual<double, C> D;
+  const int n = static_cast<int>(th.size());
+  g.assign(n, 0.0);
+  val = NA_REAL;
+  for (int b0 = 0; b0 < n; b0 += C) {
+    std::vector<D> x(n);
+    for (int k = 0; k < n; ++k) {
+      x[k] = D(th[k]);
+      const int a = k - b0;
+      if (a >= 0 && a < C) x[k].d[a] = 1.0;
+    }
+    const D y = f(x);
+    val = y.v;
+    for (int a = 0; a < C && b0 + a < n; ++a) g[b0 + a] = y.d[a];
+  }
+}
+
+// Value, gradient and Hessian with nested duals: the inner partials seed the
+// directions of block I, the outer partials those of block J; the outer
+// partial b of the inner partial a is d^2 f / (d th[I+a] d th[J+b]).
+template <int C, class F>
+void ad_value_grad_hess(const F& f, const std::vector<double>& th, double& val,
+                        std::vector<double>& g, std::vector<double>& H) {
+  typedef coco_ad::Dual<double, C> D1;
+  typedef coco_ad::Dual<D1, C> D2;
+  const int n = static_cast<int>(th.size());
+  g.assign(n, 0.0);
+  H.assign(static_cast<std::size_t>(n) * n, 0.0);
+  val = NA_REAL;
+  for (int bi = 0; bi < n; bi += C) {
+    for (int bj = bi; bj < n; bj += C) {
+      std::vector<D2> x(n);
+      for (int k = 0; k < n; ++k) {
+        x[k] = D2(th[k]);
+        const int a = k - bi;
+        if (a >= 0 && a < C) x[k].v.d[a] = 1.0;
+        const int b = k - bj;
+        if (b >= 0 && b < C) x[k].d[b].v = 1.0;
+      }
+      const D2 y = f(x);
+      val = y.v.v;
+      for (int a = 0; a < C && bi + a < n; ++a) g[bi + a] = y.v.d[a];
+      for (int b = 0; b < C && bj + b < n; ++b) g[bj + b] = y.d[b].v;
+      for (int a = 0; a < C && bi + a < n; ++a) {
+        for (int b = 0; b < C && bj + b < n; ++b) {
+          const double h = y.d[b].d[a];
+          H[static_cast<std::size_t>(bi + a) * n + (bj + b)] = h;
+          if (bi != bj) H[static_cast<std::size_t>(bj + b) * n + (bi + a)] = h;
+        }
+      }
+    }
+  }
+  // diagonal blocks: average the two (mathematically equal) mixed partials
+  for (int i = 0; i < n; ++i) {
+    for (int j = i + 1; j < n; ++j) {
+      const double m = 0.5 * (H[static_cast<std::size_t>(i) * n + j] +
+                              H[static_cast<std::size_t>(j) * n + i]);
+      H[static_cast<std::size_t>(i) * n + j] = m;
+      H[static_cast<std::size_t>(j) * n + i] = m;
+    }
+  }
+}
+
+// Chunk size: the smallest instantiated size >= n (at most 8; larger
+// parameter vectors are processed in blocks of 8).
+template <class F>
+void ad_eval(const F& f, const std::vector<double>& th, int deriv, double& val,
+             std::vector<double>& g, std::vector<double>& H) {
+  const int n = static_cast<int>(th.size());
+  if (deriv >= 2) {
+    if (n <= 2)      ad_value_grad_hess<2>(f, th, val, g, H);
+    else if (n <= 3) ad_value_grad_hess<3>(f, th, val, g, H);
+    else if (n <= 4) ad_value_grad_hess<4>(f, th, val, g, H);
+    else if (n <= 5) ad_value_grad_hess<5>(f, th, val, g, H);
+    else if (n <= 6) ad_value_grad_hess<6>(f, th, val, g, H);
+    else             ad_value_grad_hess<8>(f, th, val, g, H);
+  } else {
+    if (n <= 2)      ad_value_grad<2>(f, th, val, g);
+    else if (n <= 3) ad_value_grad<3>(f, th, val, g);
+    else if (n <= 4) ad_value_grad<4>(f, th, val, g);
+    else if (n <= 5) ad_value_grad<5>(f, th, val, g);
+    else if (n <= 6) ad_value_grad<6>(f, th, val, g);
+    else             ad_value_grad<8>(f, th, val, g);
+  }
 }
 
 } // namespace
@@ -407,84 +807,8 @@ double likelihoodGP2(double lambda, double alpha1, double alpha2,
                      double alpha3, double eta, int T, int seas1, int seas2,
                      const std::vector<int>& data, int cores = 1)
 {
-  GP2Params p;
-  p.init(lambda, alpha1, alpha2, alpha3, eta);
-  GP2Tables tb;
-  tb.init(p);
-
-  int maxval = -1;
-  for (std::size_t i = 0; i < data.size(); ++i) maxval = std::max(maxval, data[i]);
-  if (maxval >= 0) tb.ensure(maxval);
-
-  GCache cache;
-
-  // Register the distinct (y, z) histories first, then build their g-vectors
-  // concurrently: each build is independent and the tables are read-only once
-  // ensured up to maxval. Pointers into the node-based unordered_map stay
-  // valid across later insertions. The serial accumulation below is unchanged,
-  // so results are bit-identical to the single-threaded evaluation.
-  struct Job { int y, z; GVec* gv; };
-  std::vector<Job> jobs;
-  int maxy = 0, maxz = 0;
-  for (int t = seas2 + 1; t <= T; ++t) {
-    const int y = data[t - seas1 - 1];
-    const int z = data[t - seas2 - 1];
-    if (y >= 0 && z >= 0) {
-      std::pair<GCache::iterator, bool> ins = cache.emplace(g_key(y, z), GVec());
-      if (ins.second) {
-        jobs.push_back(Job{y, z, &ins.first->second});
-        maxy = std::max(maxy, y);
-        maxz = std::max(maxz, z);
-      }
-    }
-  }
-
-  // lambda is constant, so the pmf tables and W(m, n) are shared by all
-  // histories; build them once (serially) before the read-only g builds.
-  const bool use_conv = !jobs.empty() &&
-    static_cast<double>(maxz + 1) * (maxy + 1) <= GP2_CONV_MAX_ENTRIES;
-  GP2Conv cv;
-  if (use_conv) {
-    cv.build_pmf(p, tb, maxval);
-    cv.build_W(0, maxz, 0, maxy);
-  }
-
-  const int nthreads = resolve_threads(static_cast<int>(jobs.size()), cores);
-  parallel_for(static_cast<int>(jobs.size()), nthreads, [&](int, int i) {
-    if (use_conv) {
-      gp2_build_g_conv(jobs[i].y, jobs[i].z, p, cv, *jobs[i].gv);
-    } else {
-      gp2_build_g(jobs[i].y, jobs[i].z, p, tb, *jobs[i].gv);
-    }
-  });
-
-  double mlef = 0.0;
-  for (int t = seas2 + 1; t <= T; ++t) {
-    const int x = data[t - 1];
-    const int y = data[t - seas1 - 1];
-    const int z = data[t - seas2 - 1];
-
-    double nain = 0.0;
-    if (y >= 0 && z >= 0) {
-      const GVec& gv = g_lookup(cache, y, z, p, tb);
-      const int minxyz = std::min(x, y + z);
-      for (int r = 0; r <= minxyz; ++r) {
-        nain = nain + gv.g[r] * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
-      }
-    } else {
-      // degenerate inputs (e.g. NA counts): zwerg/pyz vanish just like in the
-      // guarded cube loops, propagating the same 0 * Inf arithmetic
-      const double pyz = gp2_pyz(y, z, p);
-      const int minxyz = std::min(x, y + z);
-      for (int r = 0; r <= minxyz; ++r) {
-        const double gryz = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
-        nain = nain + gryz * lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
-      }
-    }
-    mlef = mlef + log(nain);
-  }
-
-  return (-mlef);
+  return likelihoodGP2_impl<double>(lambda, alpha1, alpha2, alpha3, eta, T, seas1, seas2,
+                                    data, cores);
 }
 
 
@@ -492,40 +816,7 @@ double likelihoodGP2(double lambda, double alpha1, double alpha2,
 double likelihoodGP1(double lambda, double alpha, double eta, int T, int seas,
                      const std::vector<int>& data)
 {
-  const double psi = eta * (1 - alpha) / lambda;
-  GP1Tables tb;
-  tb.init(lambda, alpha, eta, psi);
-
-  int maxval = -1;
-  for (std::size_t i = 0; i < data.size(); ++i) maxval = std::max(maxval, data[i]);
-  if (maxval >= 0) tb.ensure(maxval);
-
-  // conditional densities depend on t only through (x, y); cache them
-  const bool use_memo = maxval >= 0 &&
-    static_cast<double>(maxval + 1) * (maxval + 1) <= 4e6;
-  std::vector<double> memo;
-  if (use_memo) memo.assign(static_cast<std::size_t>(maxval + 1) * (maxval + 1), -1.0);
-
-  double mlef = 0.0;
-  for (int t = seas + 1; t <= T; ++t) {
-    const int x = data[t - 1];
-    const int y = data[t - seas - 1];
-
-    double p;
-    if (use_memo && x >= 0 && y >= 0) {
-      const std::size_t key = static_cast<std::size_t>(x) * (maxval + 1) + y;
-      p = memo[key];
-      if (p < 0.0) {
-        p = gp1_density(x, y, tb);
-        memo[key] = p;
-      }
-    } else {
-      p = gp1_density(x, y, tb);
-    }
-    mlef = mlef + log(p);
-  }
-
-  return (-mlef);
+  return likelihoodGP1_impl<double>(lambda, alpha, eta, T, seas, data);
 }
 
 
@@ -1260,71 +1551,8 @@ double likelihoodGP2cov(double alpha1, double alpha2, double alpha3,
                         int cores = 1)
 {
   const LinkFunction link = parseLinkFunction(link_function);
-
-  // lambda_t varies with t, so nothing can be cached across observations --
-  // but each observation's contribution is independent. Compute them
-  // concurrently with thread-private tables and accumulate serially in t
-  // order afterwards, keeping results bit-identical to the serial loop.
-  // Bound the table sizes once here so workers never raise an R error.
-  int maxval = -1;
-  for (std::size_t i = 0; i < data.size(); ++i) maxval = std::max(maxval, data[i]);
-  check_table_index(maxval);
-
-  const int nterms = T - seas2;
-  if (nterms <= 0) return 0.0;
-  std::vector<double> logn(nterms);
-
-  const int nthreads = resolve_threads(nterms, cores);
-  std::vector<GP2Params> pv(nthreads);
-  std::vector<GP2Tables> tbv(nthreads);
-  std::vector<GP2Conv> cvv(nthreads);
-
-  parallel_for(nterms, nthreads, [&](int tid, int i) {
-    const int t = seas2 + 1 + i;
-    const int x = data[t - 1];
-    const int y = data[t - seas1 - 1];
-    const int z = data[t - seas2 - 1];
-
-    const double mathelp = rowInnerProduct(xreg, t - 1, lambdas);
-    const double lambda = applyLink(mathelp, link);
-    GP2Params& p = pv[tid];
-    GP2Tables& tb = tbv[tid];
-    p.init(lambda, alpha1, alpha2, alpha3, eta);
-    tb.init(p);
-    tb.ensure(std::max(std::max(std::max(x, y), z), 0));
-
-    const double pyz = gp2_pyz(y, z, p);
-    const int minxyz = std::min(x, y + z);
-    double nain = 0.0;
-    if (x >= 0 && y >= 0 && z >= 0 &&
-        static_cast<double>(y + 1) * (z + 1) <= GP2_CONV_MAX_ENTRIES) {
-      // only r <= minxyz is needed, so W is restricted to the (m, n) that
-      // these r reach
-      GP2Conv& cv = cvv[tid];
-      cv.build_pmf(p, tb, std::max(y, z));
-      cv.build_W(std::max(0, z - minxyz), z, std::max(0, y - minxyz), y);
-      cv.zwerg_upto(y, z, minxyz, cv.zw);
-      for (int r = 0; r <= minxyz; ++r) {
-        const double gryz = cv.zw[r] * pow(pyz, -1);
-        nain = nain + gryz * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
-      }
-    } else {
-      for (int r = 0; r <= minxyz; ++r) {
-        const double gryz = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
-        nain = nain + gryz * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
-      }
-    }
-
-    if (nain <= 0) {
-      nain = 1e-12;
-    }
-    logn[i] = log(nain);
-  });
-
-  double mlef = 0.0;
-  for (int i = 0; i < nterms; ++i) mlef = mlef + logn[i];
-
-  return (-mlef);
+  return likelihoodGP2cov_impl<double>(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2,
+                                       data, xreg, link, cores);
 }
 
 
@@ -1333,26 +1561,44 @@ double likelihoodGP1cov(double alpha, double eta, NumericVector lambdas, int T, 
                         const std::vector<int>& data, NumericMatrix xreg, std::string link_function)
 {
   const LinkFunction link = parseLinkFunction(link_function);
+  return likelihoodGP1cov_impl<double>(alpha, eta, lambdas, T, seas, data, xreg, link);
+}
 
-  double mlef = 0.0;
-  for (int t = seas + 1; t <= T; ++t) {
-    const int x = data[t - 1];
-    const int y = data[t - seas - 1];
 
-    const double mathelp = rowInnerProduct(xreg, t - 1, lambdas);
-    const double lambda = applyLink(mathelp, link);
-    const double psi = eta * (1 - alpha) / lambda;
-    const double denom = (y >= 0) ? pow(1 + psi * y, y - 1) : 0.0;
+// Negative log-likelihood (the objective `mlf` of cocoReg) with its gradient
+// (deriv = 1) or gradient and Hessian (deriv = 2) by forward-mode automatic
+// differentiation. `par` is laid out as coco$par: lambda, alpha[, eta] /
+// lambda, alpha1, alpha2, alpha3[, eta] without covariates and
+// alpha[, eta], beta / alpha1, alpha2, alpha3[, eta], beta with covariates
+// (xreg not NULL). Evaluated serially.
+// [[Rcpp::export]]
+List likelihoodAD(NumericVector par, int order, bool gp, const std::vector<int>& data,
+                  int seas1, int seas2, SEXP xreg = R_NilValue,
+                  std::string link_function = "log", int deriv = 2)
+{
+  if (order != 1 && order != 2) stop("order must be 1 or 2");
+  const bool cov = !Rf_isNull(xreg);
+  const NumericMatrix X = cov ? NumericMatrix(xreg) : NumericMatrix(0, 0);
+  const LinkFunction link = cov ? parseLinkFunction(link_function) : LINK_LOG;
 
-    const int minxy = std::min(x, y);
-    double nain = 0.0;
-    for (int r = 0; r <= minxy; ++r) {
-      nain = nain + factorial(y) / factorial(y - r) / factorial(r) * alpha * (1 - alpha) *
-        pow(alpha + psi * r, r - 1) * pow(1 - alpha + psi * (y - r), y - r - 1) / denom *
-        lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
-    }
-    mlef = mlef + log(nain);
+  const ADModel model{order, gp, cov, seas1, seas2, data, X, link};
+  const int n_expected = cov ? model.n_dynamic() + X.ncol() : model.n_dynamic() + 1;
+  if (par.size() != n_expected) stop("likelihoodAD: wrong number of parameters");
+  if (cov && X.nrow() < static_cast<int>(data.size()))
+    stop("likelihoodAD: xreg has fewer rows than data");
+
+  const std::vector<double> th(par.begin(), par.end());
+  double val;
+  std::vector<double> g, H;
+  ad_eval(model, th, deriv, val, g, H);
+
+  const int n = static_cast<int>(th.size());
+  NumericVector grad(g.begin(), g.end());
+  if (deriv < 2) {
+    return List::create(_["value"] = val, _["gradient"] = grad);
   }
-
-  return (-mlef);
+  NumericMatrix hess(n, n);
+  for (int i = 0; i < n; ++i)
+    for (int j = 0; j < n; ++j) hess(i, j) = H[static_cast<std::size_t>(i) * n + j];
+  return List::create(_["value"] = val, _["gradient"] = grad, _["hessian"] = hess);
 }

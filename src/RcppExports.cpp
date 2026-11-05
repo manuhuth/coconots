@@ -385,6 +385,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// likelihoodAD
+List likelihoodAD(NumericVector par, int order, bool gp, const std::vector<int>& data, int seas1, int seas2, SEXP xreg, std::string link_function, int deriv);
+RcppExport SEXP _coconots_likelihoodAD(SEXP parSEXP, SEXP orderSEXP, SEXP gpSEXP, SEXP dataSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP xregSEXP, SEXP link_functionSEXP, SEXP derivSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type par(parSEXP);
+    Rcpp::traits::input_parameter< int >::type order(orderSEXP);
+    Rcpp::traits::input_parameter< bool >::type gp(gpSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< int >::type seas1(seas1SEXP);
+    Rcpp::traits::input_parameter< int >::type seas2(seas2SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type xreg(xregSEXP);
+    Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
+    Rcpp::traits::input_parameter< int >::type deriv(derivSEXP);
+    rcpp_result_gen = Rcpp::wrap(likelihoodAD(par, order, gp, data, seas1, seas2, xreg, link_function, deriv));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_coconots_fact", (DL_FUNC) &_coconots_fact, 1},
@@ -408,6 +427,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coconots_bootAcfCov", (DL_FUNC) &_coconots_bootAcfCov, 15},
     {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 12},
     {"_coconots_likelihoodGP1cov", (DL_FUNC) &_coconots_likelihoodGP1cov, 8},
+    {"_coconots_likelihoodAD", (DL_FUNC) &_coconots_likelihoodAD, 9},
     {NULL, NULL, 0}
 };
 
