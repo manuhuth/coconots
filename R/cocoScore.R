@@ -120,9 +120,7 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   #Poisson/GP 1 (covariates)
   if  (!is.null(coco$cov) && coco$order == 1){
     calculate_scores <- function(t) {
-      if (!is.null(coco$cov)){
-        par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))])
-      }
+      par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))])
       validate_gp1_par(par[1], par[2], par[3])
 
       # all three scores share the transition densities P(x | y_t) for
@@ -158,9 +156,7 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   #Poisson/GP 2 (covariates)
   if (!is.null(coco$cov) && coco$order == 2){
     calculate_scores <- function(t) {
-      if (!is.null(coco$cov)){
-        par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))])
-      }
+      par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))])
       validate_gp2_par(par[1], par[2], par[3], par[4], par[5])
 
       dvec <- dGP2h_vec(max(max_x, data[t]), data[t - seas[1]], data[t - seas[2]],

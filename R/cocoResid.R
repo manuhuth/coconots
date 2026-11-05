@@ -46,10 +46,6 @@ cocoResid <- function(coco, val.num = 1e-10) {
       eta <- par[3-bool_covariates]
     }
       
-    # Fitted Values
-    fitted <- c(rep(mean(data), seasonality[1])) 
-    varX <- c(rep(stats::var(data), seasonality[1])) 
-      
     # Vectorised form of the former per-j loop
     #   fitted[j] <- alpha * data[j - 1] + lambda / (1-eta)
     #   varX[j]   <- alpha * (1 - alpha) * data[j - 1] + lambda / (1-eta)^3
@@ -74,17 +70,11 @@ cocoResid <- function(coco, val.num = 1e-10) {
     alpha2 <- par[3-bool_covariates]
     alpha3 <- par[4-bool_covariates]
       
-    U <- 1 / (1 - alpha1 - alpha2 - alpha3)
-      
     if (coco$type == "Poisson"){
       eta <- 0
     } else {
       eta <- par[5-bool_covariates]
     }
-      
-    # Fitted Values
-    fitted <- c(rep(mean(data), seasonality[2])) 
-    varX <- c(rep(stats::var(data), seasonality[2])) 
       
     idx <- (seasonality[2] + 1):(length(data))
     n_idx <- length(idx)

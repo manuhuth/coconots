@@ -62,15 +62,12 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
     
     seasonality <- c(1,2) #will be used as argument in future versions
 
-    conf.alpha <- 1 - confidence
-
     par <- coco$par
 
     # Parametric Bootstrap
     T <- length(data)
     nlags <- numb.lags
     nB <- rep.Bootstrap
-    ac <- matrix(NaN, nrow = nlags, ncol = nB)
 
     # All replicates are simulated and their sample ACFs computed in one C++
     # call (bootAcfBase / bootAcfCov). Each replicate is the series the former

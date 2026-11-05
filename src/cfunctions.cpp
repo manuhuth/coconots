@@ -344,42 +344,9 @@ struct GP2ConvT {
   int mlo, mhi, nlo, nhi;
   std::size_t stride;
 
-  // pmf tables for indices 0..n; tb must cover n.
-  void build_pmf(const GP2ParamsT<S>& p, const GP2TablesT<S>& tb, int n) {
-    q1.resize(n + 1); q2.resize(n + 1); q3.resize(n + 1);
-    qL.resize(n + 1); qZ.resize(n + 1);
-    for (int i = 0; i <= n; ++i) {
-      const double f = factorial(i);
-      q1[i] = p.beta1 * tb.powB1[i] / f * tb.expB1[i];
-      q2[i] = p.beta2 * tb.powB2[i] / f * tb.expB2[i];
-      q3[i] = p.beta3 * tb.powB3[i] / f * tb.expB3[i];
-      qL[i] = p.lambda * tb.powL[i] / f * tb.expL[i];
-      qZ[i] = p.zeta * tb.powZ[i] / f * tb.expZ[i];
-    }
-  }
-
-  // W(m, n) for m in [mlo_, mhi_], n in [nlo_, nhi_]; pmf tables must cover
-  // max(mhi_, nhi_).
-  void build_W(int mlo_, int mhi_, int nlo_, int nhi_) {
-    mlo = mlo_; mhi = mhi_; nlo = nlo_; nhi = nhi_;
-    stride = static_cast<std::size_t>(nhi - nlo + 1);
-    W.resize(static_cast<std::size_t>(mhi - mlo + 1) * stride);
-    for (int m = mlo; m <= mhi; ++m) {
-      S* row = &W[static_cast<std::size_t>(m - mlo) * stride];
-      for (int n = nlo; n <= nhi; ++n) {
-        const int wmax = std::min(m, n);
-        S acc = 0.0;
-        for (int w = 0; w <= wmax; ++w) acc = acc + q1[w] * qL[m - w] * qZ[n - w];
-        row[n - nlo] = acc;
-      }
-    }
-  }
-
-  // Same W(m, n) as build_W, with the products q1[w] * qZ[n - w] formed once
-  // per n (array A) instead of once per (m, n): one multiplication per term
-  // instead of two. Only the association of the three factors differs from
-  // build_W (rounding-level differences). Pmf tables must cover q1 and qZ up
-  // to nhi_ and qL up to mhi_.
+  // W(m, n) for m in [mlo_, mhi_], n in [nlo_, nhi_], with the products
+  // q1[w] * qZ[n - w] formed once per n (array A) instead of once per (m, n).
+  // Pmf tables must cover q1 and qZ up to nhi_ and qL up to mhi_.
   void build_W_factored(int mlo_, int mhi_, int nlo_, int nhi_) {
     mlo = mlo_; mhi = mhi_; nlo = nlo_; nhi = nhi_;
     stride = static_cast<std::size_t>(nhi - nlo + 1);
@@ -485,7 +452,6 @@ struct GP2ConvT {
     }
   }
 };
-typedef GP2ConvT<double> GP2Conv;
 
 // Upper bound on the number of W entries tabulated at once; beyond it the
 // direct gp2_zwerg evaluation is used.
@@ -496,17 +462,6 @@ const double GP2_CONV_MAX_ENTRIES = 4e6;
 template <class S>
 inline double entries_limit(double n_double) {
   return n_double * sizeof(double) / sizeof(S);
-}
-
-// gp2_build_g via GP2Conv; cv must hold pmf tables and W covering
-// m in [0, z], n in [0, y]. Safe to run concurrently (cv is read-only).
-template <class S>
-void gp2_build_g_conv(int y, int z, const GP2ParamsT<S>& p, const GP2ConvT<S>& cv, GVecT<S>& out) {
-  const S pyz = gp2_pyz(y, z, p);
-  cv.zwerg_upto(y, z, y + z, out.g);
-  const S ipyz = pow(pyz, -1);
-  for (std::size_t r = 0; r < out.g.size(); ++r) out.g[r] = out.g[r] * ipyz;
-  out.tail = 0.0 * pow(pyz, -1);
 }
 
 // ---------------------------------------------- per-t tables (covariates)
@@ -533,7 +488,7 @@ inline bool is_exact_zero(const coco_ad::Dual<T, N>& x) {
 }
 
 // q[i] = rate * pow(rate + i*eta, i-1) / i! * exp(-rate - i*eta), i = 0..n
-// (the GP2ConvT::build_pmf entries). For 1 <= i <= GP_REC_MAX the exponential
+// (qX[i] in the GP2ConvT notation). For 1 <= i <= GP_REC_MAX the exponential
 // is exp(-rate) * eneg[i] with eneg[i] = exp(-i*eta) tabulated once per
 // likelihood call (one exp per table instead of one per entry); for the
 // Poisson model (eta exactly zero) q[i] = q[i-1] * rate / i (no powers).
