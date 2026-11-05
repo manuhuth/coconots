@@ -69,6 +69,14 @@ rgenpoisInv <- function(u, lambdas, eta) {
     .Call(`_coconots_rgenpoisInv`, u, lambdas, eta)
 }
 
+bootAcfBase <- function(order, gp, lambda, alpha1, alpha2, alpha3, eta, size, n_keep, nlags, nB) {
+    .Call(`_coconots_bootAcfBase`, order, gp, lambda, alpha1, alpha2, alpha3, eta, size, n_keep, nlags, nB)
+}
+
+bootAcfCov <- function(order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, size, n_unif, nlags, nB, link_function) {
+    .Call(`_coconots_bootAcfCov`, order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, size, n_unif, nlags, nB, link_function)
+}
+
 likelihoodGP2cov <- function(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores = 1L) {
     .Call(`_coconots_likelihoodGP2cov`, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores)
 }

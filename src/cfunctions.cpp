@@ -879,6 +879,379 @@ NumericVector rgenpoisInv(NumericVector u, NumericVector lambdas, double eta)
 }
 
 
+// ------------------------------------------------------------ cocoBoot
+//
+// Parametric bootstrap of the sample ACF (cocoBoot, RCPP path) in one C++
+// call: all replicates are simulated here and their ACFs computed, instead
+// of 1000 R-level cocoSim() + forecast::Acf() calls.
+//
+// Per replicate the random numbers are drawn in the same order and with the
+// same R generators as cocoSim (initial values, innovations, thinning
+// uniforms), and every thinning step uses the same arithmetic as
+// simGP1/simGP2/simGP1cov/simGP2cov, so each replicate equals the series
+// cocoSim would return for the same RNG state.
+//
+// Speed comes from memoizing the cumulative thinning distribution: without
+// covariates it depends on the history (y, z) only, so it is shared by all
+// steps and replicates; with covariates lambda_t is shared by all
+// replicates, so the replicates are simulated time-major in blocks and the
+// distribution is shared per (t, y, z). Cache entries are extended lazily
+// (only as far as some uniform required), and the cache size is capped;
+// beyond the cap the distribution is evaluated directly, as before.
+
+namespace {
+
+// Cumulative distribution c[j] = sum_{i <= j} term(i), accumulated from
+// i = 0 upwards exactly like the `nain` loops of the sim functions.
+struct LazyCdf {
+  std::vector<double> c;
+  double aux;   // order 2: pow(pyz, -1); order 1 with covariates: denom
+  bool ready;
+  LazyCdf() : aux(0.0), ready(false) {}
+};
+
+// Soft cap on the doubles stored in one cache (~80 MB).
+const std::size_t BOOT_CACHE_MAX_DOUBLES = 10000000;
+
+struct CdfStore {
+  std::unordered_map<long long, LazyCdf> map;
+  std::size_t stored;
+  LazyCdf scratch;
+
+  CdfStore() : stored(0) {}
+
+  void clear() {
+    map.clear();
+    stored = 0;
+  }
+
+  LazyCdf* get(long long key) {
+    std::unordered_map<long long, LazyCdf>::iterator it = map.find(key);
+    if (it != map.end()) return &it->second;
+    if (stored < BOOT_CACHE_MAX_DOUBLES) {
+      stored += 8;  // node overhead
+      return &map[key];
+    }
+    scratch.c.clear();
+    scratch.ready = false;
+    return &scratch;
+  }
+
+  void account(const LazyCdf* e, std::size_t before) {
+    if (e != &scratch) stored += e->c.size() - before;
+  }
+};
+
+// Thinning draw of order 2 for uniform u: the index r returned by the
+// simGP2 / simGP2cov while-loop, i.e. the first r with !(c[r] <= u).
+// The loops add zwerg(r) * pow(pyz, -1) also beyond r = y + z (where zwerg
+// is 0); if c[y + z + 1] <= u the former loop never terminated, here the
+// largest feasible value y + z is returned. Tables must cover max(y, z).
+inline int gp2_cdf_draw(LazyCdf& e, int y, int z, double u,
+                        const GP2Params& p, const GP2Tables& tb) {
+  if (!e.ready) {
+    e.aux = pow(gp2_pyz(y, z, p), -1);
+    e.c.clear();
+    e.ready = true;
+  }
+  const int rmax = y + z;
+  for (int j = 0; ; ++j) {
+    if (j == static_cast<int>(e.c.size())) {
+      if (j > rmax + 1) return rmax;
+      const double prev = (j == 0) ? 0.0 : e.c[j - 1];
+      e.c.push_back(prev + gp2_zwerg(j, y, z, p, tb) * e.aux);
+    }
+    if (!(e.c[j] <= u)) return j;
+  }
+}
+
+// Thinning draw of order 1 without covariates (simGP1 loop); terms vanish
+// beyond r = y, where the former loop never terminated if c[y] <= u.
+inline int gp1_cdf_draw(LazyCdf& e, int y, double u, const GP1Tables& tb) {
+  e.ready = true;
+  for (int j = 0; ; ++j) {
+    if (j == static_cast<int>(e.c.size())) {
+      if (j > y) return y;
+      const double prev = (j == 0) ? 0.0 : e.c[j - 1];
+      e.c.push_back(prev + factorial(y) / factorial(y - j) / factorial(j) * tb.alpha *
+                    (1 - tb.alpha) * tb.powA[j] * tb.powB[y - j] / tb.denom[y]);
+    }
+    if (!(e.c[j] <= u)) return j;
+  }
+}
+
+// Thinning draw of order 1 with covariates (simGP1cov loop) at psi(lambda_t).
+inline int gp1cov_cdf_draw(LazyCdf& e, int y, double u, double alpha, double psi) {
+  if (!e.ready) {
+    e.aux = pow(1 + psi * y, y - 1);
+    e.c.clear();
+    e.ready = true;
+  }
+  for (int j = 0; ; ++j) {
+    if (j == static_cast<int>(e.c.size())) {
+      if (j > y) return y;
+      const double prev = (j == 0) ? 0.0 : e.c[j - 1];
+      e.c.push_back(prev + factorial(y) / factorial(y - j) / factorial(j) * alpha * (1 - alpha) *
+                    pow(alpha + psi * j, j - 1) * pow(1 - alpha + psi * (y - j), y - j - 1) / e.aux);
+    }
+    if (!(e.c[j] <= u)) return j;
+  }
+}
+
+// Inversion of the Generalized Poisson CDF exactly as in rgenpoisInv, with
+// the cumulative table kept for one lambda.
+struct GPInvCdf {
+  double lam, eta;
+  std::vector<double> cdf;
+  long long iter;
+
+  GPInvCdf() : lam(0.0), eta(0.0), iter(0) {}
+
+  void reset(double lam_, double eta_) {
+    lam = lam_;
+    eta = eta_;
+    cdf.clear();
+    cdf.push_back(hmmpa_dgenpois(0, lam, eta));
+  }
+
+  int draw(double u) {
+    int idx = 0;
+    while (true) {
+      if (idx >= static_cast<int>(cdf.size())) {
+        const double next = cdf.back() + hmmpa_dgenpois(idx, lam, eta);
+        cdf.push_back(next);
+      }
+      const double last = cdf[idx];
+      if (std::isnan(last) || std::isnan(u))
+        stop("missing value where TRUE/FALSE needed");
+      if (!(last < u)) return idx;
+      idx = idx + 1;
+      if ((++iter & 0xFFFFF) == 0) checkUserInterrupt();
+    }
+  }
+};
+
+inline int count_from_double(double v) {
+  if (!R_FINITE(v) || v < 0 || v > 2147483647.0)
+    stop("Simulated innovation is not a finite non-negative count (invalid innovation mean?)");
+  return static_cast<int>(v);
+}
+
+// Sample ACF at lags 1..nlags as stats::acf(type = "correlation",
+// demean = TRUE) computes it for a complete series: mean accumulated in long
+// double (colMeans), lag-k autocovariance sum / n, correlation
+// acov / (se * se) with se = sqrt(acov[0]), clamped to [-1, 1]. Lags beyond
+// n - 1 are NA (stats::acf truncates lag.max to n - 1).
+void sample_acf(const int* x, int n, int nlags, std::vector<double>& xd, double* out) {
+  for (int k = 0; k < nlags; ++k) out[k] = NA_REAL;
+  if (n < 2) return;
+  long double s = 0.0;
+  for (int i = 0; i < n; ++i) s += x[i];
+  s /= n;
+  const double mean = static_cast<double>(s);
+  xd.resize(n);
+  for (int i = 0; i < n; ++i) xd[i] = static_cast<double>(x[i]) - mean;
+  double acov0 = 0.0;
+  for (int i = 0; i < n; ++i) acov0 += xd[i] * xd[i];
+  acov0 = acov0 / n;
+  const double se = sqrt(acov0);
+  const double den = se * se;
+  const int lagmax = std::min(nlags, n - 1);
+  for (int lag = 1; lag <= lagmax; ++lag) {
+    double sum = 0.0;
+    for (int i = 0; i < n - lag; ++i) sum += xd[i + lag] * xd[i];
+    const double a = (sum / n) / den;
+    out[lag - 1] = (a > 1.) ? 1. : ((a < -1.) ? -1. : a);
+  }
+}
+
+} // namespace
+
+
+// Bootstrap ACFs without covariates. Each replicate is the cocoSim_base
+// series of length `size` (initial values, innovations and thinning
+// uniforms drawn as there); its last n_keep values enter the ACF.
+// Returns an nlags x nB matrix (column b = replicate b).
+// [[Rcpp::export]]
+NumericMatrix bootAcfBase(int order, bool gp, double lambda, double alpha1,
+                          double alpha2, double alpha3, double eta,
+                          int size, int n_keep, int nlags, int nB)
+{
+  if (order != 1 && order != 2) stop("order must be 1 or 2");
+  const int N = order;
+  if (size <= N || n_keep < 1 || n_keep > size || nlags < 1 || nB < 0)
+    stop("invalid bootstrap dimensions");
+
+  NumericMatrix out(nlags, nB);
+  std::vector<int> data(size), innov(size);
+  std::vector<double> unif(size), xd;
+
+  GPInvCdf inv;
+  if (gp) inv.reset(lambda, eta);
+
+  GP1Tables tb1;
+  GP2Params p2;
+  GP2Tables tb2;
+  if (order == 1) {
+    tb1.init(lambda, alpha1, eta, eta * (1 - alpha1) / lambda);
+  } else {
+    p2.init(lambda, alpha1, alpha2, alpha3, eta);
+    tb2.init(p2);
+  }
+  CdfStore store;
+
+  for (int b = 0; b < nB; ++b) {
+    // same draw order as cocoSim_base: initial values, innovations, uniforms
+    for (int i = 0; i < N; ++i)
+      data[i] = gp ? inv.draw(R::runif(0.0, 1.0)) : count_from_double(R::rpois(lambda));
+    if (gp) {
+      for (int i = 0; i < size; ++i) innov[i] = inv.draw(R::runif(0.0, 1.0));
+    } else {
+      for (int i = 0; i < size; ++i) innov[i] = count_from_double(R::rpois(lambda));
+    }
+    for (int i = 0; i < size; ++i) unif[i] = R::runif(0.0, 1.0);
+
+    for (int t = N + 1; t <= size; ++t) {
+      const double u = unif[t - 1];
+      int r;
+      if (order == 1) {
+        const int y = data[t - 2];
+        tb1.ensure(y);
+        LazyCdf* e = store.get(g_key(y, 0));
+        const std::size_t before = e->c.size();
+        r = gp1_cdf_draw(*e, y, u, tb1);
+        store.account(e, before);
+      } else {
+        const int y = data[t - 2];
+        const int z = data[t - 3];
+        tb2.ensure(std::max(y, z));
+        LazyCdf* e = store.get(g_key(y, z));
+        const std::size_t before = e->c.size();
+        r = gp2_cdf_draw(*e, y, z, u, p2, tb2);
+        store.account(e, before);
+      }
+      data[t - 1] = r + innov[t - 1];
+    }
+
+    sample_acf(&data[size - n_keep], n_keep, nlags, xd,
+               out.begin() + static_cast<std::size_t>(b) * nlags);
+    checkUserInterrupt();
+  }
+  return out;
+}
+
+
+// Bootstrap ACFs with covariates. Each replicate is the cocoSim_cov series
+// of length `size` without burn-in: initial values from init_lambdas,
+// innovations from lambdas (one per xreg row), n_unif thinning uniforms,
+// and the thinning at step t uses lambda from xreg row t - order - 1, the
+// innovation t - order - 1 and the uniform t - order - 1 (order 2) or
+// t - 1 (order 1), as in simGP2cov / simGP1cov. Replicates are drawn in
+// order (so the RNG stream is that of consecutive cocoSim calls) and then
+// simulated time-major in blocks, sharing per-t tables and caches.
+// [[Rcpp::export]]
+NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
+                         double alpha3, double eta, NumericVector betas,
+                         NumericMatrix xreg, NumericVector lambdas,
+                         NumericVector init_lambdas, int size, int n_unif,
+                         int nlags, int nB, std::string link_function)
+{
+  const LinkFunction link = parseLinkFunction(link_function);
+  if (order != 1 && order != 2) stop("order must be 1 or 2");
+  const int N = order;
+  const int n_innov = lambdas.size();
+  if (size <= N || nlags < 1 || nB < 0) stop("invalid bootstrap dimensions");
+  if (init_lambdas.size() != N) stop("init_lambdas must have one value per initial observation");
+  if (betas.size() != xreg.ncol()) stop("betas and xreg do not match");
+  if (xreg.nrow() < size - N || n_innov < size - N) stop("xreg has too few rows");
+  if (n_unif < ((order == 2) ? size - N : size)) stop("too few thinning uniforms");
+
+  NumericMatrix out(nlags, nB);
+  const std::size_t per_rep = static_cast<std::size_t>(size) + n_innov + n_unif + 1;
+  const std::size_t blk_cap = std::max<std::size_t>(1, 4000000 / per_rep);
+  const int blk = static_cast<int>(std::min<std::size_t>(static_cast<std::size_t>(std::max(nB, 1)), blk_cap));
+
+  std::vector<int> data(static_cast<std::size_t>(blk) * size);
+  std::vector<double> innov(static_cast<std::size_t>(blk) * n_innov);  // Poisson: count, GP: uniform
+  std::vector<double> unif(static_cast<std::size_t>(blk) * n_unif);
+  std::vector<double> xd;
+
+  GP2Params p2;
+  GP2Tables tb2;
+  CdfStore store;
+  GPInvCdf inv, inv_init;
+
+  for (int b0 = 0; b0 < nB; b0 += blk) {
+    const int nb = std::min(blk, nB - b0);
+
+    // random numbers per replicate, in the order of cocoSim_cov
+    for (int k = 0; k < nb; ++k) {
+      int* d = &data[static_cast<std::size_t>(k) * size];
+      for (int i = 0; i < N; ++i) {
+        if (order == 1 && gp) {
+          inv_init.reset(init_lambdas[i], eta);
+          d[i] = inv_init.draw(R::runif(0.0, 1.0));
+        } else {
+          d[i] = count_from_double(R::rpois(init_lambdas[i]));
+        }
+      }
+      double* iv = &innov[static_cast<std::size_t>(k) * n_innov];
+      if (gp) {
+        for (int i = 0; i < n_innov; ++i) iv[i] = R::runif(0.0, 1.0);
+      } else {
+        for (int i = 0; i < n_innov; ++i) iv[i] = R::rpois(lambdas[i]);
+      }
+      double* uv = &unif[static_cast<std::size_t>(k) * n_unif];
+      for (int i = 0; i < n_unif; ++i) uv[i] = R::runif(0.0, 1.0);
+    }
+
+    for (int t = N + 1; t <= size; ++t) {
+      const int row = t - N - 1;
+      const int ui = (order == 2) ? (t - N - 1) : (t - 1);
+      const double lam = applyLink(rowInnerProduct(xreg, row, betas), link);
+      const double psi = eta * (1 - alpha1) / lam;
+      if (order == 2) {
+        p2.init(lam, alpha1, alpha2, alpha3, eta);
+        tb2.init(p2);
+      }
+      store.clear();
+      if (gp) inv.reset(lambdas[row], eta);
+
+      for (int k = 0; k < nb; ++k) {
+        int* d = &data[static_cast<std::size_t>(k) * size];
+        const double u = unif[static_cast<std::size_t>(k) * n_unif + ui];
+        int r;
+        if (order == 1) {
+          const int y = d[t - 2];
+          LazyCdf* e = store.get(g_key(y, 0));
+          const std::size_t before = e->c.size();
+          r = gp1cov_cdf_draw(*e, y, u, alpha1, psi);
+          store.account(e, before);
+        } else {
+          const int y = d[t - 2];
+          const int z = d[t - 3];
+          tb2.ensure(std::max(y, z));
+          LazyCdf* e = store.get(g_key(y, z));
+          const std::size_t before = e->c.size();
+          r = gp2_cdf_draw(*e, y, z, u, p2, tb2);
+          store.account(e, before);
+        }
+        const double iv = innov[static_cast<std::size_t>(k) * n_innov + row];
+        const int x = gp ? inv.draw(iv) : count_from_double(iv);
+        d[t - 1] = r + x;
+      }
+    }
+
+    for (int k = 0; k < nb; ++k) {
+      sample_acf(&data[static_cast<std::size_t>(k) * size], size, nlags, xd,
+                 out.begin() + static_cast<std::size_t>(b0 + k) * nlags);
+    }
+    checkUserInterrupt();
+  }
+  return out;
+}
+
+
 
 // [[Rcpp::export]]
 double likelihoodGP2cov(double alpha1, double alpha2, double alpha3,

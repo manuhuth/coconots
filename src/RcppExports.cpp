@@ -299,6 +299,52 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// bootAcfBase
+NumericMatrix bootAcfBase(int order, bool gp, double lambda, double alpha1, double alpha2, double alpha3, double eta, int size, int n_keep, int nlags, int nB);
+RcppExport SEXP _coconots_bootAcfBase(SEXP orderSEXP, SEXP gpSEXP, SEXP lambdaSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP sizeSEXP, SEXP n_keepSEXP, SEXP nlagsSEXP, SEXP nBSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type order(orderSEXP);
+    Rcpp::traits::input_parameter< bool >::type gp(gpSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha1(alpha1SEXP);
+    Rcpp::traits::input_parameter< double >::type alpha2(alpha2SEXP);
+    Rcpp::traits::input_parameter< double >::type alpha3(alpha3SEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< int >::type size(sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type n_keep(n_keepSEXP);
+    Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
+    Rcpp::traits::input_parameter< int >::type nB(nBSEXP);
+    rcpp_result_gen = Rcpp::wrap(bootAcfBase(order, gp, lambda, alpha1, alpha2, alpha3, eta, size, n_keep, nlags, nB));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bootAcfCov
+NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2, double alpha3, double eta, NumericVector betas, NumericMatrix xreg, NumericVector lambdas, NumericVector init_lambdas, int size, int n_unif, int nlags, int nB, std::string link_function);
+RcppExport SEXP _coconots_bootAcfCov(SEXP orderSEXP, SEXP gpSEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP betasSEXP, SEXP xregSEXP, SEXP lambdasSEXP, SEXP init_lambdasSEXP, SEXP sizeSEXP, SEXP n_unifSEXP, SEXP nlagsSEXP, SEXP nBSEXP, SEXP link_functionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type order(orderSEXP);
+    Rcpp::traits::input_parameter< bool >::type gp(gpSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha1(alpha1SEXP);
+    Rcpp::traits::input_parameter< double >::type alpha2(alpha2SEXP);
+    Rcpp::traits::input_parameter< double >::type alpha3(alpha3SEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type betas(betasSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type xreg(xregSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type lambdas(lambdasSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type init_lambdas(init_lambdasSEXP);
+    Rcpp::traits::input_parameter< int >::type size(sizeSEXP);
+    Rcpp::traits::input_parameter< int >::type n_unif(n_unifSEXP);
+    Rcpp::traits::input_parameter< int >::type nlags(nlagsSEXP);
+    Rcpp::traits::input_parameter< int >::type nB(nBSEXP);
+    Rcpp::traits::input_parameter< std::string >::type link_function(link_functionSEXP);
+    rcpp_result_gen = Rcpp::wrap(bootAcfCov(order, gp, alpha1, alpha2, alpha3, eta, betas, xreg, lambdas, init_lambdas, size, n_unif, nlags, nB, link_function));
+    return rcpp_result_gen;
+END_RCPP
+}
 // likelihoodGP2cov
 double likelihoodGP2cov(double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int seas1, int seas2, const std::vector<int>& data, NumericMatrix xreg, std::string link_function, int cores);
 RcppExport SEXP _coconots_likelihoodGP2cov(SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP, SEXP coresSEXP) {
@@ -358,6 +404,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coconots_simGP2cov", (DL_FUNC) &_coconots_simGP2cov, 14},
     {"_coconots_simGP1cov", (DL_FUNC) &_coconots_simGP1cov, 11},
     {"_coconots_rgenpoisInv", (DL_FUNC) &_coconots_rgenpoisInv, 3},
+    {"_coconots_bootAcfBase", (DL_FUNC) &_coconots_bootAcfBase, 11},
+    {"_coconots_bootAcfCov", (DL_FUNC) &_coconots_bootAcfCov, 15},
     {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 12},
     {"_coconots_likelihoodGP1cov", (DL_FUNC) &_coconots_likelihoodGP1cov, 8},
     {NULL, NULL, 0}

@@ -72,20 +72,57 @@ cocoBoot <- function(coco, numb.lags = 21, rep.Bootstrap = 1000,
     nB <- rep.Bootstrap
     ac <- matrix(NaN, nrow = nlags, ncol = nB)
 
+    # All replicates are simulated and their sample ACFs computed in one C++
+    # call (bootAcfBase / bootAcfCov). Each replicate is the series the former
+    # per-replicate cocoSim() call returned (same model, burn-in, covariate
+    # alignment and draw order of the random numbers) and its ACF is the
+    # stats::acf estimate forecast::Acf returned, so the procedure is
+    # unchanged; the thinning distributions are memoized across replicates.
     if ((is.null(coco$cov)) ) {
-      for (b in 1:nB) {
-        help <- cocoSim(order = coco$order, type = coco$type, par = par, length = (T + 10))[11:(T + 10)]
-        ac[, b] <- forecast::Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
+      # cocoSim(length = T + 10) with its burn-in of 200, first 10 values dropped
+      bootCheckParBase(coco$type, coco$order, par)
+      gp <- coco$type == "GP"
+      if (coco$order == 1) {
+        ac <- bootAcfBase(1L, gp, par[1], par[2], 0, 0, if (gp) par[3] else 0,
+                          as.integer(T + 10 + 200), as.integer(T),
+                          as.integer(nlags), as.integer(nB))
+      } else {
+        ac <- bootAcfBase(2L, gp, par[1], par[2], par[3], par[4], if (gp) par[5] else 0,
+                          as.integer(T + 10 + 200), as.integer(T),
+                          as.integer(nlags), as.integer(nB))
       }
     }
 
 
     if (!is.null(coco$cov)) {
+      # cocoSim(length = T, xreg = xreg) without burn-in
       xreg <- as.matrix(coco$cov)
-      for (b in 1:nB) {
-        help <- cocoSim(type = coco$type, order = coco$order, par = par, length = T, xreg = xreg, link_function=coco$link_function)
-        ac[, b] <- forecast::Acf(help, plot = FALSE, lag.max = nlags)$acf[2:(nlags + 1)]
+      link_function <- coco$link_function
+      type <- coco$type
+      order <- coco$order
+      bootCheckParCov(type, order, par, xreg)
+      gp <- type == "GP"
+      n_ar <- if (order == 1) 1 else 3
+      alpha <- par[1:n_ar]
+      eta <- if (gp) par[n_ar + 1] else 0
+      vec_lambda <- par[-(1:(n_ar + gp))]
+      init_lambdas <- numeric(order)
+      for (t in 1:order) {
+        if (order == 2 && nrow(xreg) <= 1) {
+          lambda_start1 <- c(0, 0)
+        } else {
+          lambda_start1 <- as.numeric(as.vector(xreg[t, ])) %*% vec_lambda
+        }
+        init_lambdas[t] <- applyLinkFunction(lambda_start1, link_function)
       }
+      lambdas <- applyLinkFunctionVec(xreg %*% vec_lambda, link_function)
+      n_unif <- T
+      if (order == 2 && nrow(xreg) < (if (gp) 3 else 2)) n_unif <- T + 2
+      if (order == 1) alpha <- c(alpha, 0, 0)
+      ac <- bootAcfCov(as.integer(order), gp, alpha[1], alpha[2], alpha[3], eta,
+                       vec_lambda, xreg, lambdas, init_lambdas, as.integer(T),
+                       as.integer(n_unif), as.integer(nlags), as.integer(nB),
+                       link_function)
     }
 
 
@@ -183,4 +220,90 @@ print.summary.cocoBoot <- function(x, ...) {
       x$out_of_region, " out of ", x$total_rows, "\n")
   cat("\n")
   invisible(x)
+}
+
+
+# Parameter checks of cocoSim / cocoSim_base (no covariates), with the same
+# messages, run once for all bootstrap replicates.
+bootCheckParBase <- function(type, order, par) {
+  if (order == 2) {
+    if (par[2] + par[4] > 1) {
+      stop("The condition alpha_1 + alpha_3 < 1 ist not satisfied")
+    }
+    if ((par[2] < 0) | (par[3] < 0) | (par[4] < 0) | (par[2] >= 1) | (par[3] >= 1) | (par[4] >= 1)) {
+      stop("The alpha parameters must be within the unit interval")
+    }
+    if ((type == "GP") & ((par[5] < 0) | (par[5] >= 1))) {
+      stop("eta must be within the unit interval")
+    }
+  } else {
+    if ((par[2] < 0) | (par[2] >= 1)) {
+      stop("alpha must be within the unit interval")
+    }
+    if ((type == "GP") & ((par[3] < 0) | (par[3] >= 1))) {
+      stop("eta must be within the unit interval")
+    }
+  }
+  if ((type != "GP") & (type != "Poisson")) {
+    stop("Option 'type' must be either Poisson or GP")
+  }
+  if ((order != 1) & order != (2)) {
+    stop("Option 'order' must be 1 or 2")
+  }
+  if (!is.numeric(par)) {
+    stop("Option 'par' must be a numeric vector")
+  }
+  if (par[1] <= 0) {
+    stop("lambda must be a positive reel number")
+  }
+  if (!((all(par[-1] > 0)) & all(par[-1] < 1))) {
+    stop(" The autoregressive parameters and eta must be between zero and one")
+  }
+  n_par <- (if (type == "GP") 3 else 2) + 2 * (order - 1)
+  if (length(par) != n_par) {
+    stop(paste("Number of parameteres must equal", n_par, "for the", type, order, "model"))
+  }
+  invisible(TRUE)
+}
+
+# Parameter checks of cocoSim / cocoSim_cov (covariates), with the same
+# messages, run once for all bootstrap replicates.
+bootCheckParCov <- function(type, order, par, xreg) {
+  if (order == 2) {
+    if (par[1] + par[3] > 1) {
+      stop("The condition alpha_1 + alpha_3 < 1 ist not satisfied")
+    }
+    if ((par[1] < 0) | (par[2] < 0) | (par[3] < 0) | (par[1] >= 1) | (par[2] >= 1) | (par[3] >= 1)) {
+      stop("The alpha parameters must be within the unit interval")
+    }
+    if ((type == "GP") & ((par[4] < 0) | (par[4] >= 1))) {
+      stop("eta must be within the unit interval")
+    }
+  } else {
+    if ((par[1] < 0) | (par[1] >= 1)) {
+      stop("alpha must be within the unit interval")
+    }
+    if ((type == "GP") & ((par[2] < 0) | (par[2] >= 1))) {
+      stop("eta must be within the unit interval")
+    }
+  }
+  if ((type != "GP") & (type != "Poisson")) {
+    stop("Option 'type' must be either Poisson or GP")
+  }
+  if ((order != 1) & order != (2)) {
+    stop("Option 'order' must be 1 or 2")
+  }
+  if (!is.numeric(par)) {
+    stop("Option 'par' must be a numeric vector")
+  }
+  if (any(par[-c((length(par) - ncol(xreg)):length(par))] < 0) |
+    any(par[-c((length(par) - ncol(xreg)):length(par))] > 1)) {
+    stop("The autoregressive parameters and eta must be between zero and one")
+  }
+  n_par <- (if (order == 1) 1 else 3) + (type == "GP") + ncol(xreg)
+  if (length(par) != n_par) {
+    stop(paste("Number of parameters must equal", n_par, "for the", type, order,
+               "model with", ncol(xreg), "covariates"))
+  }
+  invisible(TRUE)
 }
