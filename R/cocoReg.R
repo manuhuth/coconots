@@ -116,25 +116,21 @@ cocoReg <- function(type, order, data, xreg = NULL,
     start_time <- Sys.time()
     fit_julia <- cocoRegJulia(type, order, data, xreg, start, link_function, b.beta)
     end_time <- Sys.time()
-    
-    JuliaConnectoR::juliaLet("global fit2 = x", x=fit_julia)
-    fit_no_optimization_in_dict <- juliaEval('
-               delete!(fit2, "optimization")
-               ')
-    
-    fit_R <- JuliaConnectoR::juliaGet(fit_no_optimization_in_dict)
 
-    julia_out <- transformJuliaRegOutputToR(xreg=xreg, pars=getJuliaValue(fit_R, "parameter"),
+    # fit_julia: proxy of the result dict without its "optimization" entry
+    fit_vals <- juliaRegSummary(fit_julia)
+
+    julia_out <- transformJuliaRegOutputToR(xreg=xreg, pars=fit_vals$parameter,
                                             grad=NULL, hes=NULL,
-                                            inv_hes=getJuliaValue(fit_R, "covariance_matrix"),
-                                            se=getJuliaValue(fit_R, "se"),
+                                            inv_hes=fit_vals$covariance_matrix,
+                                            se=fit_vals$se,
                                             data=data,
                                             type=type,
                                             order=order,
-                                            likelihood=getJuliaValue(fit_R, "log_likelihood"),
+                                            likelihood=fit_vals$log_likelihood,
                                             end_time = end_time,
                                             start_time=start_time, 
-                                            julia_reg=fit_no_optimization_in_dict)
+                                            julia_reg=fit_julia)
 
     class(julia_out) <- "coco"
     julia_out$link_function <- link_function
