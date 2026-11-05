@@ -3,6 +3,8 @@
 # include <vector>
 # include <cmath>
 # include <unordered_map>
+# include <limits>
+# include <utility>
 # include <atomic>
 # include <thread>
 # include <Rcpp.h>
@@ -418,6 +420,70 @@ struct GP2ConvT {
       }
     }
   }
+
+  // Staircase variant of W: for every n in [0, slo.size()) only the m in
+  // [slo[n], shi[n]] are tabulated (none when slo[n] > shi[n]); the caller sets
+  // slo and shi. Each entry is computed exactly as in build_W_factored (same
+  // products A[w] = q1[w] * qZ[n - w], same w-order), so it is bitwise equal to
+  // the build_W_factored entry. q1 and qZ must cover every n with a non-empty
+  // range, qL every shi[n].
+  std::vector<int> slo, shi;
+  std::vector<std::size_t> soff;
+
+  void build_W_stair() {
+    const int ncol = static_cast<int>(slo.size());
+    soff.assign(static_cast<std::size_t>(ncol) + 1, 0);
+    std::size_t tot = 0;
+    int atop = -1;
+    for (int n = 0; n < ncol; ++n) {
+      soff[n] = tot;
+      if (slo[n] <= shi[n]) {
+        tot += static_cast<std::size_t>(shi[n] - slo[n] + 1);
+        atop = std::max(atop, std::min(shi[n], n));
+      }
+    }
+    soff[ncol] = tot;
+    W.resize(tot);
+    A.resize(static_cast<std::size_t>(atop + 1));
+    for (int n = 0; n < ncol; ++n) {
+      const int lo = slo[n], hi = shi[n];
+      if (lo > hi) continue;
+      const int wtop = std::min(hi, n);
+      for (int w = 0; w <= wtop; ++w) A[w] = q1[w] * qZ[n - w];
+      S* col = &W[soff[n]];
+      for (int m = lo; m <= hi; ++m) {
+        const int wmax = std::min(m, n);
+        S acc = 0.0;
+        for (int w = 0; w <= wmax; ++w) acc = acc + A[w] * qL[m - w];
+        col[m - lo] = acc;
+      }
+    }
+  }
+
+  inline const S& Wst(int m, int n) const {
+    return W[soff[n] + static_cast<std::size_t>(m - slo[n])];
+  }
+
+  // zwerg_upto on the staircase W (identical loops and summation order).
+  // The staircase must cover m in [max(0, z-rcap), z] for every n in
+  // [max(0, y-rcap), y] (the (m, n) read for r <= rcap).
+  void zwerg_upto_stair(int y, int z, int rcap, std::vector<S>& out) const {
+    out.assign(rcap + 1, S(0.0));
+    const int smax = std::min(std::min(y, z), rcap);
+    for (int s = 0; s <= smax; ++s) {
+      const S a3 = q3[s];
+      const int vmax = std::min(y - s, rcap - s);
+      for (int v = 0; v <= vmax; ++v) {
+        const S a31 = a3 * q1[v];
+        const int n = y - s - v;
+        const int kmax = std::min(z - s, rcap - s - v);
+        S* o = &out[s + v];
+        for (int k = 0; k <= kmax; ++k) {
+          o[k] = o[k] + a31 * q2[k] * Wst(z - s - k, n);
+        }
+      }
+    }
+  }
 };
 typedef GP2ConvT<double> GP2Conv;
 
@@ -570,6 +636,28 @@ inline GVecT<S>& g_lookup(GCacheT<S>& cache, int y, int z, const GP2ParamsT<S>& 
 // Negative log-likelihoods; the exported double entry points below and the
 // automatic-differentiation entry point likelihoodAD() share these bodies.
 
+// One observation of the order-2 likelihood with a valid history (y, z >= 0).
+struct GP2Obs { int y, z, x; };
+
+inline bool gp2obs_less(const GP2Obs& a, const GP2Obs& b) {
+  if (a.y != b.y) return a.y < b.y;
+  if (a.z != b.z) return a.z < b.z;
+  return a.x < b.x;
+}
+
+// Order-2 negative log-likelihood without covariates. lambda is constant, so
+// P(x | y, z) depends on t only through the triple (x, y, z):
+// - observations are sorted by (y, z, x); identical triples contribute
+//   count * log P(x | y, z) (same terms, summed in a different order);
+// - for each distinct history (y, z), g(r | y, z) is built only for
+//   r <= rcap = min(max x observed after (y, z), y + z), the r the
+//   accumulation reads (g[r] for r <= rcap is bitwise the value of the full
+//   vector: zwerg_upto adds the same contributions to out[r] in the same order);
+// - W(m, n) is tabulated only over the staircase of (m, n) these r reach;
+// - pmf tables come from gp_pmf_fill (one exp per table via exp(-i*eta),
+//   Poisson ratio recurrence when eta is exactly zero), sized to the indices
+//   read; the normalizer from gp2_pyz_cov. P(x | y, z) = sum_r g[r] qL[x-r].
+// All of this is the same math as before; values agree up to rounding.
 template <class S>
 S likelihoodGP2_impl(const S& lambda, const S& alpha1, const S& alpha2,
                      const S& alpha3, const S& eta, int T, int seas1, int seas2,
@@ -577,77 +665,163 @@ S likelihoodGP2_impl(const S& lambda, const S& alpha1, const S& alpha2,
 {
   GP2ParamsT<S> p;
   p.init(lambda, alpha1, alpha2, alpha3, eta);
-  GP2TablesT<S> tb;
-  tb.init(p);
 
   int maxval = -1;
   for (std::size_t i = 0; i < data.size(); ++i) maxval = std::max(maxval, data[i]);
-  if (maxval >= 0) tb.ensure(maxval);
+  if (maxval >= 0) check_table_index(maxval);
 
-  GCacheT<S> cache;
-
-  // Register the distinct (y, z) histories first, then build their g-vectors
-  // concurrently: each build is independent and the tables are read-only once
-  // ensured up to maxval. Pointers into the node-based unordered_map stay
-  // valid across later insertions. The serial accumulation below is unchanged,
-  // so results are bit-identical to the single-threaded evaluation.
-  struct Job { int y, z; GVecT<S>* gv; };
-  std::vector<Job> jobs;
-  int maxy = 0, maxz = 0;
-  for (int t = seas2 + 1; t <= T; ++t) {
-    const int y = data[t - seas1 - 1];
-    const int z = data[t - seas2 - 1];
-    if (y >= 0 && z >= 0) {
-      auto ins = cache.emplace(g_key(y, z), GVecT<S>());
-      if (ins.second) {
-        jobs.push_back(Job{y, z, &ins.first->second});
-        maxy = std::max(maxy, y);
-        maxz = std::max(maxz, z);
-      }
-    }
-  }
-
-  // lambda is constant, so the pmf tables and W(m, n) are shared by all
-  // histories; build them once (serially) before the read-only g builds.
-  const bool use_conv = !jobs.empty() &&
-    static_cast<double>(maxz + 1) * (maxy + 1) <= entries_limit<S>(GP2_CONV_MAX_ENTRIES);
-  GP2ConvT<S> cv;
-  if (use_conv) {
-    cv.build_pmf(p, tb, maxval);
-    cv.build_W(0, maxz, 0, maxy);
-  }
-
-  const int nthreads = resolve_threads(static_cast<int>(jobs.size()), cores);
-  parallel_for(static_cast<int>(jobs.size()), nthreads, [&](int, int i) {
-    if (use_conv) {
-      gp2_build_g_conv(jobs[i].y, jobs[i].z, p, cv, *jobs[i].gv);
-    } else {
-      gp2_build_g(jobs[i].y, jobs[i].z, p, tb, *jobs[i].gv);
-    }
-  });
-
-  S mlef = 0.0;
+  std::vector<GP2Obs> obs;
+  std::vector<int> degen;  // t with a negative (e.g. NA) y or z
+  if (T > seas2) obs.reserve(static_cast<std::size_t>(T - seas2));
   for (int t = seas2 + 1; t <= T; ++t) {
     const int x = data[t - 1];
     const int y = data[t - seas1 - 1];
     const int z = data[t - seas2 - 1];
-
-    S nain = 0.0;
     if (y >= 0 && z >= 0) {
-      const GVecT<S>& gv = g_lookup(cache, y, z, p, tb);
-      const int minxyz = std::min(x, y + z);
-      for (int r = 0; r <= minxyz; ++r) {
-        nain = nain + gv.g[r] * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
-      }
+      GP2Obs o;
+      o.y = y; o.z = z; o.x = x;
+      obs.push_back(o);
     } else {
-      // degenerate inputs (e.g. NA counts): zwerg/pyz vanish just like in the
-      // guarded cube loops, propagating the same 0 * Inf arithmetic
-      const S pyz = gp2_pyz(y, z, p);
-      const int minxyz = std::min(x, y + z);
-      for (int r = 0; r <= minxyz; ++r) {
-        const S gryz = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
-        nain = nain + gryz * lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
+      degen.push_back(t);
+    }
+  }
+  std::sort(obs.begin(), obs.end(), gp2obs_less);
+
+  // distinct histories: obs[begin, end) share (y, z); rcap < 0: no g needed
+  struct Hist { int y, z, rcap; std::size_t begin, end; };
+  std::vector<Hist> hist;
+  int maxy = 0, maxz = 0;
+  for (std::size_t i = 0; i < obs.size(); ) {
+    std::size_t j = i + 1;
+    while (j < obs.size() && obs[j].y == obs[i].y && obs[j].z == obs[i].z) ++j;
+    Hist h;
+    h.y = obs[i].y; h.z = obs[i].z;
+    h.rcap = std::min(obs[j - 1].x, h.y + h.z);
+    h.begin = i; h.end = j;
+    hist.push_back(h);
+    maxy = std::max(maxy, h.y);
+    maxz = std::max(maxz, h.z);
+    i = j;
+  }
+
+  const bool use_conv = !hist.empty() &&
+    static_cast<double>(maxz + 1) * (maxy + 1) <= entries_limit<S>(GP2_CONV_MAX_ENTRIES);
+
+  std::vector<std::vector<S> > gv(hist.size());
+  GP2ConvT<S> cv;
+  GP2TablesT<S> tb;
+  tb.init(p);
+
+  if (use_conv) {
+    // table extents over the histories that need g and the x read
+    int ny = -1, nl = -1, n2 = -1, n3 = -1;
+    for (std::size_t h = 0; h < hist.size(); ++h) {
+      const Hist& hh = hist[h];
+      if (hh.rcap < 0) continue;
+      ny = std::max(ny, hh.y);
+      nl = std::max(nl, hh.z);
+      n2 = std::max(n2, std::min(hh.z, hh.rcap));
+      n3 = std::max(n3, std::min(std::min(hh.y, hh.z), hh.rcap));
+      nl = std::max(nl, obs[hh.end - 1].x);
+    }
+    if (ny >= 0) {
+      const bool poisson = is_exact_zero(eta);
+      const int nrec = std::max(0, std::min(maxval, GP_REC_MAX));
+      std::vector<S> eneg, epos;
+      if (poisson) {
+        // exp(+-(i * 0)) with zero partials: exactly 1
+        epos.assign(static_cast<std::size_t>(nrec) + 1, S(1.0));
+      } else {
+        eneg.resize(static_cast<std::size_t>(nrec) + 1);
+        epos.resize(static_cast<std::size_t>(nrec) + 1);
+        for (int i = 0; i <= nrec; ++i) {
+          eneg[i] = exp(-(i * eta));
+          epos[i] = exp(i * eta);
+        }
       }
+      gp_pmf_fill(cv.q1, ny, p.beta1, eta, poisson, eneg);
+      gp_pmf_fill(cv.qZ, ny, p.zeta, eta, poisson, eneg);
+      gp_pmf_fill(cv.q2, n2, p.beta2, eta, poisson, eneg);
+      gp_pmf_fill(cv.q3, n3, p.beta3, eta, poisson, eneg);
+      gp_pmf_fill(cv.qL, nl, lambda, eta, poisson, eneg);
+
+      // staircase: for each n the m-range read by any history
+      cv.slo.assign(static_cast<std::size_t>(ny) + 1, std::numeric_limits<int>::max());
+      cv.shi.assign(static_cast<std::size_t>(ny) + 1, -1);
+      for (std::size_t h = 0; h < hist.size(); ++h) {
+        const Hist& hh = hist[h];
+        if (hh.rcap < 0) continue;
+        const int mlo = std::max(0, hh.z - hh.rcap);
+        for (int n = std::max(0, hh.y - hh.rcap); n <= hh.y; ++n) {
+          cv.slo[n] = std::min(cv.slo[n], mlo);
+          cv.shi[n] = std::max(cv.shi[n], hh.z);
+        }
+      }
+      cv.build_W_stair();
+
+      const int nthreads = resolve_threads(static_cast<int>(hist.size()), cores);
+      std::vector<std::vector<S> > hbufs(nthreads);
+      parallel_for(static_cast<int>(hist.size()), nthreads, [&](int tid, int i) {
+        const Hist& hh = hist[i];
+        if (hh.rcap < 0) return;
+        const S pyz = (std::max(hh.y, hh.z) <= GP_REC_MAX) ?
+          gp2_pyz_cov(hh.y, hh.z, p, poisson, epos, hbufs[tid]) : gp2_pyz(hh.y, hh.z, p);
+        std::vector<S>& g = gv[i];
+        cv.zwerg_upto_stair(hh.y, hh.z, hh.rcap, g);
+        const S ipyz = pow(pyz, -1);
+        for (std::size_t r = 0; r < g.size(); ++r) g[r] = g[r] * ipyz;
+      });
+    }
+  } else if (!hist.empty()) {
+    if (maxval >= 0) tb.ensure(maxval);
+    const int nthreads = resolve_threads(static_cast<int>(hist.size()), cores);
+    parallel_for(static_cast<int>(hist.size()), nthreads, [&](int, int i) {
+      const Hist& hh = hist[i];
+      if (hh.rcap < 0) return;
+      GVecT<S> tmp;
+      gp2_build_g(hh.y, hh.z, p, tb, tmp);
+      gv[i].swap(tmp.g);
+    });
+  }
+
+  S mlef = 0.0;
+  for (std::size_t h = 0; h < hist.size(); ++h) {
+    const Hist& hh = hist[h];
+    const std::vector<S>& g = gv[h];
+    for (std::size_t i = hh.begin; i < hh.end; ) {
+      const int x = obs[i].x;
+      std::size_t j = i + 1;
+      while (j < hh.end && obs[j].x == x) ++j;
+      const int minxyz = std::min(x, hh.y + hh.z);
+      S nain = 0.0;
+      if (use_conv) {
+        for (int r = 0; r <= minxyz; ++r) nain = nain + g[r] * cv.qL[x - r];
+      } else {
+        for (int r = 0; r <= minxyz; ++r) {
+          nain = nain + g[r] * lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
+        }
+      }
+      const S ln = log(nain);
+      const std::size_t cnt = j - i;
+      mlef = (cnt == 1) ? mlef + ln : mlef + static_cast<double>(cnt) * ln;
+      i = j;
+    }
+  }
+
+  if (!degen.empty() && maxval >= 0) tb.ensure(maxval);
+  for (std::size_t i = 0; i < degen.size(); ++i) {
+    const int t = degen[i];
+    const int x = data[t - 1];
+    const int y = data[t - seas1 - 1];
+    const int z = data[t - seas2 - 1];
+    // degenerate inputs (e.g. NA counts): zwerg/pyz vanish just like in the
+    // guarded cube loops, propagating the same 0 * Inf arithmetic
+    const S pyz = gp2_pyz(y, z, p);
+    const int minxyz = std::min(x, y + z);
+    S nain = 0.0;
+    for (int r = 0; r <= minxyz; ++r) {
+      const S gryz = gp2_zwerg(r, y, z, p, tb) * pow(pyz, -1);
+      nain = nain + gryz * lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
     }
     mlef = mlef + log(nain);
   }
@@ -655,41 +829,91 @@ S likelihoodGP2_impl(const S& lambda, const S& alpha1, const S& alpha2,
   return (-mlef);
 }
 
+// Order-1 negative log-likelihood. P(x | y) depends on t only through (x, y):
+// observations are sorted by (y, x) and identical pairs contribute
+// count * log P(x | y). For each distinct y the r-dependent factor
+//   K[r] = y! / (y-r)! / r! * alpha (1-alpha) pow(alpha + psi r, r-1)
+//          * pow(1 - alpha + psi (y-r), y-r-1)
+// is formed once, and P(x | y) = (sum_r K[r] L[x-r]) / pow(1 + psi y, y-1)
+// with the GP innovation pmf L (as in gp1_density, same factors, different
+// association; values agree up to rounding). Poisson (eta exactly zero): L by
+// the ratio recurrence of gp_pmf_fill.
 template <class S>
 S likelihoodGP1_impl(const S& lambda, const S& alpha, const S& eta, int T, int seas,
                      const std::vector<int>& data)
 {
   const S psi = eta * (1 - alpha) / lambda;
-  GP1TablesT<S> tb;
-  tb.init(lambda, alpha, eta, psi);
 
   int maxval = -1;
   for (std::size_t i = 0; i < data.size(); ++i) maxval = std::max(maxval, data[i]);
-  if (maxval >= 0) tb.ensure(maxval);
+  if (maxval >= 0) check_table_index(maxval);
 
-  // conditional densities depend on t only through (x, y); cache them
-  const bool use_memo = maxval >= 0 &&
-    static_cast<double>(maxval + 1) * (maxval + 1) <= entries_limit<S>(4e6);
-  std::vector<S> memo;
-  if (use_memo) memo.assign(static_cast<std::size_t>(maxval + 1) * (maxval + 1), S(-1.0));
-
-  S mlef = 0.0;
+  std::vector<std::pair<int, int> > obs;  // (y, x)
+  if (T > seas) obs.reserve(static_cast<std::size_t>(T - seas));
   for (int t = seas + 1; t <= T; ++t) {
-    const int x = data[t - 1];
-    const int y = data[t - seas - 1];
+    obs.push_back(std::make_pair(data[t - seas - 1], data[t - 1]));
+  }
+  std::sort(obs.begin(), obs.end());
 
-    S p;
-    if (use_memo && x >= 0 && y >= 0) {
-      const std::size_t key = static_cast<std::size_t>(x) * (maxval + 1) + y;
-      p = memo[key];
-      if (p < 0.0) {
-        p = gp1_density(x, y, tb);
-        memo[key] = p;
-      }
+  // table extents over the valid pairs (x, y >= 0)
+  int maxy = -1, maxx = -1, maxr = -1;
+  for (std::size_t i = 0; i < obs.size(); ++i) {
+    const int y = obs[i].first, x = obs[i].second;
+    if (x < 0 || y < 0) continue;
+    maxy = std::max(maxy, y);
+    maxx = std::max(maxx, x);
+    maxr = std::max(maxr, std::min(x, y));
+  }
+
+  const S a1a = alpha * (1 - alpha);
+  std::vector<S> powA(static_cast<std::size_t>(maxr + 1));
+  std::vector<S> powB(static_cast<std::size_t>(maxy + 1));
+  std::vector<S> L;
+  for (int i = 0; i <= maxr; ++i) powA[i] = a1a * pow(alpha + psi * i, i - 1);
+  for (int i = 0; i <= maxy; ++i) powB[i] = pow(1 - alpha + psi * i, i - 1);
+  if (maxx >= 0) {
+    if (is_exact_zero(eta)) {
+      const std::vector<S> none;
+      gp_pmf_fill(L, maxx, lambda, eta, true, none);
     } else {
-      p = gp1_density(x, y, tb);
+      L.resize(static_cast<std::size_t>(maxx) + 1);
+      for (int i = 0; i <= maxx; ++i) {
+        L[i] = lambda * pow(lambda + i * eta, i - 1) / factorial(i) * exp(-lambda - i * eta);
+      }
     }
-    mlef = mlef + log(p);
+  }
+
+  std::vector<S> K;
+  S mlef = 0.0;
+  for (std::size_t i = 0; i < obs.size(); ) {
+    const int y = obs[i].first;
+    std::size_t e = i + 1;
+    while (e < obs.size() && obs[e].first == y) ++e;
+    // obs[i, e) share y, sorted by x; K over r <= min(y, max x)
+    const int rk = std::min(y, obs[e - 1].second);
+    S denom = 1.0;
+    if (y >= 0 && rk >= 0) {
+      K.resize(static_cast<std::size_t>(rk) + 1);
+      for (int r = 0; r <= rk; ++r) {
+        K[r] = factorial(y) / factorial(y - r) / factorial(r) * powA[r] * powB[y - r];
+      }
+      denom = pow(1 + psi * y, y - 1);
+    }
+    while (i < e) {
+      const int x = obs[i].second;
+      std::size_t j = i + 1;
+      while (j < e && obs[j].second == x) ++j;
+      const int minxy = std::min(x, y);
+      S nain = 0.0;
+      if (minxy >= 0) {
+        for (int r = 0; r <= minxy; ++r) nain = nain + K[r] * L[x - r];
+        nain = nain / denom;
+      }
+      const S ln = log(nain);
+      const std::size_t cnt = j - i;
+      mlef = (cnt == 1) ? mlef + ln : mlef + static_cast<double>(cnt) * ln;
+      i = j;
+    }
   }
 
   return (-mlef);
