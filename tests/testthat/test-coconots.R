@@ -876,3 +876,43 @@ test_that("cocoResid uses t = order + 1, ..., T for both orders", {
   expect_length(res2$residuals, length(data2) - 2)
   expect_equal(unname(res2$residuals), unname(data2[3:60] - res2$fitted))
 })
+
+test_that("order-2 conditional pmf and residuals are finite at alphas exactly on the boundary 0", {
+  # The Julia backend returns boundary estimates exactly at 0 (e.g. alpha1 = 0
+  # for a GP2 fit with covariates); a zero rate beta_i = lambda U alpha_i made
+  # the C++ factor beta_i * pow(beta_i, -1) at index 0 NaN (0 * Inf), so
+  # cocoResid raised the non-finite pmf error. The limit is the value just
+  # inside the boundary.
+  for (p in list(c(0, 0.2, 0.3), c(0.2, 0, 0.3), c(0.2, 0.3, 0), c(0.25, 0.1, 0.5))) {
+    # last case: 2 alpha1 + alpha3 = 1, i.e. the rate zeta is zero
+    for (eta in c(0, 0.15)) {
+      for (yz in list(c(0L, 0L), c(3L, 2L), c(1L, 6L))) {
+        p_in <- p
+        p_in[p_in == 0] <- 1e-13
+        if (2 * p[1] + p[3] == 1) p_in[1] <- p[1] - 1e-13
+        g0 <- coconots:::dR2_vec(yz[1], yz[2], 1.5, p[1], p[2], p[3], eta, 1e-14)
+        g1 <- coconots:::dR2_vec(yz[1], yz[2], 1.5, p_in[1], p_in[2], p_in[3], eta, 1e-14)
+        expect_true(all(is.finite(g0)))
+        expect_equal(sum(g0), 1, tolerance = 1e-10)
+        n <- min(length(g0), length(g1))
+        expect_equal(g0[1:n], g1[1:n], tolerance = 1e-8)
+      }
+    }
+  }
+
+  length <- 120
+  cov <- cbind(sin(2 * pi / 25 * (1:length)), cos(2 * pi / 25 * (1:length)))
+  set.seed(20261107)
+  data <- cocoSim(order = 2, type = "GP", par = c(0.15, 0.1, 0.3, 0.1, 0.4, -0.2),
+                  xreg = cov, length = length)
+  fit <- cocoReg(order = 2, type = "GP", data = data, xreg = cov)
+  fit0 <- fit
+  fit0$par[1] <- 0
+  fit1 <- fit
+  fit1$par[1] <- 1e-13
+  r0 <- cocoResid(fit0)
+  r1 <- cocoResid(fit1)
+  expect_true(all(is.finite(r0$residuals)))
+  expect_equal(r0$residuals, r1$residuals, tolerance = 1e-8)
+  expect_equal(r0$cond.var, r1$cond.var, tolerance = 1e-8)
+})

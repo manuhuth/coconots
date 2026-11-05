@@ -212,6 +212,28 @@ inline S gp1_density(int x, int y, const GP1TablesT<S>& tb) {
   return nain;
 }
 
+// True iff x and (for dual numbers) all its partials are exactly zero; for
+// eta this identifies the Poisson model in every AD instantiation.
+inline bool is_exact_zero(double x) { return x == 0.0; }
+
+template <class T, int N>
+inline bool is_exact_zero(const coco_ad::Dual<T, N>& x) {
+  if (!is_exact_zero(x.v)) return false;
+  for (int i = 0; i < N; ++i) {
+    if (!is_exact_zero(x.d[i])) return false;
+  }
+  return true;
+}
+
+// True iff the value of x (for dual numbers: the innermost primal value) is
+// exactly zero, whatever its partials.
+inline bool is_zero_value(double x) { return x == 0.0; }
+
+template <class T, int N>
+inline bool is_zero_value(const coco_ad::Dual<T, N>& x) {
+  return is_zero_value(x.v);
+}
+
 // ------------------------------------------------------------------ order 2
 //
 // P(x | y, z) = sum_r g(r | y, z) * GP(x - r; lambda, eta) with
@@ -307,13 +329,58 @@ inline S gp2_pyz(int y, int z, const GP2ParamsT<S>& p) {
   return dwarf * help;
 }
 
+// Univariate GP pmf factor rate * pow(rate + i*eta, i-1) / i! * exp(-rate - i*eta)
+// read from the tables of gp2_zwerg. At i = 0 the expression is
+// rate * pow(rate, -1) * exp(-rate), which is 0 * Inf = NaN at a zero rate;
+// there the factor is its limit exp(-rate) = 1 (as in Coconots.jl, whose GP
+// pmf at 0 is exp(-rate) for every rate).
+template <class S>
+inline S gp2_rate_factor(const S& rate, const std::vector<S>& powT,
+                         const std::vector<S>& expT, int i) {
+  if (i == 0 && is_zero_value(rate)) return expT[0];
+  return rate * powT[i] / factorial(i) * expT[i];
+}
+
+// gp2_zwerg when one of the rates beta1, beta2, beta3, zeta is exactly zero,
+// e.g. at a fitted alpha on its boundary 0 (the Julia backend returns
+// boundary estimates exactly at 0): same feasible index set and factors, with
+// the zero-rate factor at index 0 replaced by its limit (gp2_rate_factor).
+template <class S>
+inline S gp2_zwerg_zero_rate(int r, int y, int z, const GP2ParamsT<S>& p,
+                             const GP2TablesT<S>& tb) {
+  S zwerg = 0.0;
+  const int smax = std::min(y, r);
+  for (int s = 0; s <= smax; ++s) {
+    const int vlo = std::max(0, r - z);
+    const int vhi = std::min(r - s, y - s);
+    for (int v = vlo; v <= vhi; ++v) {
+      const int k = r - s - v;
+      const int wmax = std::min(z - r + v, y - s - v);
+      const S pre = gp2_rate_factor(p.beta3, tb.powB3, tb.expB3, s) *
+        gp2_rate_factor(p.beta1, tb.powB1, tb.expB1, v) *
+        gp2_rate_factor(p.beta2, tb.powB2, tb.expB2, k);
+      for (int w = 0; w <= wmax; ++w) {
+        zwerg = zwerg + pre * gp2_rate_factor(p.beta1, tb.powB1, tb.expB1, w) *
+          gp2_rate_factor(p.lambda, tb.powL, tb.expL, z - r + v - w) *
+          gp2_rate_factor(p.zeta, tb.powZ, tb.expZ, y - s - v - w);
+      }
+    }
+  }
+  return zwerg;
+}
+
 // Triple convolution over (s, v, w). The loop bounds enumerate exactly the
 // index triples that satisfy r-s-v >= 0, z-r+v-w >= 0 and y-s-v-w >= 0, in
 // the same lexicographic order the former full 0..y cube visited them.
 // Tables must cover indices up to max(y, z) (all six factor indices are
 // bounded by y or z on the feasible set).
+// With a zero rate beta1, beta2, beta3 or zeta, gp2_zwerg_zero_rate.
 template <class S>
 inline S gp2_zwerg(int r, int y, int z, const GP2ParamsT<S>& p, const GP2TablesT<S>& tb) {
+  if (is_zero_value(p.beta1) || is_zero_value(p.beta2) || is_zero_value(p.beta3) ||
+      is_zero_value(p.zeta)) {
+    return gp2_zwerg_zero_rate(r, y, z, p, tb);
+  }
   S zwerg = 0.0;
   const int smax = std::min(y, r);
   for (int s = 0; s <= smax; ++s) {
@@ -509,32 +576,20 @@ inline double entries_limit(double n_double) {
 // there, since 171! overflows).
 const int GP_REC_MAX = 170;
 
-// True iff x and (for dual numbers) all its partials are exactly zero; for
-// eta this identifies the Poisson model in every AD instantiation.
-inline bool is_exact_zero(double x) { return x == 0.0; }
-
-template <class T, int N>
-inline bool is_exact_zero(const coco_ad::Dual<T, N>& x) {
-  if (!is_exact_zero(x.v)) return false;
-  for (int i = 0; i < N; ++i) {
-    if (!is_exact_zero(x.d[i])) return false;
-  }
-  return true;
-}
-
 // q[i] = rate * pow(rate + i*eta, i-1) / i! * exp(-rate - i*eta), i = 0..n
 // (qX[i] in the GP2ConvT notation). For 1 <= i <= GP_REC_MAX the exponential
 // is exp(-rate) * eneg[i] with eneg[i] = exp(-i*eta) tabulated once per
 // likelihood call (one exp per table instead of one per entry); for the
 // Poisson model (eta exactly zero) q[i] = q[i-1] * rate / i (no powers).
 // q[0] keeps the former formula (rate / rate == rate * pow(rate, -1) up to
-// rounding, NaN at rate = 0 as before). eneg must cover min(n, GP_REC_MAX).
+// rounding) except at a zero rate, where that is NaN and q[0] is its limit
+// exp(-rate) (as gp2_rate_factor). eneg must cover min(n, GP_REC_MAX).
 template <class S>
 inline void gp_pmf_fill(std::vector<S>& q, int n, const S& rate, const S& eta,
                         bool poisson, const std::vector<S>& eneg) {
   q.resize(static_cast<std::size_t>(n) + 1);
   const S e0 = exp(-rate);
-  q[0] = rate / rate * e0;
+  q[0] = is_zero_value(rate) ? e0 : rate / rate * e0;
   const int nrec = std::min(n, GP_REC_MAX);
   if (poisson) {
     for (int i = 1; i <= nrec; ++i) q[i] = q[i - 1] * rate / static_cast<double>(i);
