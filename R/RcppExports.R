@@ -65,6 +65,10 @@ simGP1cov <- function(alpha, eta, lambdas, T, N, seas, data, xreg, uniform, inno
     .Call(`_coconots_simGP1cov`, alpha, eta, lambdas, T, N, seas, data, xreg, uniform, innovations, link_function)
 }
 
+rgenpoisInv <- function(u, lambdas, eta) {
+    .Call(`_coconots_rgenpoisInv`, u, lambdas, eta)
+}
+
 likelihoodGP2cov <- function(alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores = 1L) {
     .Call(`_coconots_likelihoodGP2cov`, alpha1, alpha2, alpha3, eta, lambdas, T, seas1, seas2, data, xreg, link_function, cores)
 }

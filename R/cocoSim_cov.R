@@ -116,10 +116,9 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
 
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
-    innovations <- numeric(length(lambdas))
-    for (index in 1:(length(lambdas))) {
-      innovations[index] <- rgenpois(n = 1, lambdas[index], eta)
-    }
+    # one uniform per time point, in time order (same random stream as the
+    # former per-index rgenpois(n = 1, ...) loop)
+    innovations <- rgenpois(n = length(lambdas), lambda = lambdas, eta = eta)
     uniform <- stats::runif(n = T, 0, 1)
 
     data <- simGP1cov(alpha, eta, vec_lambda, T, N, seasonality[1], data,
@@ -215,10 +214,9 @@ cocoSim_cov <- function(type, order, par, size, xreg, seasonality = c(1, 2), ini
 
     N <- length(data)
     data <- c(data, rep(NaN, T - N))
-    innovations <- numeric(length(lambdas))
-    for (index in 1:(length(lambdas))) {
-      innovations[index] <- rgenpois(n = 1, lambdas[index], eta)
-    }
+    # one uniform per time point, in time order (same random stream as the
+    # former per-index rgenpois(n = 1, ...) loop)
+    innovations <- rgenpois(n = length(lambdas), lambda = lambdas, eta = eta)
     
     if (nrow(xreg) < 3){
       uniform <- stats::runif(n = T+2, 0, 1)

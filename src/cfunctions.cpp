@@ -809,6 +809,76 @@ std::vector<int> simGP1cov(double alpha, double eta,
   return (data);
 }
 
+namespace {
+
+// Generalized Poisson pmf P(X = x; lambda1, lambda2), reproducing the
+// arithmetic of HMMpa::dgenpois (term order, the x < 2 closed form, the
+// product loop for x >= 2 and its replacement of NaN/Inf by the smallest
+// denormal), so the inversion below picks the same indices as the former
+// R implementation of rgenpois().
+inline double hmmpa_dgenpois(int x, double l1, double l2) {
+  if (x < 2) {
+    const double f = l1 + x * l2;
+    // factorial(0) = factorial(1) = 1; std::pow matches R's ^ for the
+    // exponents -1 and 0 used here (including the Inf/NaN/0 bases)
+    return l1 * pow(f, x - 1.0) * exp(-f);
+  }
+  const double f1 = l1 + x * l2;
+  const double g1 = exp(-l2);
+  double e = 1.0;
+  for (int i = 2; i <= x; ++i) e = e * ((f1 * g1) / i);
+  const double d1 = l1 * exp(-l1) * g1;
+  double b = e * d1;
+  if (std::isnan(b) || std::isinf(b)) b = 4.94065645841247e-324;
+  return b;
+}
+
+} // namespace
+
+
+// Inversion sampler of the Generalized Poisson distribution: for each
+// uniform u[i], the smallest x with cumulative pmf (accumulated from x = 0
+// upwards, as in the former R loop) >= u[i], at lambda = lambdas[i].
+// The cumulative table is reused while consecutive lambdas are equal.
+// [[Rcpp::export]]
+NumericVector rgenpoisInv(NumericVector u, NumericVector lambdas, double eta)
+{
+  const int n = u.size();
+  if (lambdas.size() != n) stop("u and lambdas must have the same length");
+  NumericVector out(n);
+  std::vector<double> cdf;
+  double cur = 0.0;
+  bool have = false;
+  long long iter = 0;
+
+  for (int i = 0; i < n; ++i) {
+    const double lam = lambdas[i];
+    if (!have || !(lam == cur)) {
+      cdf.clear();
+      cdf.push_back(hmmpa_dgenpois(0, lam, eta));
+      cur = lam;
+      have = true;
+    }
+    const double ui = u[i];
+    int idx = 0;
+    while (true) {
+      if (idx >= static_cast<int>(cdf.size())) {
+        const double next = cdf.back() + hmmpa_dgenpois(idx, cur, eta);
+        cdf.push_back(next);
+      }
+      const double last = cdf[idx];
+      if (std::isnan(last) || std::isnan(ui))
+        stop("missing value where TRUE/FALSE needed");
+      if (!(last < ui)) break;
+      idx = idx + 1;
+      if ((++iter & 0xFFFFF) == 0) checkUserInterrupt();
+    }
+    out[i] = idx;
+  }
+  return out;
+}
+
+
 
 // [[Rcpp::export]]
 double likelihoodGP2cov(double alpha1, double alpha2, double alpha3,

@@ -286,6 +286,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rgenpoisInv
+NumericVector rgenpoisInv(NumericVector u, NumericVector lambdas, double eta);
+RcppExport SEXP _coconots_rgenpoisInv(SEXP uSEXP, SEXP lambdasSEXP, SEXP etaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type u(uSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type lambdas(lambdasSEXP);
+    Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
+    rcpp_result_gen = Rcpp::wrap(rgenpoisInv(u, lambdas, eta));
+    return rcpp_result_gen;
+END_RCPP
+}
 // likelihoodGP2cov
 double likelihoodGP2cov(double alpha1, double alpha2, double alpha3, double eta, NumericVector lambdas, int T, int seas1, int seas2, const std::vector<int>& data, NumericMatrix xreg, std::string link_function, int cores);
 RcppExport SEXP _coconots_likelihoodGP2cov(SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP alpha3SEXP, SEXP etaSEXP, SEXP lambdasSEXP, SEXP TSEXP, SEXP seas1SEXP, SEXP seas2SEXP, SEXP dataSEXP, SEXP xregSEXP, SEXP link_functionSEXP, SEXP coresSEXP) {
@@ -344,6 +357,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_coconots_Pyz", (DL_FUNC) &_coconots_Pyz, 7},
     {"_coconots_simGP2cov", (DL_FUNC) &_coconots_simGP2cov, 14},
     {"_coconots_simGP1cov", (DL_FUNC) &_coconots_simGP1cov, 11},
+    {"_coconots_rgenpoisInv", (DL_FUNC) &_coconots_rgenpoisInv, 3},
     {"_coconots_likelihoodGP2cov", (DL_FUNC) &_coconots_likelihoodGP2cov, 12},
     {"_coconots_likelihoodGP1cov", (DL_FUNC) &_coconots_likelihoodGP1cov, 8},
     {NULL, NULL, 0}
