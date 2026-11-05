@@ -85,8 +85,40 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
     stop("y must be a non-negative integer")
   }
 
-  #Poisson/GP 1
-  if  (coco$order == 1){
+  # Without covariates the predictive pmf of x_t depends on t only through
+  # the history (x_{t-1}[, x_{t-2}]): one density vector per distinct history
+  if (is.null(coco$cov) && coco$order == 1) {
+    validate_gp1_par(par[1], par[2], par[3])
+    tt <- (seas[1] + 1):T
+    y_t <- data[tt - seas[1]]
+    scores <- coco_scores_by_history(
+      data[tt], y_t,
+      function(xmax, i) dGP1h_vec(xmax, y_t[i], par[1], par[2], par[3]),
+      max_x
+    )
+    log.score <- mean(scores$log)
+    quad.score <- mean(scores$quad)
+    rps.score <- mean(scores$rps)
+  }
+
+  if (is.null(coco$cov) && coco$order == 2) {
+    validate_gp2_par(par[1], par[2], par[3], par[4], par[5])
+    tt <- (seas[2] + 1):T
+    y_t <- data[tt - seas[1]]
+    z_t <- data[tt - seas[2]]
+    scores <- coco_scores_by_history(
+      data[tt], paste(y_t, z_t),
+      function(xmax, i) dGP2h_vec(xmax, y_t[i], z_t[i],
+                                  par[1], par[2], par[3], par[4], par[5]),
+      max_x
+    )
+    log.score <- mean(scores$log)
+    quad.score <- mean(scores$quad)
+    rps.score <- mean(scores$rps)
+  }
+
+  #Poisson/GP 1 (covariates)
+  if  (!is.null(coco$cov) && coco$order == 1){
     calculate_scores <- function(t) {
       if (!is.null(coco$cov)){
         par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))])
@@ -123,8 +155,8 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   }# Poisson/GP 1
 
 
-  #Poisson/GP 2
-  if (coco$order == 2){
+  #Poisson/GP 2 (covariates)
+  if (!is.null(coco$cov) && coco$order == 2){
     calculate_scores <- function(t) {
       if (!is.null(coco$cov)){
         par <- c(lambdas[t], par_original[1:(length(par_original) - ncol(xreg))])
@@ -167,3 +199,44 @@ cocoScore <- function(coco, max_x = 50, julia=FALSE) {
   return(list_out)
 
 }# end function
+
+#' Scores of the no-covariate models, one density vector per history
+#'
+#' `x` are the observations x_t scored, `key` identifies the history of each
+#' x_t (equal keys, equal predictive pmf), and `dens(xmax, i)` returns the
+#' predictive pmf at 0..xmax for the history of observation i. For each
+#' distinct history the pmf is computed once, up to max(max_x, largest x of
+#' that history); its entries do not depend on xmax. Per observation this
+#' gives the same log score -log p(x), quadratic score -2 p(x) + sum p^2 and
+#' ranked probability score sum((F - 1{k >= x})^2) over k = 0..max_x as the
+#' former per-t loop; the latter is evaluated as
+#' sum(F^2) - 2 sum_{k >= x} F_k + #{k >= x} (rounding-level differences).
+#' Returns list(log, quad, rps), each in the order of `x`.
+#' @noRd
+coco_scores_by_history <- function(x, key, dens, max_x) {
+  n <- length(x)
+  log_s <- numeric(n)
+  quad_s <- numeric(n)
+  rps_s <- numeric(n)
+  groups <- split(seq_len(n), match(key, unique(key)))
+  for (ix in groups) {
+    xs <- x[ix]
+    dvec <- dens(max(max_x, xs), ix[1])
+    d_obs <- dvec[xs + 1]
+
+    log_s[ix] <- -log(d_obs)
+
+    norm_p <- sum(dvec[1:(max_x + 1)]^2)
+    quad_s[ix] <- -2 * d_obs + norm_p
+
+    cdf <- cumsum(dvec)[1:(max_x + 1)]
+    nk <- length(cdf)
+    s2 <- sum(cdf^2)
+    suf <- rev(cumsum(rev(cdf)))  # suf[j] = sum(cdf[j:nk])
+    r <- rep(s2, length(xs))
+    inside <- xs < nk
+    r[inside] <- s2 - 2 * suf[xs[inside] + 1] + (nk - xs[inside])
+    rps_s[ix] <- r
+  }
+  list(log = log_s, quad = quad_s, rps = rps_s)
+}
