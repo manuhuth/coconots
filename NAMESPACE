@@ -53,36 +53,40 @@ export(cocoSoc)
 export(installJuliaPackages)
 export(setJuliaSeed)
 importFrom(HMMpa,dgenpois)
-importFrom(JuliaConnectoR,juliaCall)
-importFrom(JuliaConnectoR,juliaEval)
-importFrom(JuliaConnectoR,juliaGet)
-importFrom(JuliaConnectoR,juliaLet)
+importFrom(JuliaConnectoR,
+  juliaCall,
+  juliaEval,
+  juliaGet,
+  juliaLet
+)
 importFrom(Rcpp,sourceCpp)
 importFrom(forecast,Acf)
-importFrom(ggplot2,autoplot)
-importFrom(ggplot2,ggtitle)
-importFrom(ggplot2,theme_bw)
+importFrom(ggplot2,
+  autoplot,
+  ggtitle,
+  theme_bw
+)
 importFrom(matrixStats,rowQuantiles)
-importFrom(numDeriv,grad)
-importFrom(numDeriv,hessian)
-importFrom(stats,coef)
-importFrom(stats,constrOptim)
-importFrom(stats,extractAIC)
-importFrom(stats,fitted)
-importFrom(stats,glm)
-importFrom(stats,lm)
-importFrom(stats,logLik)
-importFrom(stats,na.omit)
-importFrom(stats,nobs)
-importFrom(stats,optim)
-importFrom(stats,pchisq)
-importFrom(stats,predict)
-importFrom(stats,qchisq)
-importFrom(stats,residuals)
-importFrom(stats,rpois)
-importFrom(stats,rstandard)
-importFrom(stats,runif)
-importFrom(stats,var)
-importFrom(stats,vcov)
+importFrom(stats,
+  coef,
+  constrOptim,
+  extractAIC,
+  fitted,
+  glm,
+  lm,
+  logLik,
+  na.omit,
+  nobs,
+  optim,
+  pchisq,
+  predict,
+  qchisq,
+  residuals,
+  rpois,
+  rstandard,
+  runif,
+  var,
+  vcov
+)
 importFrom(utils,head)
 useDynLib(coconots, .registration = TRUE)

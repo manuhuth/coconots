@@ -1,12 +1,11 @@
 #' @importFrom forecast Acf
 #' @importFrom stats glm lm constrOptim optim var na.omit
 #' @importFrom JuliaConnectoR juliaCall
-#' @importFrom numDeriv grad hessian
 cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-4,
                         outer.it = 500, outer.eps = 1e-10, optim_control = FALSE, constrained.optim = TRUE, b.beta = -10,
                         start = NULL, start.val.adjust = TRUE, method_optim= "Nelder-Mead",
                         replace.start.val = 1e-5, iteration.start.val = 0.99,
-                        method.hessian = "Richardson", julia_installed=FALSE, link_function="log", cores = 1, ...) {
+                        method.hessian = NULL, julia_installed=FALSE, link_function="log", cores = 1, ...) {
   start_time <- Sys.time()
 
   if (is.data.frame(data)) {
@@ -128,6 +127,12 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         }
       }
 
+      # derivatives of mlf by automatic differentiation (C++ dual numbers)
+      mlf_derivs <- function(par, data, deriv = 2L) {
+        coco_ad_derivs(par, data, type, 1, seasonality, xreg_matrix, link_function, deriv)
+      }
+      gradient <- function(par, data) mlf_derivs(par, data, 1L)$gradient
+
       if (constrained.optim == TRUE) {
         # constrained.optimaints
         ui <- rbind(c(1), c(-1))
@@ -145,7 +150,6 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
 
         # constrained.optimained optimization process
         if (method_optim == "BFGS") {
-          gradient <- function(par, data){return(numDeriv::grad(func=mlf, x=par, data=data))}
           fit <- stats::constrOptim(
             theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, #mu = mu,
             method = method_optim, control = optim_control,
@@ -159,7 +163,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
           hessian = FALSE
         )
         }
-        fit <- coco_polish_fit(fit, mlf, ui, ci, data = data)
+        fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
       } # end constrained.optim True
 
       if (constrained.optim == FALSE) {
@@ -184,19 +188,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       T <- length(data)
       likelihood <- -likelihoodGP1cov(pars[1], 0, pars[-1], T, seasonality[1], data, xreg_matrix, link_function)
 
-      h <- function(par) {
-        alpha <- par[1]
-        eta <- 0
-        vec_lambda <- par[-1]
-
-        T <- length(data)
-        mlef <- likelihoodGP1cov(alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
-        return(mlef)
-      } # end ml function
-
-
-      gra <- numDeriv::grad(func = h, x = pars, method = method.hessian)
-      hes <- numDeriv::hessian(func = h, x = pars, method = method.hessian)
+      derivs <- mlf_derivs(pars, data, 2L)
+      gra <- derivs$gradient
+      hes <- derivs$hessian
       inv_hes <- solve(hes)
       se <- diag(inv_hes)^0.5
       names(se) <- c("alpha", lambs)
@@ -286,6 +280,12 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         }
       }
 
+      # derivatives of mlf by automatic differentiation (C++ dual numbers)
+      mlf_derivs <- function(par, data, deriv = 2L) {
+        coco_ad_derivs(par, data, type, 1, seasonality, xreg_matrix, link_function, deriv)
+      }
+      gradient <- function(par, data) mlf_derivs(par, data, 1L)$gradient
+
       if (constrained.optim == TRUE) {
         # constrained.optimaints
         ui <- rbind(c(1, 0), c(-1, 0), c(0, 1), c(0, -1))
@@ -303,7 +303,6 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
 
         # constrained.optimained optimization process
         if (method_optim == "BFGS") {
-          gradient <- function(par, data){return(numDeriv::grad(func=mlf, x=par, data=data))}
           fit <- stats::constrOptim(
             theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, #mu = mu,
             method = method_optim, control = optim_control,
@@ -317,7 +316,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             hessian = FALSE
           )
         }
-        fit <- coco_polish_fit(fit, mlf, ui, ci, data = data)
+        fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
       } # constrained.optim True
 
       if (constrained.optim == FALSE) {
@@ -342,21 +341,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       T <- length(data)
       likelihood <- -likelihoodGP1cov(pars[1], pars[2], pars[-c(1, 2)], T, seasonality[1], data, xreg_matrix, link_function)
 
-      h <- function(par) {
-        alpha <- par[1]
-        eta <- par[2]
-        vec_lambda <- par[-(1:2)]
-
-        T <- length(data)
-        mlef <- likelihoodGP1cov(alpha, eta, vec_lambda, T, seasonality[1], data, xreg_matrix, link_function)
-        return(mlef)
-      } # end ml function
-
-
-
-
-      gra <- numDeriv::grad(func = h, x = pars, method = method.hessian)
-      hes <- numDeriv::hessian(func = h, x = pars, method = method.hessian)
+      derivs <- mlf_derivs(pars, data, 2L)
+      gra <- derivs$gradient
+      hes <- derivs$hessian
       inv_hes <- solve(hes)
       se <- diag(inv_hes)^0.5
       names(se) <- c("alpha", "eta", lambs)
@@ -484,6 +471,12 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
         }
       }
 
+      # derivatives of mlf by automatic differentiation (C++ dual numbers)
+      mlf_derivs <- function(par, data, deriv = 2L) {
+        coco_ad_derivs(par, data, type, 2, seasonality, xreg_matrix, link_function, deriv)
+      }
+      gradient <- function(par, data) mlf_derivs(par, data, 1L)$gradient
+
       if (constrained.optim == TRUE) {
         # constrained.optimaints
         ui <- rbind(c(-1, -1, -1), c(-2, 0, -1), c(1, 0, 0), c(0, 1, 0), c(0, 0, 1))
@@ -501,7 +494,6 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
 
         # constrained.optimained optimization process
         if (method_optim == "BFGS") {
-          gradient <- function(par, data){return(numDeriv::grad(func=mlf, x=par, data=data))}
           fit <- stats::constrOptim(
             theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, #mu = mu,
             method = method_optim, control = optim_control,
@@ -515,7 +507,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             hessian = FALSE
           )
         }
-        fit <- coco_polish_fit(fit, mlf, ui, ci, data = data)
+        fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
       } # end constrained.optim
 
       if (constrained.optim == FALSE) {
@@ -541,20 +533,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       likelihood <- -likelihoodGP2cov(pars[1], pars[2], pars[3], 0, pars[-c(1:3)], T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
 
 
-      h <- function(par) {
-        alpha1 <- par[1]
-        alpha2 <- par[2]
-        alpha3 <- par[3]
-        eta <- 0
-        vec_lambda <- par[-(1:3)]
-
-        T <- length(data)
-        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function, cores)
-        return(mlef)
-      } # end ml function
-
-      gra <- numDeriv::grad(func = h, x = pars, method = method.hessian)
-      hes <- numDeriv::hessian(func = h, x = pars, method = method.hessian)
+      derivs <- mlf_derivs(pars, data, 2L)
+      gra <- derivs$gradient
+      hes <- derivs$hessian
       inv_hes <- solve(hes)
       se <- diag(inv_hes)^0.5
       names(se) <- c("alpha1", "alpha2", "alpha3", lambs)
@@ -711,6 +692,12 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       }
 
 
+      # derivatives of mlf by automatic differentiation (C++ dual numbers)
+      mlf_derivs <- function(par, data, deriv = 2L) {
+        coco_ad_derivs(par, data, type, 2, seasonality, xreg_matrix, link_function, deriv)
+      }
+      gradient <- function(par, data) mlf_derivs(par, data, 1L)$gradient
+
       if (constrained.optim == TRUE) {
         # constrained.optimaints
         ui <- rbind(
@@ -730,7 +717,6 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
 
         # constrained.optimained optimization process
         if (method_optim == "BFGS") {
-          gradient <- function(par, data){return(numDeriv::grad(func=mlf, x=par, data=data))}
           fit <- stats::constrOptim(
             theta = sta, f = mlf, grad=gradient, ui = ui, ci = ci, data = data, #mu = mu,
             method = method_optim, control = optim_control,
@@ -744,7 +730,7 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
             hessian = FALSE
           )
         }
-        fit <- coco_polish_fit(fit, mlf, ui, ci, data = data)
+        fit <- coco_polish_fit(fit, mlf, ui, ci, gr = gradient, data = data)
       } # end constrained.optim True
 
       if (constrained.optim == FALSE) {
@@ -770,21 +756,9 @@ cocoReg_cov <- function(type, order, data, xreg, seasonality = c(1, 2), mu = 1e-
       likelihood <- -likelihoodGP2cov(pars[1], pars[2], pars[3], pars[4], pars[-c(1:4)], T, seasonality[1], seasonality[2], data, xreg_matrix, link_function)
 
 
-      h <- function(par) {
-        alpha1 <- par[1]
-        alpha2 <- par[2]
-        alpha3 <- par[3]
-        eta <- par[4]
-        vec_lambda <- par[-(1:4)]
-
-        T <- length(data)
-        mlef <- likelihoodGP2cov(alpha1, alpha2, alpha3, eta, vec_lambda, T, seasonality[1], seasonality[2], data, xreg_matrix, link_function, cores)
-
-        return(mlef)
-      } # end ml function
-
-      gra <- numDeriv::grad(func = h, x = pars, method = method.hessian)
-      hes <- numDeriv::hessian(func = h, x = pars, method = method.hessian)
+      derivs <- mlf_derivs(pars, data, 2L)
+      gra <- derivs$gradient
+      hes <- derivs$hessian
       inv_hes <- solve(hes)
       se <- diag(inv_hes)^0.5
       names(se) <- c("alpha1", "alpha2", "alpha3", "eta", lambs)

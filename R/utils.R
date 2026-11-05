@@ -150,8 +150,10 @@ coco_default_cores <- function() {
 #' large finite value outside the feasible region. The polished point is
 #' accepted only if it is feasible and lowers the objective `f` (the negative
 #' log-likelihood); otherwise, and on any error, `fit` is returned unchanged.
+#' `gr` (called like `f`) is the gradient of `f`; without it L-BFGS-B falls
+#' back to finite differences.
 #' @noRd
-coco_polish_fit <- function(fit, f, ui, ci, ..., margin = 1e-8) {
+coco_polish_fit <- function(fit, f, ui, ci, gr = NULL, ..., margin = 1e-8) {
   dots <- list(...)
   f_eval <- function(p) {
     v <- tryCatch(do.call(f, c(list(p), dots)), error = function(e) NA_real_)
@@ -194,6 +196,16 @@ coco_polish_fit <- function(fit, f, ui, ci, ..., margin = 1e-8) {
     v <- f_eval(p)
     if (is.finite(v)) v else penalty
   }
+  # gradient of obj: zero where obj is the constant penalty (infeasible p;
+  # a non-finite objective gives a non-finite gradient)
+  obj_gr <- if (is.null(gr)) NULL else function(p) {
+    zero <- rep(0, n_par)
+    if (!feasible(p)) {
+      return(zero)
+    }
+    g <- tryCatch(as.numeric(do.call(gr, c(list(p), dots))), error = function(e) NULL)
+    if (length(g) != n_par || any(!is.finite(g))) zero else g
+  }
 
   start <- pmin(pmax(par0, lower), upper)
   if (!feasible(start)) {
@@ -202,7 +214,7 @@ coco_polish_fit <- function(fit, f, ui, ci, ..., margin = 1e-8) {
 
   res <- tryCatch(
     stats::optim(
-      par = start, fn = obj, method = "L-BFGS-B",
+      par = start, fn = obj, gr = obj_gr, method = "L-BFGS-B",
       lower = lower, upper = upper,
       control = list(maxit = 1000, factr = 1e5, ndeps = rep(1e-6, n_par))
     ),
@@ -222,4 +234,20 @@ coco_polish_fit <- function(fit, f, ui, ci, ..., margin = 1e-8) {
     fit$value <- v
   }
   fit
+}
+
+#' Negative log-likelihood with derivatives by automatic differentiation
+#'
+#' Evaluates the objective `mlf` of cocoReg (the negative log-likelihood of
+#' the C++ likelihoods) together with its gradient (`deriv = 1`) or gradient
+#' and Hessian (`deriv = 2`) by forward-mode automatic differentiation with
+#' dual numbers (C++ `likelihoodAD()`). `par` is in the `coco$par` layout;
+#' `xreg` is the covariate matrix or NULL. Returns `list(value, gradient)`
+#' and, for `deriv = 2`, `hessian`.
+#' @noRd
+coco_ad_derivs <- function(par, data, type, order, seasonality, xreg = NULL,
+                           link_function = "log", deriv = 2L) {
+  likelihoodAD(as.numeric(par), as.integer(order), identical(type, "GP"), data,
+               as.integer(seasonality[1]), as.integer(seasonality[2]), xreg,
+               link_function, as.integer(deriv))
 }

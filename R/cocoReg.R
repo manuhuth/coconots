@@ -16,7 +16,7 @@
 #' @param method_optim character string indicating the optimization method to be used, currently only available in the R version. In the \proglang{julia} implementation this is by default the LBFGS algorithm
 #' @param replace.start.val numeric value indicating the value to replace any invalid starting values, currently only available in the \proglang{R} version
 #' @param iteration.start.val numeric value indicating the proportion of the interval to use as the new starting value, currently only available in the \proglang{R} version
-#' @param method.hessian character string indicating the method to be used to approximate the Hessian matrix, currently only available in the \proglang{R} version
+#' @param method.hessian deprecated and ignored. On both backends the gradient and the Hessian of the log-likelihood are computed by forward-mode automatic differentiation (dual numbers in the \proglang{R}/C++ version, ForwardDiff in the \proglang{julia} version).
 #' @param cores numeric indicating the number of threads used to evaluate the order-2 likelihood on the RCPP backend. Defaults to the number of physical cores minus one (capped at 2 while \code{_R_CHECK_LIMIT_CORES_} is set, e.g. during CRAN checks). Has no effect on order-1 models or the Julia backend. Results are identical for any number of threads.
 #' @param julia if TRUE, the model is estimated with \proglang{julia}. This can improve computational speed significantly since \proglang{julia} makes use of derivatives using autodiff. In this case, only \code{type}, \code{order}, \code{data}, \code{xreg}, and \code{start} are used as other inputs (default: FALSE).
 #' @param julia_installed if TRUE, the model \proglang{R} output will contain a \proglang{julia} compatible output element.
@@ -96,9 +96,13 @@ cocoReg <- function(type, order, data, xreg = NULL,
                     constrained.optim = TRUE, b.beta = -10,
                     start = NULL, start.val.adjust = TRUE, method_optim = "Nelder-Mead",
                     replace.start.val = 1e-5, iteration.start.val = 0.6,
-                    method.hessian = "Richardson", cores=NULL, julia=FALSE,
+                    method.hessian = NULL, cores=NULL, julia=FALSE,
                     julia_installed=FALSE, link_function="log") {
   seasonality <- c(1, 2) #will be used as argument in future versions
+
+  if (!is.null(method.hessian)) {
+    warning("'method.hessian' is deprecated and ignored: derivatives are computed by automatic differentiation.")
+  }
 
   if (is.null(cores)) {
     cores <- coco_default_cores()
