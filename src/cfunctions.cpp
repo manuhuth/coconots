@@ -1424,6 +1424,134 @@ inline int gp2_cdf_draw(LazyCdf& e, int y, int z, double u,
   }
 }
 
+// Per-t tables of the order-2 thinning distribution with covariates (same
+// math as gp2_zwerg / gp2_pyz, evaluated as in likelihoodGP2cov_impl):
+// univariate pmf tables by gp_pmf_fill and the w-sum
+//   W(m, n) = sum_{w=0}^{min(m,n)} q1[w] qL[m-w] qZ[n-w]
+// tabulated once per t for all histories (y, z) of the block, so that
+// zwerg(r | y, z) is a double sum over W (GP2ConvT::zwerg_upto). Tables
+// are sized to the largest y and z present at t; W row n holds only
+// m = 0..mz[n], with mz[n] the largest z of a history with y >= n (the
+// entries the histories present can read). Values agree with gp2_zwerg /
+// gp2_pyz up to floating-point rounding.
+struct GP2BootTabs {
+  GP2Params p;
+  double eta;
+  bool poisson;
+  int ecap, ld;
+  std::vector<double> q1, q2, q3, qL, qZ, W, A, zbuf, hbuf, eneg, epos;
+
+  GP2BootTabs() : eta(0.0), poisson(true), ecap(-1), ld(0) {}
+
+  void init_eta(double eta_) {
+    eta = eta_;
+    poisson = is_exact_zero(eta_);
+    ecap = -1;
+    eneg.clear();
+    epos.clear();
+  }
+
+  // eneg[i] = exp(-(i * eta)), epos[i] = exp(i * eta) for i = 0..min(n, GP_REC_MAX)
+  void ensure_exp(int n) {
+    n = std::min(n, GP_REC_MAX);
+    if (n <= ecap) return;
+    eneg.resize(static_cast<std::size_t>(n) + 1);
+    epos.resize(static_cast<std::size_t>(n) + 1);
+    for (int i = ecap + 1; i <= n; ++i) {
+      eneg[i] = exp(-(i * eta));
+      epos[i] = exp(i * eta);
+    }
+    ecap = n;
+  }
+
+  // mz must have maxy + 1 entries (non-increasing, mz[0] = maxz).
+  void build(const GP2Params& p_, int maxy, int maxz, const std::vector<int>& mz) {
+    p = p_;
+    ensure_exp(std::max(maxy, maxz));
+    gp_pmf_fill(q1, maxy, p.beta1, eta, poisson, eneg);
+    gp_pmf_fill(qZ, maxy, p.zeta, eta, poisson, eneg);
+    gp_pmf_fill(q2, maxz, p.beta2, eta, poisson, eneg);
+    gp_pmf_fill(q3, std::min(maxy, maxz), p.beta3, eta, poisson, eneg);
+    gp_pmf_fill(qL, maxz, p.lambda, eta, poisson, eneg);
+    ld = maxz + 1;
+    W.resize(static_cast<std::size_t>(maxy + 1) * static_cast<std::size_t>(ld));
+    A.resize(static_cast<std::size_t>(std::min(maxy, maxz)) + 1);
+    for (int n = 0; n <= maxy; ++n) {
+      const int mtop = mz[n];
+      if (mtop < 0) continue;
+      const int wtop = std::min(mtop, n);
+      for (int w = 0; w <= wtop; ++w) A[w] = q1[w] * qZ[n - w];
+      double* row = &W[static_cast<std::size_t>(n) * static_cast<std::size_t>(ld)];
+      for (int m = 0; m <= mtop; ++m) {
+        const int wmax = std::min(m, n);
+        double acc = 0.0;
+        for (int w = 0; w <= wmax; ++w) acc = acc + A[w] * qL[m - w];
+        row[m] = acc;
+      }
+    }
+  }
+
+  double pyz(int y, int z) {
+    return (std::max(y, z) <= GP_REC_MAX) ?
+      gp2_pyz_cov(y, z, p, poisson, epos, hbuf) : gp2_pyz(y, z, p);
+  }
+
+  // zbuf[r - rlo] = zwerg(r | y, z) for r = rlo..rhi, 0 <= rlo <= rhi <= y + z.
+  // Terms are those of gp2_zwerg: s in [0, min(y, z)], v in [0, y - s],
+  // k in [0, z - s], r = s + v + k, read at W(z - s - k, y - s - v).
+  void zwerg_range(int y, int z, int rlo, int rhi) {
+    zbuf.assign(static_cast<std::size_t>(rhi - rlo) + 1, 0.0);
+    const int smax = std::min(std::min(y, z), rhi);
+    for (int s = 0; s <= smax; ++s) {
+      const double a3 = q3[s];
+      const int vmax = std::min(y - s, rhi - s);
+      for (int v = 0; v <= vmax; ++v) {
+        const int klo = std::max(0, rlo - s - v);
+        const int khi = std::min(z - s, rhi - s - v);
+        if (klo > khi) continue;
+        const double a31 = a3 * q1[v];
+        const double* Wn = &W[static_cast<std::size_t>(y - s - v) * static_cast<std::size_t>(ld)];
+        const int base = s + v - rlo;  // may be negative; base + k >= 0
+        for (int k = klo; k <= khi; ++k) {
+          double& o = zbuf[static_cast<std::size_t>(base + k)];
+          o = o + a31 * q2[k] * Wn[z - s - k];
+        }
+      }
+    }
+  }
+};
+
+// gp2_cdf_draw with zwerg from GP2BootTabs (built for this t, covering
+// (y, z)). The cumulative table is extended in chunks of doubling length
+// (r = j..min(y + z, 2j - 1), at least 8 values), each value accumulated
+// as c[r] = c[r - 1] + zwerg(r) * pow(pyz, -1) like the former loop; the
+// stopping rule is unchanged.
+inline int gp2cov_cdf_draw(LazyCdf& e, int y, int z, double u, GP2BootTabs& bt) {
+  if (!e.ready) {
+    e.aux = pow(bt.pyz(y, z), -1);
+    e.c.clear();
+    e.ready = true;
+  }
+  const int rmax = y + z;
+  for (int j = 0; ; ++j) {
+    if (j == static_cast<int>(e.c.size())) {
+      if (j > rmax + 1) return rmax;
+      double prev = (j == 0) ? 0.0 : e.c[j - 1];
+      if (j > rmax) {
+        e.c.push_back(prev + 0.0 * e.aux);
+      } else {
+        const int rhi = std::min(rmax, j + std::max(j, 8) - 1);
+        bt.zwerg_range(y, z, j, rhi);
+        for (int r = j; r <= rhi; ++r) {
+          prev = prev + bt.zbuf[static_cast<std::size_t>(r - j)] * e.aux;
+          e.c.push_back(prev);
+        }
+      }
+    }
+    if (!(e.c[j] <= u)) return j;
+  }
+}
+
 // Thinning draw of order 1 without covariates (simGP1 loop); terms vanish
 // beyond r = y, where the former loop never terminated if c[y] <= u.
 inline int gp1_cdf_draw(LazyCdf& e, int y, double u, const GP1Tables& tb) {
@@ -1637,6 +1765,9 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
 
   GP2Params p2;
   GP2Tables tb2;
+  GP2BootTabs bt2;
+  bt2.init_eta(eta);
+  std::vector<int> mz;
   CdfStore store;
   GPInvCdf inv, inv_init;
 
@@ -1669,9 +1800,29 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
       const int ui = (order == 2) ? (t - N - 1) : (t - 1);
       const double lam = applyLink(rowInnerProduct(xreg, row, betas), link);
       const double psi = eta * (1 - alpha1) / lam;
+      bool conv = false;
       if (order == 2) {
         p2.init(lam, alpha1, alpha2, alpha3, eta);
-        tb2.init(p2);
+        // histories (y, z) = (d[t-2], d[t-3]) of the block at this t
+        int maxy = 0, maxz = 0;
+        for (int k = 0; k < nb; ++k) {
+          const int* d = &data[static_cast<std::size_t>(k) * size];
+          maxy = std::max(maxy, d[t - 2]);
+          maxz = std::max(maxz, d[t - 3]);
+        }
+        conv = static_cast<double>(maxy + 1) * (maxz + 1) <= GP2_CONV_MAX_ENTRIES;
+        if (conv) {
+          check_table_index(std::max(maxy, maxz));
+          mz.assign(static_cast<std::size_t>(maxy) + 1, -1);
+          for (int k = 0; k < nb; ++k) {
+            const int* d = &data[static_cast<std::size_t>(k) * size];
+            if (d[t - 3] > mz[d[t - 2]]) mz[d[t - 2]] = d[t - 3];
+          }
+          for (int n = maxy - 1; n >= 0; --n) mz[n] = std::max(mz[n], mz[n + 1]);
+          bt2.build(p2, maxy, maxz, mz);
+        } else {
+          tb2.init(p2);
+        }
       }
       store.clear();
       if (gp) inv.reset(lambdas[row], eta);
@@ -1689,10 +1840,14 @@ NumericMatrix bootAcfCov(int order, bool gp, double alpha1, double alpha2,
         } else {
           const int y = d[t - 2];
           const int z = d[t - 3];
-          tb2.ensure(std::max(y, z));
           LazyCdf* e = store.get(g_key(y, z));
           const std::size_t before = e->c.size();
-          r = gp2_cdf_draw(*e, y, z, u, p2, tb2);
+          if (conv) {
+            r = gp2cov_cdf_draw(*e, y, z, u, bt2);
+          } else {
+            tb2.ensure(std::max(y, z));
+            r = gp2_cdf_draw(*e, y, z, u, p2, tb2);
+          }
           store.account(e, before);
         }
         const double iv = innov[static_cast<std::size_t>(k) * n_innov + row];
