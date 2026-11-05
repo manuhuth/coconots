@@ -1038,3 +1038,155 @@ test_that("R and Julia order-2 log-likelihoods agree at alpha1 = alpha3 = 0", {
     expect_equal(lc_j, lc_r, tolerance = 1e-8)
   }
 })
+
+test_that("order-1 likelihood, densities, residuals and PIT are finite at alpha = 0 and alpha = 1", {
+  # The quasi-binomial thinning term g(r | y) contains
+  # alpha * pow(alpha + psi r, r - 1), which is 0 * Inf = NaN at alpha = 0 and
+  # r = 0, and (1 - alpha) * pow(1 - alpha + psi (y - r), y - r - 1), which is
+  # 0 * Inf = NaN at alpha = 1 (psi = 0) and r = y. The limit is the value just
+  # inside the boundary. At alpha = 1, P(x | y) = 0 for x < y, so the
+  # likelihood is compared on a nondecreasing series there. Gradients are
+  # compared with second-order one-sided finite differences into the
+  # parameter space.
+  fd_grad <- function(f, par, dir, h = 1e-6) {
+    # dir[i] = +1 / -1: one-sided difference upwards / downwards, 0: central
+    sapply(seq_along(par), function(i) {
+      e <- replace(numeric(length(par)), i, h)
+      if (dir[i] != 0) {
+        e <- dir[i] * e
+        dir[i] * (-3 * f(par) + 4 * f(par + e) - f(par + 2 * e)) / (2 * h)
+      } else {
+        (f(par + e) - f(par - e)) / (2 * h)
+      }
+    })
+  }
+
+  set.seed(20261111)
+  data <- cocoSim(order = 1, type = "GP", par = c(1.5, 0.3, 0.2), length = 150)
+  set.seed(20261112)
+  data_up <- cumsum(stats::rpois(150, 0.15))
+  length <- 150
+  cov <- cbind(sin(2 * pi / 25 * (1:length)), cos(2 * pi / 25 * (1:length)))
+  for (case in list(list(a = 0, a_in = 1e-12, d = 1, x = data),
+                    list(a = 1, a_in = 1 - 1e-12, d = -1, x = data_up))) {
+    idata <- as.integer(case$x)
+    for (eta in c(0, 0.2)) {
+      l0 <- coconots:::likelihoodGP1(1.5, case$a, eta, length, 1L, idata)
+      l1 <- coconots:::likelihoodGP1(1.5, case$a_in, eta, length, 1L, idata)
+      expect_true(is.finite(l0))
+      expect_equal(l0, l1, tolerance = 1e-8)
+      for (y in c(0L, 1L, 4L, 9L)) {
+        d0 <- coconots:::dGP1h_vec(15L, y, 1.5, case$a, eta)
+        d1 <- coconots:::dGP1h_vec(15L, y, 1.5, case$a_in, eta)
+        expect_true(all(is.finite(d0)))
+        expect_equal(d0, d1, tolerance = 1e-8)
+        h0 <- vapply(0:15, function(x) coconots:::dGP1h(x, y, 1.5, case$a, eta), 0)
+        expect_equal(h0, d0, tolerance = 1e-12)
+      }
+      par0 <- c(1.5, case$a, eta)
+      ad <- coconots:::likelihoodAD(par0, 1L, TRUE, idata, 1L, 1L, NULL, "log", 2L)
+      expect_equal(ad$value, l0, tolerance = 1e-10)
+      expect_true(all(is.finite(ad$gradient)))
+      expect_true(all(is.finite(ad$hessian)))
+      f <- function(p) coconots:::likelihoodGP1(p[1], p[2], p[3], length, 1L, idata)
+      dir <- c(0, case$d, if (eta == 0) 1 else 0)
+      expect_equal(as.numeric(ad$gradient), fd_grad(f, par0, dir), tolerance = 1e-5)
+
+      # covariates (likelihoodGP1cov)
+      lc0 <- coconots:::likelihoodGP1cov(case$a, eta, c(0.4, -0.2), length, 1L, idata,
+                                         cov, "log")
+      lc1 <- coconots:::likelihoodGP1cov(case$a_in, eta, c(0.4, -0.2), length, 1L, idata,
+                                         cov, "log")
+      expect_true(is.finite(lc0))
+      expect_equal(lc0, lc1, tolerance = 1e-8)
+      parc0 <- c(case$a, eta, 0.4, -0.2)
+      adc <- coconots:::likelihoodAD(parc0, 1L, TRUE, idata, 1L, 1L, cov, "log", 2L)
+      expect_equal(adc$value, lc0, tolerance = 1e-10)
+      expect_true(all(is.finite(adc$gradient)))
+      expect_true(all(is.finite(adc$hessian)))
+      fc <- function(p) coconots:::likelihoodGP1cov(p[1], p[2], p[3:4], length, 1L, idata,
+                                                    cov, "log")
+      dirc <- c(case$d, if (eta == 0) 1 else 0, 0, 0)
+      expect_equal(as.numeric(adc$gradient), fd_grad(fc, parc0, dirc), tolerance = 1e-5)
+    }
+  }
+
+  # simulation at the boundary: alpha = 0 thins every count to 0, alpha = 1
+  # keeps it (X_t = X_{t-1} + innovation)
+  set.seed(20261113)
+  u <- stats::runif(30)
+  inn <- as.integer(stats::rpois(30, 1.5))
+  init <- c(5L, integer(29))
+  keep <- as.integer(5L + c(0L, cumsum(inn[-1])))
+  expect_equal(coconots:::simGP1(1.5, 0, 0.2, 30L, 1L, 1L, init, u, inn)[-1], inn[-1])
+  expect_equal(coconots:::simGP1(1.5, 1, 0.2, 30L, 1L, 1L, init, u, inn), keep)
+  expect_equal(coconots:::simGP1cov(0, 0.2, c(0.4, -0.2), 30L, 1L, 1L, init, cov[1:29, ],
+                                    u, inn[-1], "log")[-1], inn[-1])
+  expect_equal(coconots:::simGP1cov(1, 0.2, c(0.4, -0.2), 30L, 1L, 1L, init, cov[1:29, ],
+                                    u, inn[-1], "log"), keep)
+
+  # post-processing on fits moved to alpha = 0 and alpha = 1 (for cocoPit at
+  # alpha = 1 on a nondecreasing series, where every observed count has
+  # positive conditional probability)
+  set.seed(20261114)
+  datac <- cocoSim(order = 1, type = "GP", par = c(0.3, 0.2, 0.4, -0.2), xreg = cov,
+                   length = length)
+  fit <- cocoReg(order = 1, type = "GP", data = data)
+  fitc <- cocoReg(order = 1, type = "GP", data = datac, xreg = cov)
+  for (case in list(list(fit = fit, i = 2), list(fit = fitc, i = 1))) {
+    for (b in list(list(a = 0, a_in = 1e-12, ts = NULL),
+                   list(a = 1, a_in = 1 - 1e-12, ts = data_up))) {
+      fit0 <- case$fit
+      fit0$par[case$i] <- b$a
+      fit1 <- case$fit
+      fit1$par[case$i] <- b$a_in
+      r0 <- cocoResid(fit0)
+      r1 <- cocoResid(fit1)
+      expect_true(all(is.finite(r0$residuals)))
+      expect_equal(r0$residuals, r1$residuals, tolerance = 1e-8)
+      expect_equal(r0$cond.var, r1$cond.var, tolerance = 1e-8)
+      if (!is.null(b$ts)) {
+        fit0$ts <- b$ts
+        fit1$ts <- b$ts
+      }
+      pit0 <- cocoPit(fit0, J = 10)
+      pit1 <- cocoPit(fit1, J = 10)
+      expect_true(all(is.finite(pit0$`PIT values`)))
+      expect_equal(as.numeric(pit0$`PIT values`), as.numeric(pit1$`PIT values`),
+                   tolerance = 1e-8)
+      expect_equal(pit0$p_value, pit1$p_value, tolerance = 1e-8)
+    }
+  }
+})
+
+test_that("R and Julia order-1 log-likelihoods agree at alpha = 0 and alpha = 1", {
+  skip_on_cran()
+  skip_if_no_julia()
+  coconots:::addJuliaFunctions()
+  set.seed(20261115)
+  data <- cocoSim(order = 1, type = "GP", par = c(1.5, 0.3, 0.2), length = 150)
+  set.seed(20261116)
+  data_up <- cumsum(stats::rpois(150, 0.15))
+  length <- 150
+  cov <- cbind(sin(2 * pi / 25 * (1:length)), cos(2 * pi / 25 * (1:length)))
+  lambdas <- as.numeric(exp(cov %*% c(0.4, -0.2)))
+  for (case in list(list(a = 0, x = data), list(a = 1, x = data_up))) {
+    for (eta in c(0, 0.2)) {
+      l_r <- coconots:::likelihoodGP1(1.5, case$a, eta, length, 1L, as.integer(case$x))
+      l_j <- as.numeric(JuliaConnectoR::juliaLet(
+        'Coconots.compute_negative_log_likelihood_GP1(1.5, alpha, eta, Int.(data))',
+        alpha = case$a, eta = eta, data = as.numeric(case$x)))
+      expect_true(is.finite(l_r))
+      expect_true(is.finite(l_j))
+      expect_equal(l_j, l_r, tolerance = 1e-8)
+      lc_r <- coconots:::likelihoodGP1cov(case$a, eta, c(0.4, -0.2), length, 1L,
+                                          as.integer(case$x), cov, "log")
+      lc_j <- as.numeric(JuliaConnectoR::juliaLet(
+        'Coconots.compute_negative_log_likelihood_GP1(lambdas, alpha, eta, Int.(data))',
+        lambdas = lambdas, alpha = case$a, eta = eta, data = as.numeric(case$x)))
+      expect_true(is.finite(lc_r))
+      expect_true(is.finite(lc_j))
+      expect_equal(lc_j, lc_r, tolerance = 1e-8)
+    }
+  }
+})

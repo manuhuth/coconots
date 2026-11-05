@@ -159,8 +159,68 @@ void parallel_for(int n, int nthreads, F f) {
   }
 }
 
+// True iff x and (for dual numbers) all its partials are exactly zero; for
+// eta this identifies the Poisson model in every AD instantiation.
+inline bool is_exact_zero(double x) { return x == 0.0; }
+
+template <class T, int N>
+inline bool is_exact_zero(const coco_ad::Dual<T, N>& x) {
+  if (!is_exact_zero(x.v)) return false;
+  for (int i = 0; i < N; ++i) {
+    if (!is_exact_zero(x.d[i])) return false;
+  }
+  return true;
+}
+
+// True iff the value of x (for dual numbers: the innermost primal value) is
+// exactly zero, whatever its partials.
+inline bool is_zero_value(double x) { return x == 0.0; }
+
+template <class T, int N>
+inline bool is_zero_value(const coco_ad::Dual<T, N>& x) {
+  return is_zero_value(x.v);
+}
+
 // ------------------------------------------------------------------ order 1
 //
+// Quasi-binomial thinning factors at alpha on a boundary of [0, 1].
+// g(r | y) = y! / (y-r)! / r! * alpha (1-alpha) pow(alpha + psi r, r-1)
+//            * pow(1 - alpha + psi (y-r), y-r-1) / pow(1 + psi y, y-1).
+// At alpha = 0 the r = 0 factor alpha * pow(alpha, -1) is 0 * Inf = NaN; at
+// alpha = 1 (psi = 0) the r = y factor (1-alpha) * pow(1-alpha, -1) is
+// 0 * Inf = NaN. Both factors equal 1 identically in the parameters for
+// alpha in (0, 1) (psi * 0 is exactly 0), so their value at the boundary is
+// the limit 1 with zero partials, which dual numbers then carry exactly.
+// The entry points branch on gp1_alpha_on_bound (exact-zero value of alpha
+// or 1 - alpha) and keep their former arithmetic otherwise.
+template <class S>
+inline bool gp1_alpha_on_bound(const S& alpha) {
+  return is_zero_value(alpha) || is_zero_value(1 - alpha);
+}
+
+// alpha * pow(alpha + psi r, r-1), the limit 1 at r = 0 and alpha = 0.
+template <class S>
+inline S gp1_thin_a(const S& alpha, const S& psi, int r) {
+  if (r == 0 && is_zero_value(alpha)) return S(1.0);
+  return alpha * pow(alpha + psi * r, r - 1);
+}
+
+// (1-alpha) * pow(1 - alpha + psi k, k-1), the limit 1 at k = 0 and alpha = 1.
+template <class S>
+inline S gp1_thin_b(const S& alpha, const S& psi, int k) {
+  if (k == 0 && is_zero_value(1 - alpha)) return S(1.0);
+  return (1 - alpha) * pow(1 - alpha + psi * k, k - 1);
+}
+
+// y! / (y-r)! / r! * alpha (1-alpha) pow(alpha + psi r, r-1)
+// * pow(1 - alpha + psi (y-r), y-r-1) for alpha on a boundary (g(r | y)
+// without the normalizer pow(1 + psi y, y-1)).
+template <class S>
+inline S gp1_thin_bound(int r, int y, const S& alpha, const S& psi) {
+  return factorial(y) / factorial(y - r) / factorial(r) * gp1_thin_a(alpha, psi, r) *
+    gp1_thin_b(alpha, psi, y - r);
+}
+
 // P(x | y) = sum_r  QuasiBinomial(r; y) * GP(x - r; lambda, eta)
 //
 // The r-invariant factors pow(alpha+psi*r, r-1), pow(1-alpha+psi*k, k-1),
@@ -196,10 +256,25 @@ struct GP1TablesT {
 };
 typedef GP1TablesT<double> GP1Tables;
 
+// gp1_density for alpha on a boundary (gp1_thin_bound instead of the
+// tabulated thinning factors, whose index-0 entries are pow(0, -1) there).
+template <class S>
+inline S gp1_density_bound(int x, int y, const GP1TablesT<S>& tb) {
+  const int minxy = std::min(x, y);
+  S nain = 0.0;
+  for (int r = 0; r <= minxy; ++r) {
+    nain = nain + gp1_thin_bound(r, y, tb.alpha, tb.psi) / tb.denom[y] *
+      tb.lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
+  }
+  return nain;
+}
+
 // Transition density P(x | y); term order and operation chain match the
-// original inline expression exactly.
+// original inline expression exactly. With alpha on a boundary,
+// gp1_density_bound.
 template <class S>
 inline S gp1_density(int x, int y, const GP1TablesT<S>& tb) {
+  if (gp1_alpha_on_bound(tb.alpha)) return gp1_density_bound(x, y, tb);
   const S& alpha = tb.alpha;
   const S& lambda = tb.lambda;
   const int minxy = std::min(x, y);
@@ -210,28 +285,6 @@ inline S gp1_density(int x, int y, const GP1TablesT<S>& tb) {
       lambda * tb.powL[x - r] * tb.expL[x - r] / factorial(x - r);
   }
   return nain;
-}
-
-// True iff x and (for dual numbers) all its partials are exactly zero; for
-// eta this identifies the Poisson model in every AD instantiation.
-inline bool is_exact_zero(double x) { return x == 0.0; }
-
-template <class T, int N>
-inline bool is_exact_zero(const coco_ad::Dual<T, N>& x) {
-  if (!is_exact_zero(x.v)) return false;
-  for (int i = 0; i < N; ++i) {
-    if (!is_exact_zero(x.d[i])) return false;
-  }
-  return true;
-}
-
-// True iff the value of x (for dual numbers: the innermost primal value) is
-// exactly zero, whatever its partials.
-inline bool is_zero_value(double x) { return x == 0.0; }
-
-template <class T, int N>
-inline bool is_zero_value(const coco_ad::Dual<T, N>& x) {
-  return is_zero_value(x.v);
 }
 
 // ------------------------------------------------------------------ order 2
@@ -945,8 +998,15 @@ S likelihoodGP1_impl(const S& lambda, const S& alpha, const S& eta, int T, int s
   std::vector<S> powA(static_cast<std::size_t>(maxr + 1));
   std::vector<S> powB(static_cast<std::size_t>(maxy + 1));
   std::vector<S> L;
-  for (int i = 0; i <= maxr; ++i) powA[i] = a1a * pow(alpha + psi * i, i - 1);
-  for (int i = 0; i <= maxy; ++i) powB[i] = pow(1 - alpha + psi * i, i - 1);
+  if (gp1_alpha_on_bound(alpha)) {
+    // K[r] = y! / (y-r)! / r! * powA[r] * powB[y-r] with the factors of
+    // gp1_thin_bound (limit 1 instead of 0 * Inf at index 0)
+    for (int i = 0; i <= maxr; ++i) powA[i] = gp1_thin_a(alpha, psi, i);
+    for (int i = 0; i <= maxy; ++i) powB[i] = gp1_thin_b(alpha, psi, i);
+  } else {
+    for (int i = 0; i <= maxr; ++i) powA[i] = a1a * pow(alpha + psi * i, i - 1);
+    for (int i = 0; i <= maxy; ++i) powB[i] = pow(1 - alpha + psi * i, i - 1);
+  }
   if (maxx >= 0) {
     if (is_exact_zero(eta)) {
       const std::vector<S> none;
@@ -1097,6 +1157,7 @@ S likelihoodGP1cov_impl(const S& alpha, const S& eta, const V& lambdas, int T, i
                         const std::vector<int>& data, const NumericMatrix& xreg,
                         LinkFunction link)
 {
+  const bool bound = gp1_alpha_on_bound(alpha);
   S mlef = 0.0;
   for (int t = seas + 1; t <= T; ++t) {
     const int x = data[t - 1];
@@ -1110,6 +1171,11 @@ S likelihoodGP1cov_impl(const S& alpha, const S& eta, const V& lambdas, int T, i
     const int minxy = std::min(x, y);
     S nain = 0.0;
     for (int r = 0; r <= minxy; ++r) {
+      if (bound) {
+        nain = nain + gp1_thin_bound(r, y, alpha, psi) / denom *
+          lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
+        continue;
+      }
       nain = nain + factorial(y) / factorial(y - r) / factorial(r) * alpha * (1 - alpha) *
         pow(alpha + psi * r, r - 1) * pow(1 - alpha + psi * (y - r), y - r - 1) / denom *
         lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
@@ -1340,6 +1406,7 @@ std::vector<int> simGP1(double lambda, double alpha, double eta, int T, int N,
   const double psi = eta * (1 - alpha) / lambda;
   GP1Tables tb;
   tb.init(lambda, alpha, eta, psi);
+  const bool bound = gp1_alpha_on_bound(alpha);
 
   for (int t = N + 1; t <= T; ++t) {
     const int y = data[t - seas - 1];
@@ -1352,8 +1419,12 @@ std::vector<int> simGP1(double lambda, double alpha, double eta, int T, int N,
     int r = 0;
     double nain = 0.0;
     while (nain <= unif && r <= y) {
-      nain = nain + factorial(y) / factorial(y - r) / factorial(r) * tb.alpha * (1 - tb.alpha) *
-        tb.powA[r] * tb.powB[y - r] / tb.denom[y];
+      if (bound) {
+        nain = nain + gp1_thin_bound(r, y, tb.alpha, tb.psi) / tb.denom[y];
+      } else {
+        nain = nain + factorial(y) / factorial(y - r) / factorial(r) * tb.alpha * (1 - tb.alpha) *
+          tb.powA[r] * tb.powB[y - r] / tb.denom[y];
+      }
       r = r + 1;
     }
     data[t - 1] = r - 1 + innovations[t - 1];
@@ -1424,8 +1495,15 @@ double dGP1h(int x, int y, double lambda, double alpha, double eta)
   const double denom = (y >= 0) ? pow(1 + psi * y, y - 1) : 0.0;
   const int minxy = std::min(x, y);
 
+  const bool bound = gp1_alpha_on_bound(alpha);
+
   double nain = 0.0;
   for (int r = 0; r <= minxy; ++r) {
+    if (bound) {
+      nain = nain + gp1_thin_bound(r, y, alpha, psi) / denom *
+        lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
+      continue;
+    }
     nain = nain + factorial(y) / factorial(y - r) / factorial(r) * alpha * (1 - alpha) *
       pow(alpha + psi * r, r - 1) * pow(1 - alpha + psi * (y - r), y - r - 1) / denom *
       lambda * pow(lambda + (x - r) * eta, x - r - 1) * exp(-lambda - (x - r) * eta) / factorial(x - r);
@@ -1554,6 +1632,7 @@ std::vector<int> simGP1cov(double alpha, double eta,
                            const std::vector<int>& innovations, std::string link_function)
 {
   const LinkFunction link = parseLinkFunction(link_function);
+  const bool bound = gp1_alpha_on_bound(alpha);
 
   for (int t = N + 1; t <= T; ++t) {
     const int y = data[t - seas - 1];
@@ -1570,8 +1649,12 @@ std::vector<int> simGP1cov(double alpha, double eta,
     int r = 0;
     double nain = 0.0;
     while (nain <= unif && r <= y) {
-      nain = nain + factorial(y) / factorial(y - r) / factorial(r) * alpha * (1 - alpha) *
-        pow(alpha + psi * r, r - 1) * pow(1 - alpha + psi * (y - r), y - r - 1) / denom;
+      if (bound) {
+        nain = nain + gp1_thin_bound(r, y, alpha, psi) / denom;
+      } else {
+        nain = nain + factorial(y) / factorial(y - r) / factorial(r) * alpha * (1 - alpha) *
+          pow(alpha + psi * r, r - 1) * pow(1 - alpha + psi * (y - r), y - r - 1) / denom;
+      }
       r = r + 1;
     }
     data[t - 1] = r - 1 + innovations[t - N - 1];
@@ -1958,8 +2041,12 @@ inline int gp1_cdf_draw(LazyCdf& e, int y, double u, const GP1Tables& tb) {
     if (j == static_cast<int>(e.c.size())) {
       if (j > y) return y;
       const double prev = (j == 0) ? 0.0 : e.c[j - 1];
-      e.c.push_back(prev + factorial(y) / factorial(y - j) / factorial(j) * tb.alpha *
-                    (1 - tb.alpha) * tb.powA[j] * tb.powB[y - j] / tb.denom[y]);
+      if (gp1_alpha_on_bound(tb.alpha)) {
+        e.c.push_back(prev + gp1_thin_bound(j, y, tb.alpha, tb.psi) / tb.denom[y]);
+      } else {
+        e.c.push_back(prev + factorial(y) / factorial(y - j) / factorial(j) * tb.alpha *
+                      (1 - tb.alpha) * tb.powA[j] * tb.powB[y - j] / tb.denom[y]);
+      }
     }
     if (!(e.c[j] <= u)) return j;
   }
@@ -1976,8 +2063,12 @@ inline int gp1cov_cdf_draw(LazyCdf& e, int y, double u, double alpha, double psi
     if (j == static_cast<int>(e.c.size())) {
       if (j > y) return y;
       const double prev = (j == 0) ? 0.0 : e.c[j - 1];
-      e.c.push_back(prev + factorial(y) / factorial(y - j) / factorial(j) * alpha * (1 - alpha) *
-                    pow(alpha + psi * j, j - 1) * pow(1 - alpha + psi * (y - j), y - j - 1) / e.aux);
+      if (gp1_alpha_on_bound(alpha)) {
+        e.c.push_back(prev + gp1_thin_bound(j, y, alpha, psi) / e.aux);
+      } else {
+        e.c.push_back(prev + factorial(y) / factorial(y - j) / factorial(j) * alpha * (1 - alpha) *
+                      pow(alpha + psi * j, j - 1) * pow(1 - alpha + psi * (y - j), y - j - 1) / e.aux);
+      }
     }
     if (!(e.c[j] <= u)) return j;
   }
