@@ -11,64 +11,64 @@ procedures for likelihood based inference and probabilistic forecasting
 are provided as well as useful tools for model validation and
 diagnostics.
 
-![alt
-text](https://github.com/manuhuth/coconots/blob/main/man/figures/functionality.png?raw=true)
-
-alt text
+![Overview of the functionality of
+coconots](reference/figures/functionality.png)
 
 ## Details
 
-The package allows simulation of convolution-closed count time series
-models with the cocoSim function. Model fitting is performed with the
-cocoReg routine. By passing a cocoReg-type object, cocoForecast computes
-the one-step ahead forecasting distribution. cocoBoot, cocoPit,
-cocoScore, and cocoResid provide routines for model assessment. The main
-usage of the package is illustrated within the cocoReg function chapter.
-For more details and examples of the functions see the respective
-sections within this vignette.
+[`cocoSim()`](https://manuhuth.github.io/coconots/reference/cocoSim.md)
+simulates convolution-closed count time series models and
+[`cocoReg()`](https://manuhuth.github.io/coconots/reference/cocoReg.md)
+fits them. The S3 method
+[`predict()`](https://rdrr.io/r/stats/predict.html) computes k-step
+ahead forecasting distributions for a fitted model.
+[`cocoBoot()`](https://manuhuth.github.io/coconots/reference/cocoBoot.md),
+[`cocoPit()`](https://manuhuth.github.io/coconots/reference/cocoPit.md),
+[`cocoScore()`](https://manuhuth.github.io/coconots/reference/cocoScore.md),
+[`cocoSoc()`](https://manuhuth.github.io/coconots/reference/cocoSoc.md)
+and
+[`cocoResid()`](https://manuhuth.github.io/coconots/reference/cocoResid.md)
+provide routines for model assessment. The main usage of the package is
+illustrated in the help page of
+[`cocoReg()`](https://manuhuth.github.io/coconots/reference/cocoReg.md).
+Further examples are given in the help pages of the other functions.
 
-By default, our functions make use of an RCPP implementation. However,
-users with a running Julia installation can choose to call Julia in the
-background to run their functions by specifying it in the R function
-input. This option is particularly useful for the regression (), where a
-complex likelihood function must be numerically evaluated to obtain
-parameter estimates. By leveraging Julia’s automatic differentiation
-capabilities, our functions can take advantage of numerical gradients,
-leading to increased numerical stability and faster convergence.
+By default, the functions use a C++ implementation via Rcpp. Users with
+a Julia installation can instead run them in Julia by setting the
+argument `julia = TRUE`. This is most useful for
+[`cocoReg()`](https://manuhuth.github.io/coconots/reference/cocoReg.md),
+where the likelihood is evaluated numerically: the Julia backend uses
+automatic differentiation to obtain exact gradients, which can improve
+numerical stability and speed of convergence for complex models.
 
-Despite these advantages, we found that both the Julia and RCPP
-implementations produced qualitatively similar results in all our tests.
-As a result, we have decided to use the RCPP implementation as the
-default option to make our package accessible to non-Julia users.
+Both backends gave qualitatively similar results in our tests. Rcpp is
+therefore the default, so that the package works without Julia.
 
 ## Model
 
-![alt
-text](https://github.com/manuhuth/coconots/blob/main/man/figures/dgp.png?raw=true)
-
-alt text
+![Definition of the model](reference/figures/dgp.png)
 
 ## Installation
 
-You can install the latest stable version of coconots from
-[CRAN](https://cran.r-project.org/) with:
+The stable version of coconots is available from
+[CRAN](https://cran.r-project.org/package=coconots):
 
 ``` r
 
 install.packages("coconots")
 ```
 
-or the latest version from GitHub with:
+The development version can be installed from GitHub:
 
 ``` r
 
 devtools::install_github("manuhuth/coconots")
 ```
 
-## Example using RCPP implementation
+## Example using the Rcpp implementation
 
-Coconots runs on an RCPP and a Julia implementation. RCPP is the
-default. The regression results can be summarized using the summary
+The Rcpp implementation is the default. The regression results can be
+summarized using the [`summary()`](https://rdrr.io/r/base/summary.html)
 function.
 
 ``` r
@@ -81,26 +81,27 @@ set.seed(12345)
 data <- cocoSim(order = 1, type = "GP", par = pars,
                 length = length)
 coco <- cocoReg(order = 1, type = "GP", data = data)
-#> Registered S3 method overwritten by 'quantmod':
-#>   method            from
-#>   as.zoo.data.frame zoo
 summary(coco)
 #> Coefficients:
-#>          Estimate   Std. Error         t
-#> lambda     1.0548       0.0930   11.3367
-#> alpha      0.4201       0.0373   11.2508
-#> eta        0.1609       0.0329    4.8958
+#>          Estimate   Std..Error         t
+#> lambda     1.0546       0.0930   11.3368
+#> alpha      0.4202       0.0373   11.2541
+#> eta        0.1609       0.0329    4.8961
 #> 
-#> Type: GP 
-#> Order: 1 
+#> Type: GP
+#> Order: 1
 #> 
 #> Log-likelihood: -885.012
+#> AIC: 1776.024
+#> BIC: 1788.6679
 ```
 
-## Example using Julia implementation
+## Example using the Julia implementation
 
-In order to use the Julia functions, you need a running version of Julia
-installed. You need to install the relevant Julia packages once.
+The Julia functions require a working Julia installation.
+[`installJuliaPackages()`](https://manuhuth.github.io/coconots/reference/installJuliaPackages.md)
+installs the Julia package Coconots.jl (version 0.2.0 or higher) and
+updates an older installed version. It needs to be run once.
 
 ``` r
 
@@ -108,9 +109,10 @@ coconots::installJuliaPackages()
 #> Starting Julia ...
 ```
 
-If installed, the Julia implementation can be addressed by setting the
-julia argument to true. In this case we need to set the seed within the
-simulation function in order to pass it to Julia.
+The Julia implementation is used by setting the argument `julia = TRUE`.
+The seed of the Julia random number generator is set via `julia_seed`,
+since [`set.seed()`](https://rdrr.io/r/base/Random.html) does not affect
+Julia.
 
 ``` r
 
@@ -125,11 +127,11 @@ coco <- cocoReg(order = 2, type = "Poisson", data = data, julia = TRUE)
 
 ## Model assessment
 
-We provide different tools for model assessment. One can even use the
-RCPP implementation for the regression and do model assessment with the
-Julia implementation. If this is desired, one needs to specify in the
-output of the regression that it should be Julia compatible. Note that
-this is not necessary if the Julia option in the regression is true.
+The package provides several tools for model assessment. A model fitted
+with the Rcpp implementation can also be assessed with the Julia
+implementation. For this, the fit must be created with
+`julia_installed = TRUE`, which stores a Julia-compatible copy of the
+fit. This is not necessary if the model was fitted with `julia = TRUE`.
 
 ``` r
 
@@ -146,12 +148,26 @@ coco <- cocoReg(order = 1, type = "Poisson", data = data,
 #> [1] 1.501935
 #> 
 #> $quad.score
-#> [1] -0.2532058
+#> [1] -0.2532048
 #> 
 #> $rps.score
-#> [1] 0.619761
+#> [1] 0.6197608
+#> 
+#> $aic
+#> [1] 1502.931
+#> 
+#> $bic
+#> [1] 1511.36
 pit <- cocoPit(coco, julia = TRUE)
 plot(pit)
+#> Warning: `aes_string()` was deprecated in ggplot2 3.0.0.
+#> ℹ Please use tidy evaluation idioms with `aes()`.
+#> ℹ See also `vignette("ggplot2-in-packages")` for more information.
+#> ℹ The deprecated feature was likely used in the coconots package.
+#>   Please report the issue at <https://github.com/manuhuth/coconots/issues>.
+#> This warning is displayed once per session.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
 ```
 
 ![](reference/figures/README-example_assessment-1.png)
@@ -187,10 +203,11 @@ plot(resid)
 
 ![](reference/figures/README-example_assessment-5.png)
 
-## Compare Models
+## Compare models
 
-Model selection is facilitated by providing quick and easy access to the
-scoring metrics.
+[`cocoSoc()`](https://manuhuth.github.io/coconots/reference/cocoSoc.md)
+fits the Poisson and generalized Poisson models of order 1 and 2 to the
+same data and tabulates the scoring rules for model selection.
 
 ``` r
 
@@ -200,7 +217,7 @@ length <- 500
 pars <- c(1.3, 0.25, 0.03, 0.2, 0.3)
 set.seed(12345)
 data <- cocoSim(order = 2, type = "GP", par = pars, length = length)
-soc <- cocoSoc(data, julia=T)
+soc <- cocoSoc(data, julia = TRUE)
 #> [1] "Computing PAR1 model."
 #> [1] "Computing PAR2 model."
 #> [1] "Computing GP1 model."

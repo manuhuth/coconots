@@ -53,36 +53,33 @@
 
 <p>📖 <strong>Documentation:</strong> <a href="https://manuhuth.github.io/coconots/" class="uri">https://manuhuth.github.io/coconots/</a></p>
 <p>Functions to analyse time series consisting of low counts are provided. The focus in the current version is on practical models that can capture first and higher-order dependence based on the work of Joe (1996). Both equidispersed and overdispersed marginal distributions of data can be modelled. Regression effects can be included. Fast and efficient procedures for likelihood based inference and probabilistic forecasting are provided as well as useful tools for model validation and diagnostics.</p>
-<figure><img src="https://github.com/manuhuth/coconots/blob/main/man/figures/functionality.png?raw=true" alt="alt text"><figcaption aria-hidden="true">
-alt text
-</figcaption></figure><div class="section level2">
+<p><img src="reference/figures/functionality.png" alt="Overview of the functionality of coconots" width="70%"></p>
+<div class="section level2">
 <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a>
 </h2>
-<p>The package allows simulation of convolution-closed count time series models with the cocoSim function. Model fitting is performed with the cocoReg routine. By passing a cocoReg-type object, cocoForecast computes the one-step ahead forecasting distribution. cocoBoot, cocoPit, cocoScore, and cocoResid provide routines for model assessment. The main usage of the package is illustrated within the cocoReg function chapter. For more details and examples of the functions see the respective sections within this vignette.</p>
-<p>By default, our functions make use of an RCPP implementation. However, users with a running Julia installation can choose to call Julia in the background to run their functions by specifying it in the R function input. This option is particularly useful for the regression (), where a complex likelihood function must be numerically evaluated to obtain parameter estimates. By leveraging Julia’s automatic differentiation capabilities, our functions can take advantage of numerical gradients, leading to increased numerical stability and faster convergence.</p>
-<p>Despite these advantages, we found that both the Julia and RCPP implementations produced qualitatively similar results in all our tests. As a result, we have decided to use the RCPP implementation as the default option to make our package accessible to non-Julia users.</p>
+<p><code><a href="reference/cocoSim.html">cocoSim()</a></code> simulates convolution-closed count time series models and <code><a href="reference/cocoReg.html">cocoReg()</a></code> fits them. The S3 method <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> computes k-step ahead forecasting distributions for a fitted model. <code><a href="reference/cocoBoot.html">cocoBoot()</a></code>, <code><a href="reference/cocoPit.html">cocoPit()</a></code>, <code><a href="reference/cocoScore.html">cocoScore()</a></code>, <code><a href="reference/cocoSoc.html">cocoSoc()</a></code> and <code><a href="reference/cocoResid.html">cocoResid()</a></code> provide routines for model assessment. The main usage of the package is illustrated in the help page of <code><a href="reference/cocoReg.html">cocoReg()</a></code>. Further examples are given in the help pages of the other functions.</p>
+<p>By default, the functions use a C++ implementation via Rcpp. Users with a Julia installation can instead run them in Julia by setting the argument <code>julia = TRUE</code>. This is most useful for <code><a href="reference/cocoReg.html">cocoReg()</a></code>, where the likelihood is evaluated numerically: the Julia backend uses automatic differentiation to obtain exact gradients, which can improve numerical stability and speed of convergence for complex models.</p>
+<p>Both backends gave qualitatively similar results in our tests. Rcpp is therefore the default, so that the package works without Julia.</p>
 </div>
 <div class="section level2">
 <h2 id="model">Model<a class="anchor" aria-label="anchor" href="#model"></a>
 </h2>
-<figure><img src="https://github.com/manuhuth/coconots/blob/main/man/figures/dgp.png?raw=true" alt="alt text"><figcaption aria-hidden="true">
-alt text
-</figcaption></figure>
+<p><img src="reference/figures/dgp.png" alt="Definition of the model" width="70%"></p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the latest stable version of coconots from <a href="https://cran.r-project.org/" class="external-link">CRAN</a> with:</p>
+<p>The stable version of coconots is available from <a href="https://cran.r-project.org/package=coconots" class="external-link">CRAN</a>:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"coconots"</span><span class="op">)</span></span></code></pre></div>
-<p>or the latest version from GitHub with:</p>
+<p>The development version can be installed from GitHub:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"manuhuth/coconots"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example-using-rcpp-implementation">Example using RCPP implementation<a class="anchor" aria-label="anchor" href="#example-using-rcpp-implementation"></a>
+<h2 id="example-using-the-rcpp-implementation">Example using the Rcpp implementation<a class="anchor" aria-label="anchor" href="#example-using-the-rcpp-implementation"></a>
 </h2>
-<p>Coconots runs on an RCPP and a Julia implementation. RCPP is the default. The regression results can be summarized using the summary function.</p>
+<p>The Rcpp implementation is the default. The regression results can be summarized using the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> function.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/manuhuth/coconots" class="external-link">coconots</a></span><span class="op">)</span></span>
 <span><span class="va">length</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
@@ -92,29 +89,28 @@ alt text
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cocoSim.html">cocoSim</a></span><span class="op">(</span>order <span class="op">=</span> <span class="fl">1</span>, type <span class="op">=</span> <span class="st">"GP"</span>, par <span class="op">=</span> <span class="va">pars</span>,</span>
 <span>                length <span class="op">=</span> <span class="va">length</span><span class="op">)</span></span>
 <span><span class="va">coco</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cocoReg.html">cocoReg</a></span><span class="op">(</span>order <span class="op">=</span> <span class="fl">1</span>, type <span class="op">=</span> <span class="st">"GP"</span>, data <span class="op">=</span> <span class="va">data</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Registered S3 method overwritten by 'quantmod':</span></span>
-<span><span class="co">#&gt;   method            from</span></span>
-<span><span class="co">#&gt;   as.zoo.data.frame zoo</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">coco</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Coefficients:</span></span>
-<span><span class="co">#&gt;          Estimate   Std. Error         t</span></span>
-<span><span class="co">#&gt; lambda     1.0548       0.0930   11.3367</span></span>
-<span><span class="co">#&gt; alpha      0.4201       0.0373   11.2508</span></span>
-<span><span class="co">#&gt; eta        0.1609       0.0329    4.8958</span></span>
+<span><span class="co">#&gt;          Estimate   Std..Error         t</span></span>
+<span><span class="co">#&gt; lambda     1.0546       0.0930   11.3368</span></span>
+<span><span class="co">#&gt; alpha      0.4202       0.0373   11.2541</span></span>
+<span><span class="co">#&gt; eta        0.1609       0.0329    4.8961</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Type: GP </span></span>
-<span><span class="co">#&gt; Order: 1 </span></span>
+<span><span class="co">#&gt; Type: GP</span></span>
+<span><span class="co">#&gt; Order: 1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Log-likelihood: -885.012</span></span></code></pre></div>
+<span><span class="co">#&gt; Log-likelihood: -885.012</span></span>
+<span><span class="co">#&gt; AIC: 1776.024</span></span>
+<span><span class="co">#&gt; BIC: 1788.6679</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example-using-julia-implementation">Example using Julia implementation<a class="anchor" aria-label="anchor" href="#example-using-julia-implementation"></a>
+<h2 id="example-using-the-julia-implementation">Example using the Julia implementation<a class="anchor" aria-label="anchor" href="#example-using-the-julia-implementation"></a>
 </h2>
-<p>In order to use the Julia functions, you need a running version of Julia installed. You need to install the relevant Julia packages once.</p>
+<p>The Julia functions require a working Julia installation. <code><a href="reference/installJuliaPackages.html">installJuliaPackages()</a></code> installs the Julia package Coconots.jl (version 0.2.0 or higher) and updates an older installed version. It needs to be run once.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">coconots</span><span class="fu">::</span><span class="fu"><a href="reference/installJuliaPackages.html">installJuliaPackages</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Starting Julia ...</span></span></code></pre></div>
-<p>If installed, the Julia implementation can be addressed by setting the julia argument to true. In this case we need to set the seed within the simulation function in order to pass it to Julia.</p>
+<p>The Julia implementation is used by setting the argument <code>julia = TRUE</code>. The seed of the Julia random number generator is set via <code>julia_seed</code>, since <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> does not affect Julia.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/manuhuth/coconots" class="external-link">coconots</a></span><span class="op">)</span></span>
 <span><span class="va">length</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
@@ -127,7 +123,7 @@ alt text
 <div class="section level2">
 <h2 id="model-assessment">Model assessment<a class="anchor" aria-label="anchor" href="#model-assessment"></a>
 </h2>
-<p>We provide different tools for model assessment. One can even use the RCPP implementation for the regression and do model assessment with the Julia implementation. If this is desired, one needs to specify in the output of the regression that it should be Julia compatible. Note that this is not necessary if the Julia option in the regression is true.</p>
+<p>The package provides several tools for model assessment. A model fitted with the Rcpp implementation can also be assessed with the Julia implementation. For this, the fit must be created with <code>julia_installed = TRUE</code>, which stores a Julia-compatible copy of the fit. This is not necessary if the model was fitted with <code>julia = TRUE</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/manuhuth/coconots" class="external-link">coconots</a></span><span class="op">)</span></span>
 <span><span class="va">length</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
@@ -142,33 +138,47 @@ alt text
 <span><span class="co">#&gt; [1] 1.501935</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $quad.score</span></span>
-<span><span class="co">#&gt; [1] -0.2532058</span></span>
+<span><span class="co">#&gt; [1] -0.2532048</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $rps.score</span></span>
-<span><span class="co">#&gt; [1] 0.619761</span></span>
+<span><span class="co">#&gt; [1] 0.6197608</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $aic</span></span>
+<span><span class="co">#&gt; [1] 1502.931</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $bic</span></span>
+<span><span class="co">#&gt; [1] 1511.36</span></span>
 <span><span class="va">pit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cocoPit.html">cocoPit</a></span><span class="op">(</span><span class="va">coco</span>, julia <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-example_assessment-1.png" width="100%"></p>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: `aes_string()` was deprecated in ggplot2 3.0.0.</span></span>
+<span><span class="co">#&gt; ℹ Please use tidy evaluation idioms with `aes()`.</span></span>
+<span><span class="co">#&gt; ℹ See also `vignette("ggplot2-in-packages")` for more information.</span></span>
+<span><span class="co">#&gt; ℹ The deprecated feature was likely used in the coconots package.</span></span>
+<span><span class="co">#&gt;   Please report the issue at &lt;https://github.com/manuhuth/coconots/issues&gt;.</span></span>
+<span><span class="co">#&gt; This warning is displayed once per session.</span></span>
+<span><span class="co">#&gt; Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span>
+<span><span class="co">#&gt; generated.</span></span></code></pre></div>
+<p><img src="reference/figures/README-example_assessment-1.png" width="70%"></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">boot</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cocoBoot.html">cocoBoot</a></span><span class="op">(</span><span class="va">coco</span>, julia <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">boot</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-example_assessment-2.png" width="100%"></p>
+<p><img src="reference/figures/README-example_assessment-2.png" width="70%"></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">forecast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">coco</span>, k<span class="op">=</span><span class="fl">3</span>, julia <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">forecast</span><span class="op">)</span> <span class="co">#plot all k forecasts</span></span></code></pre></div>
-<p><img src="reference/figures/README-example_assessment-3.png" width="100%"></p>
+<p><img src="reference/figures/README-example_assessment-3.png" width="70%"></p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">forecast</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="co">#plot density of one-step ahead forecast</span></span></code></pre></div>
-<p><img src="reference/figures/README-example_assessment-4.png" width="100%"></p>
+<p><img src="reference/figures/README-example_assessment-4.png" width="70%"></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">resid</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cocoResid.html">cocoResid</a></span><span class="op">(</span><span class="va">coco</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">resid</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-example_assessment-5.png" width="100%"></p>
+<p><img src="reference/figures/README-example_assessment-5.png" width="70%"></p>
 </div>
 <div class="section level2">
-<h2 id="compare-models">Compare Models<a class="anchor" aria-label="anchor" href="#compare-models"></a>
+<h2 id="compare-models">Compare models<a class="anchor" aria-label="anchor" href="#compare-models"></a>
 </h2>
-<p>Model selection is facilitated by providing quick and easy access to the scoring metrics.</p>
+<p><code><a href="reference/cocoSoc.html">cocoSoc()</a></code> fits the Poisson and generalized Poisson models of order 1 and 2 to the same data and tabulates the scoring rules for model selection.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/manuhuth/coconots" class="external-link">coconots</a></span><span class="op">)</span></span>
 <span><span class="va">length</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
@@ -176,7 +186,7 @@ alt text
 <span><span class="va">pars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.3</span>, <span class="fl">0.25</span>, <span class="fl">0.03</span>, <span class="fl">0.2</span>, <span class="fl">0.3</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">12345</span><span class="op">)</span></span>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cocoSim.html">cocoSim</a></span><span class="op">(</span>order <span class="op">=</span> <span class="fl">2</span>, type <span class="op">=</span> <span class="st">"GP"</span>, par <span class="op">=</span> <span class="va">pars</span>, length <span class="op">=</span> <span class="va">length</span><span class="op">)</span></span>
-<span><span class="va">soc</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cocoSoc.html">cocoSoc</a></span><span class="op">(</span><span class="va">data</span>, julia<span class="op">=</span><span class="cn">T</span><span class="op">)</span></span>
+<span><span class="va">soc</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cocoSoc.html">cocoSoc</a></span><span class="op">(</span><span class="va">data</span>, julia <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "Computing PAR1 model."</span></span>
 <span><span class="co">#&gt; [1] "Computing PAR2 model."</span></span>
 <span><span class="co">#&gt; [1] "Computing GP1 model."</span></span>
