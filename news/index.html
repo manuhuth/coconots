@@ -34,7 +34,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.5" id="coconots-205">coconots 2.0.5<a class="anchor" aria-label="anchor" href="#coconots-205"></a></h2>
-<div class="section level3">
+<ul><li>
+<code><a href="../reference/installJuliaPackages.html">installJuliaPackages()</a></code> installs or updates Coconots.jl to version 0.2 or newer (an existing 0.1.x installation was previously kept).</li>
+</ul><div class="section level3">
 <h3 id="bug-fixes-2-0-5">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-0-5"></a></h3>
 <ul><li>
 <code>cocoReg(julia = TRUE)</code> without covariates passed a user-supplied <code>start</code> to Julia in R order (<code>lambda</code> first) although the Julia backend expects <code>lambda</code> last. <code>start</code> is now reordered before the call. The <code>start</code> documentation states the expected order.</li>

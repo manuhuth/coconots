@@ -2,6 +2,10 @@
 
 ## coconots 2.0.5
 
+- [`installJuliaPackages()`](https://manuhuth.github.io/coconots/reference/installJuliaPackages.md)
+  installs or updates Coconots.jl to version 0.2 or newer (an existing
+  0.1.x installation was previously kept).
+
 ### Bug fixes
 
 - `cocoReg(julia = TRUE)` without covariates passed a user-supplied
