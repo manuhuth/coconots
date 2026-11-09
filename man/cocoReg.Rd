@@ -36,7 +36,7 @@ cocoReg(
 
 \item{b.beta}{numeric value indicating the lower bound for the parameters of the explanatory variables for the optimization, currently only available in the \proglang{R} version}
 
-\item{start}{optional numeric vector of starting values for the optimization}
+\item{start}{optional numeric vector of starting values for the optimization, in the order of the fitted parameters: \code{lambda, alpha[, eta]} (order 1), \code{lambda, alpha1, alpha2, alpha3[, eta]} (order 2), or \code{alpha[s][, eta], beta1, ..., betak} with covariates}
 
 \item{start.val.adjust}{logical indicating whether starting values should be adjusted, currently only available in the R version}
 
