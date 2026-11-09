@@ -13,7 +13,7 @@ Method of moments estimators are used to initialize numerical optimization, thou
 
     <a class="navbar-brand me-2" href="../index.html">coconots</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,7 +97,7 @@ integer autoregressive <code>(G)PAR</code> time series models for count data as 
 
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
-<dd><p>optional numeric vector of starting values for the optimization</p></dd>
+<dd><p>optional numeric vector of starting values for the optimization, in the order of the fitted parameters: <code>lambda, alpha[, eta]</code> (order 1), <code>lambda, alpha1, alpha2, alpha3[, eta]</code> (order 2), or <code>alpha[s][, eta], beta1, ..., betak</code> with covariates</p></dd>
 
 
 <dt id="arg-start-val-adjust">start.val.adjust<a class="anchor" aria-label="anchor" href="#arg-start-val-adjust"></a></dt>

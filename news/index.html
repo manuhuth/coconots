@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">coconots</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,31 @@
       <small>Source: <a href="https://github.com/manuhuth/coconots/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.0.5" id="coconots-205">coconots 2.0.5<a class="anchor" aria-label="anchor" href="#coconots-205"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-2-0-5">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-0-5"></a></h3>
+<ul><li>
+<code>cocoReg(julia = TRUE)</code> without covariates passed a user-supplied <code>start</code> to Julia in R order (<code>lambda</code> first) although the Julia backend expects <code>lambda</code> last. <code>start</code> is now reordered before the call. The <code>start</code> documentation states the expected order.</li>
+<li>
+<code><a href="../reference/cocoSim.html">cocoSim()</a></code> with covariates takes <code>lambda_t</code> from row <code>t</code> of <code>xreg</code> (previously row <code>t - order</code>); GP2 start values account for <code>eta</code>.</li>
+<li>
+<code><a href="../reference/cocoPit.html">cocoPit()</a></code> evaluates the PIT over <code>t = order + 1, ..., T</code> on both backends, uses the upper-tail chi-square p-value, and draws the confidence bands at the level <code>conf.alpha</code> (order 1 previously used the model <code>alpha</code>).</li>
+<li>Densities, the order-2 normalizer <code>P(y, z)</code> and the order-1 thinning term return the exact limits at zero rates and at <code>alpha = 0</code> and <code>alpha = 1</code> instead of <code>0 * Inf = NaN</code>.</li>
+<li>Inverse-transform samplers terminate at the count limit 170.</li>
+<li>Input checks: counts above 170 (factorial overflow), rank-deficient <code>xreg</code>, series too short for the model order, and <code>lambda_t &lt;= 0</code> now raise informative errors.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="performance-2-0-5">Performance<a class="anchor" aria-label="anchor" href="#performance-2-0-5"></a></h3>
+<ul><li>The default RCPP fit uses L-BFGS-B with gradient and Hessian from C++ forward-mode automatic differentiation and an optimality check (KKT conditions, positive definite reduced Hessian, Newton decrement); <code>constrOptim</code> Nelder-Mead with a polishing step remains the fallback. Starting values for covariate coefficients come from a Poisson GLM.</li>
+<li>Faster likelihoods (sized pmf tables, recurrences, factored order-2 convolution), <code><a href="../reference/cocoBoot.html">cocoBoot()</a></code>, <code><a href="../reference/cocoSim.html">cocoSim()</a></code> with covariates and <code>predict(k &gt; 1)</code> (all replicates or paths in one C++ call), <code><a href="../reference/cocoScore.html">cocoScore()</a></code> and <code><a href="../reference/cocoResid.html">cocoResid()</a></code> (one pmf per distinct history), and fewer R-Julia round trips in <code>cocoReg(julia = TRUE)</code> and <code>cocoScore(julia = TRUE)</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="other-changes-2-0-5">Other changes<a class="anchor" aria-label="anchor" href="#other-changes-2-0-5"></a></h3>
+<ul><li>
+<code>method.hessian</code> is deprecated and ignored with a warning; the Hessian is computed by automatic differentiation on both backends. The <code>numDeriv</code> dependency is removed.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="2.0.4" id="coconots-204">coconots 2.0.4<a class="anchor" aria-label="anchor" href="#coconots-204"></a></h2><p class="text-muted">CRAN release: 2026-08-23</p>
 <div class="section level3">

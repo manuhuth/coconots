@@ -1,5 +1,53 @@
 # Changelog
 
+## coconots 2.0.5
+
+### Bug fixes
+
+- `cocoReg(julia = TRUE)` without covariates passed a user-supplied
+  `start` to Julia in R order (`lambda` first) although the Julia
+  backend expects `lambda` last. `start` is now reordered before the
+  call. The `start` documentation states the expected order.
+- [`cocoSim()`](https://manuhuth.github.io/coconots/reference/cocoSim.md)
+  with covariates takes `lambda_t` from row `t` of `xreg` (previously
+  row `t - order`); GP2 start values account for `eta`.
+- [`cocoPit()`](https://manuhuth.github.io/coconots/reference/cocoPit.md)
+  evaluates the PIT over `t = order + 1, ..., T` on both backends, uses
+  the upper-tail chi-square p-value, and draws the confidence bands at
+  the level `conf.alpha` (order 1 previously used the model `alpha`).
+- Densities, the order-2 normalizer `P(y, z)` and the order-1 thinning
+  term return the exact limits at zero rates and at `alpha = 0` and
+  `alpha = 1` instead of `0 * Inf = NaN`.
+- Inverse-transform samplers terminate at the count limit 170.
+- Input checks: counts above 170 (factorial overflow), rank-deficient
+  `xreg`, series too short for the model order, and `lambda_t <= 0` now
+  raise informative errors.
+
+### Performance
+
+- The default RCPP fit uses L-BFGS-B with gradient and Hessian from C++
+  forward-mode automatic differentiation and an optimality check (KKT
+  conditions, positive definite reduced Hessian, Newton decrement);
+  `constrOptim` Nelder-Mead with a polishing step remains the fallback.
+  Starting values for covariate coefficients come from a Poisson GLM.
+- Faster likelihoods (sized pmf tables, recurrences, factored order-2
+  convolution),
+  [`cocoBoot()`](https://manuhuth.github.io/coconots/reference/cocoBoot.md),
+  [`cocoSim()`](https://manuhuth.github.io/coconots/reference/cocoSim.md)
+  with covariates and `predict(k > 1)` (all replicates or paths in one
+  C++ call),
+  [`cocoScore()`](https://manuhuth.github.io/coconots/reference/cocoScore.md)
+  and
+  [`cocoResid()`](https://manuhuth.github.io/coconots/reference/cocoResid.md)
+  (one pmf per distinct history), and fewer R-Julia round trips in
+  `cocoReg(julia = TRUE)` and `cocoScore(julia = TRUE)`.
+
+### Other changes
+
+- `method.hessian` is deprecated and ignored with a warning; the Hessian
+  is computed by automatic differentiation on both backends. The
+  `numDeriv` dependency is removed.
+
 ## coconots 2.0.4
 
 CRAN release: 2026-08-23

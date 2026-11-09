@@ -77,7 +77,10 @@ cocoReg(
 
 - start:
 
-  optional numeric vector of starting values for the optimization
+  optional numeric vector of starting values for the optimization, in
+  the order of the fitted parameters: `lambda, alpha[, eta]` (order 1),
+  `lambda, alpha1, alpha2, alpha3[, eta]` (order 2), or
+  `alpha[s][, eta], beta1, ..., betak` with covariates
 
 - start.val.adjust:
 
