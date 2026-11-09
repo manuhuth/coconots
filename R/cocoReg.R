@@ -11,7 +11,7 @@
 #' @param xreg optional matrix of explanatory variables (without constant term) for use in a regression model
 #' @param constrained.optim logical indicating whether optimization should be constrained, currently only available in the R version
 #' @param b.beta numeric value indicating the lower bound for the parameters of the explanatory variables for the optimization, currently only available in the \proglang{R} version
-#' @param start optional numeric vector of starting values for the optimization
+#' @param start optional numeric vector of starting values for the optimization, in the order of the fitted parameters: \code{lambda, alpha[, eta]} (order 1), \code{lambda, alpha1, alpha2, alpha3[, eta]} (order 2), or \code{alpha[s][, eta], beta1, ..., betak} with covariates
 #' @param start.val.adjust logical indicating whether starting values should be adjusted, currently only available in the R version
 #' @param method_optim character string indicating the optimization method to be used, currently only available in the R version. In the \proglang{julia} implementation this is by default the LBFGS algorithm
 #' @param replace.start.val numeric value indicating the value to replace any invalid starting values, currently only available in the \proglang{R} version
@@ -130,7 +130,9 @@ cocoReg <- function(type, order, data, xreg = NULL,
 
   if (julia){
     start_time <- Sys.time()
-    fit_julia <- cocoRegJulia(type, order, data, xreg, start, link_function, b.beta)
+    # Julia expects lambda last when there are no covariates
+    start_julia <- if (is.null(xreg) && length(start) > 1) c(start[-1], start[1]) else start
+    fit_julia <- cocoRegJulia(type, order, data, xreg, start_julia, link_function, b.beta)
     end_time <- Sys.time()
 
     # fit_julia: proxy of the result dict without its "optimization" entry
