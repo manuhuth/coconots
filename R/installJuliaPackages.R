@@ -6,14 +6,14 @@
 installJuliaPackages <- function(){
   set_julia_threads()
 
-  strings1 <- c('"Coconots"')
-  strings2 <- c('Pkg.add("Coconots")')
-  for (i in 1:length(strings1)){
-    if (!JuliaConnectoR::juliaEval(paste0(strings1[i], ' in keys(Pkg.project().dependencies)'))){
-      #JuliaConnectoR.utils::install_julia_packages(strings2[i])
-      JuliaConnectoR::juliaEval("using Pkg")
-      JuliaConnectoR::juliaEval(paste0(strings2[i]) )
-    }
+  min_version <- "0.2.0" # minimum Coconots.jl version the R bridge supports
+  JuliaConnectoR::juliaEval("using Pkg")
+  installed <- JuliaConnectoR::juliaEval(
+    'v = [string(d.version) for d in values(Pkg.dependencies()) if d.name == "Coconots" && d.is_direct_dep]; isempty(v) ? "" : first(v)')
+  if (installed == "" || numeric_version(installed) < min_version) {
+    if (installed != "") message("Updating Coconots.jl ", installed, " to >= ", min_version, ".")
+    JuliaConnectoR::juliaEval(sprintf('Pkg.add(name = "Coconots", version = "%s")',
+                                      sub("\\.0$", "", min_version)))
   }
   JuliaConnectoR::juliaEval('
       using Coconots
