@@ -33,7 +33,7 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="2.0.4" id="coconots-204">coconots 2.0.4<a class="anchor" aria-label="anchor" href="#coconots-204"></a></h2>
+<h2 class="pkg-version" data-toc-text="2.0.4" id="coconots-204">coconots 2.0.4<a class="anchor" aria-label="anchor" href="#coconots-204"></a></h2><p class="text-muted">CRAN release: 2026-08-23</p>
 <div class="section level3">
 <h3 id="bug-fixes-2-0-4">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-2-0-4"></a></h3>
 <ul><li>Fixed a heap buffer over-read reported by CRAN’s valgrind check. The post-hoc log-likelihood for Poisson models with covariates reused the Generalized-Poisson parameter slicing, which drops <code>eta</code>. Poisson models carry no <code>eta</code>, so the slicing also discarded the first covariate coefficient and passed a coefficient vector one element shorter than the number of covariate columns to <code>likelihoodGP1cov()</code> / <code>likelihoodGP2cov()</code>, which then read one <code>double</code> past the end of that vector on every observation. The stored <code>$likelihood</code> (and hence AIC/BIC) was wrong for these models; parameter estimates and standard errors were unaffected.</li>

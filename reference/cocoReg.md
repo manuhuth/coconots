@@ -36,7 +36,7 @@ cocoReg(
   method_optim = "Nelder-Mead",
   replace.start.val = 1e-05,
   iteration.start.val = 0.6,
-  method.hessian = "Richardson",
+  method.hessian = NULL,
   cores = NULL,
   julia = FALSE,
   julia_installed = FALSE,
@@ -102,8 +102,10 @@ cocoReg(
 
 - method.hessian:
 
-  character string indicating the method to be used to approximate the
-  Hessian matrix, currently only available in the R version
+  deprecated and ignored. On both backends the gradient and the Hessian
+  of the log-likelihood are computed by forward-mode automatic
+  differentiation (dual numbers in the R/C++ version, ForwardDiff in the
+  julia version).
 
 - cores:
 

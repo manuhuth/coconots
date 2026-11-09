@@ -60,7 +60,7 @@ integer autoregressive <code>(G)PAR</code> time series models for count data as 
 <span>  method_optim <span class="op">=</span> <span class="st">"Nelder-Mead"</span>,</span>
 <span>  replace.start.val <span class="op">=</span> <span class="fl">1e-05</span>,</span>
 <span>  iteration.start.val <span class="op">=</span> <span class="fl">0.6</span>,</span>
-<span>  method.hessian <span class="op">=</span> <span class="st">"Richardson"</span>,</span>
+<span>  method.hessian <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  julia <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  julia_installed <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -117,7 +117,7 @@ integer autoregressive <code>(G)PAR</code> time series models for count data as 
 
 
 <dt id="arg-method-hessian">method.hessian<a class="anchor" aria-label="anchor" href="#arg-method-hessian"></a></dt>
-<dd><p>character string indicating the method to be used to approximate the Hessian matrix, currently only available in the R version</p></dd>
+<dd><p>deprecated and ignored. On both backends the gradient and the Hessian of the log-likelihood are computed by forward-mode automatic differentiation (dual numbers in the R/C++ version, ForwardDiff in the julia version).</p></dd>
 
 
 <dt id="arg-cores">cores<a class="anchor" aria-label="anchor" href="#arg-cores"></a></dt>

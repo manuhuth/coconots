@@ -2,6 +2,8 @@
 
 ## coconots 2.0.4
 
+CRAN release: 2026-08-23
+
 ### Bug fixes
 
 - Fixed a heap buffer over-read reported by CRAN’s valgrind check. The
